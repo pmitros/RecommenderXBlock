@@ -1,0 +1,9 @@
+/* CSS for RecommenderXBlock */
+
+.recommender_block .count {
+    font-weight: bold;
+}
+
+.recommender_block p {
+    cursor: pointer;
+}
