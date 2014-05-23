@@ -93,6 +93,12 @@
 	Textbook Page 505
       </div>
     </div>
+    <div class="recommender_row">
+      % for elem in resources:
+        <li> ${elem} </li>
+        <%include file="resourcebox.html" args="title=elem['title']" />
+      % endfor
+    </div>
   </div>
   <div class="recommender_description">
   </div>

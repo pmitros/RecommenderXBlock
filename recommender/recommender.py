@@ -57,7 +57,7 @@ class RecommenderXBlock(XBlock):
     This XBlock will show a set of recommended resources
     """
     # Scope-wide. List of JSON objects corresponding to recommendations combine XML and user. 
-    recommendations = List(help="List of help resources", default=0, scope=Scope.content)
+    default_recommendations = List(help="List of help resources", default=0, scope=Scope.content)
     # Scope-wide. List of JSON objects corresponding to recommendations as defined in XML. 
     recommendations = List(help="List of help resources", default=0, scope=Scope.content)
     # Upvotes for this particular user
@@ -83,7 +83,7 @@ class RecommenderXBlock(XBlock):
             self.template_lookup.put_string("recommender.html", self.resource_string("static/html/recommender.html"))
             self.template_lookup.put_string("resourcebox.html", self.resource_string("static/html/resourcebox.html"))
 
-        frag = Fragment(self.template_lookup.get_template("recommender.html").render())
+        frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = self.recommendations))
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/recommender.css"))
