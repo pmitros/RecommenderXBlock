@@ -1,6 +1,11 @@
 """TO-DO: Write a description of what this XBlock is."""
 
+import json
+
 import pkg_resources
+from mako.template import Template
+from mako.lookup import TemplateLookup
+
 
 from xblock.core import XBlock
 from xblock.fields import Scope, Integer, String, BlockScope, List
@@ -51,13 +56,16 @@ class RecommenderXBlock(XBlock):
     """
     This XBlock will show a set of recommended resources
     """
+    # Scope-wide. List of JSON objects corresponding to recommendations combine XML and user. 
+    recommendations = List(help="List of help resources", default=0, scope=Scope.content)
+    # Scope-wide. List of JSON objects corresponding to recommendations as defined in XML. 
+    recommendations = List(help="List of help resources", default=0, scope=Scope.content)
+    # Upvotes for this particular user
+    upvotes = List(help="List of items user gave upvote to", default=False, scope=Scope.user_state)
+    # Downvotes for this particular user
+    downvotes = List(help="List of items user gave downvote to", default=False, scope=Scope.user_state)
 
-    # Fields are defined on the class.  You can access them in your code as
-    # self.<fieldname>.
-    objects = List(
-           scope = BlockScope, 
-           help = "List of help resources"
-        )
+    template_lookup = None
 
     def resource_string(self, path):
         """Handy helper for getting resources from our kit."""
@@ -70,15 +78,17 @@ class RecommenderXBlock(XBlock):
         The primary view of the RecommenderXBlock, shown to students
         when viewing courses.
         """
-        html = self.resource_string("static/html/recommender.html")
-        print html.format
-        frag = Fragment(html.format())
+        if not self.template_lookup:
+            self.template_lookup = TemplateLookup() 
+            self.template_lookup.put_string("recommender.html", self.resource_string("static/html/recommender.html"))
+            self.template_lookup.put_string("resourcebox.html", self.resource_string("static/html/resourcebox.html"))
+
+        frag = Fragment(self.template_lookup.get_template("recommender.html").render())
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/recommender.css"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
         frag.initialize_js('RecommenderXBlock')
-        print self.xml_text_content()
         return frag
 
     # TO-DO: change this to create the scenarios you'd like to see in the
@@ -90,10 +100,28 @@ class RecommenderXBlock(XBlock):
             ("RecommenderXBlock",
              """<vertical_demo>
                   <recommender> 
-                     
-                  </recommender>
-                  <recommender> 
+                     {"title": "Textbook page 501", "up" : 50, "down" : 75, "url" : "google.com"}
                   </recommender>
                 </vertical_demo>
              """),
         ]
+
+    @classmethod
+    def parse_xml(cls, node, runtime, keys, id_generator):
+        """
+        Parse the XML for an HTML block.
+
+        The entire subtree under `node` is re-serialized, and set as the
+        content of the XBlock.
+
+        """
+        block = runtime.construct_xblock_from_class(cls, keys)
+        lines = []
+        for line in node.text.split('\n'):
+            line = line.strip()
+            if len(line) > 2:
+                print "Decoding", line
+                lines.append(json.loads(line))
+    
+        block.default_recommendations = lines
+        return block

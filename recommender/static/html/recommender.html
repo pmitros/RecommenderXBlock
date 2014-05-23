@@ -1,10 +1,99 @@
+<style>
+.recommender_block {
+  width : 100%;
+}
+
+.recommender_resource {
+  border : 1;
+  padding : 1;
+  margin : 10;
+  display:table-cell;
+  width:300px;
+  border-color:red;
+  border-width:1px;
+  border-style:solid;
+  border-radius:5px;
+}
+
+.recommender_header {
+  display : flex;
+  padding : 0 0 10 0;
+}
+
+.recommender_title {
+  flex-grow : 1
+}
+
+.recommender_recommendations {
+  display:table;
+  width:100%;
+}
+
+.recommender_blurb {
+  display:inline-block;
+  vertical-align: middle;
+  width:225px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.recommender_vote_box {
+  display:inline-block;
+  vertical-align: middle;
+  width:45px;
+}
+
+.recommender_vote_arrow_up {
+  margin-left:auto;
+  margin-right:auto;
+  text-align:center;
+}
+
+.recommender_vote_arrow_down {
+  margin-left:auto;
+  margin-right:auto;
+  text-align:center;
+}
+
+.recommender_vote_score {
+  width:100%;
+}
+
+.recommender_edit{
+  display:inline-block;
+  vertical-align: top;
+}
+</style>
+
 <div class="recommender_block">
-Helpful resources
-<table>
-<tr>
-<td>
-</td>
-</tr>
-</table>
-<span class="ui-icon ui-icon-plusthick"></span>
+  <div class="recommender_header"> <div class="recommender_title">Helpful resources</div><div class="recommender_add"> <span class="ui-icon ui-icon-plusthick"></span></div></div>
+
+  <div class="recommender_recommendations">
+    <div class="recommender_row">
+      <div class="recommender_resource">
+	<div class="recommender_vote_box">
+	  <div class="recommender_vote_arrow_up" role="button" aria-label="upvote" tabindex="0"><span class="ui-icon ui-icon-triangle-1-n"></span></div>
+	  <!--div class="recommender_vote_score_dislikes">2927</div-->
+	  <div class="recommender_vote_score">2926</div>
+	  <!--div class="recommender_vote_score_likes">2927</div-->
+	  <div class="recommender_vote_arrow_down" role="button" aria-label="downvote" tabindex="0"><span class="ui-icon ui-icon-triangle-1-s"></span></div>
+	</div>
+	<div class="recommender_blurb">Textbook Page 501</div>
+	<div class="recommender_edit"><span class="ui-icon ui-icon-pencil"></span></div>
+      </div>
+      <div class="recommender_resource">
+	Textbook Page 502
+      </div>
+    </div>
+    <div class="recommender_row">
+      <div class="recommender_resource">
+	Textbook Page 504
+      </div>
+      <div class="recommender_resource">
+	Textbook Page 505
+      </div>
+    </div>
+  </div>
+  <div class="recommender_description">
+  </div>
 </div>
