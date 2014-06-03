@@ -72,6 +72,11 @@ class RecommenderXBlock(XBlock):
         data = pkg_resources.resource_string(__name__, path)
         return data.decode("utf8")
 
+    @XBlock.json_handler
+    def handle_upvote(slef, data, suffix=''):
+        print "Upvote clicked!"
+        return {"Success": True}
+
     # TO-DO: change this view to display your data your own way.
     def student_view(self, context=None):
         """
