@@ -78,6 +78,9 @@ class RecommenderXBlock(XBlock):
         The primary view of the RecommenderXBlock, shown to students
         when viewing courses.
         """
+        if not self.recommendations:
+            self.recommendations = self.default_recommendations
+
         if not self.template_lookup:
             self.template_lookup = TemplateLookup() 
             self.template_lookup.put_string("recommender.html", self.resource_string("static/html/recommender.html"))
