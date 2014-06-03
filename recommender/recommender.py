@@ -57,9 +57,9 @@ class RecommenderXBlock(XBlock):
     This XBlock will show a set of recommended resources
     """
     # Scope-wide. List of JSON objects corresponding to recommendations combine XML and user. 
-    default_recommendations = List(help="List of help resources", default=0, scope=Scope.content)
+    default_recommendations = List(help="List of help resources", default=[], scope=Scope.content)
     # Scope-wide. List of JSON objects corresponding to recommendations as defined in XML. 
-    recommendations = List(help="List of help resources", default=0, scope=Scope.content)
+    recommendations = List(help="List of help resources", default=[], scope=Scope.content)
     # Upvotes for this particular user
     upvotes = List(help="List of items user gave upvote to", default=False, scope=Scope.user_state)
     # Downvotes for this particular user
