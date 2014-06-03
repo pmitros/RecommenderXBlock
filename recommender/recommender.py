@@ -61,9 +61,9 @@ class RecommenderXBlock(XBlock):
     # Scope-wide. List of JSON objects corresponding to recommendations as defined in XML. 
     recommendations = List(help="List of help resources", default=[], scope=Scope.content)
     # Upvotes for this particular user
-    upvotes = List(help="List of items user gave upvote to", default=False, scope=Scope.user_state)
+    upvotes = List(help="List of items user gave upvote to", default=[], scope=Scope.user_state)
     # Downvotes for this particular user
-    downvotes = List(help="List of items user gave downvote to", default=False, scope=Scope.user_state)
+    downvotes = List(help="List of items user gave downvote to", default=[], scope=Scope.user_state)
 
     template_lookup = None
 
@@ -73,8 +73,44 @@ class RecommenderXBlock(XBlock):
         return data.decode("utf8")
 
     @XBlock.json_handler
-    def handle_upvote(slef, data, suffix=''):
+    def handle_upvote(self, data, suffix=''):
+        ''' untested '''
+        resource = data['resource']
+        if resource in upvotes:
+            return {"Success": False}
+
+        if resource in self.downvotes:
+            del self.downvotes[self.downvotes.index(resource)]
+            self.recommendations[resource]['downvotes'] -= 1
+
+        self.upvotes.append(resource)
+        self.recommendations[resource]['upvotes'] += 1
+
         print "Upvote clicked!"
+        return {"Success": True}
+
+    @XBlock.json_handler
+    def add_resource(self, data, suffix=''):
+        ''' untested '''
+        resource = data['resource']
+        
+        ## TODO: Return if already in resources
+        # Construct new resource
+        valid_fields = ['url', 'title', 'description']
+        new_resource = {}
+        for field in valid_fields:
+            new_resource[field] = data['resource'][field]
+        new_resource['upvotes'] = 0
+        new_resource['downvotes'] = 0
+        self.resources.append(new_resource)
+        return {"Success": True}
+
+    @XBlock.json_handler
+    def edit_resource(self, data, suffix=''):
+        pass
+
+    @XBlock.json_handler
+    def flag_resource(self, data, suffix=''):
         return {"Success": True}
 
     # TO-DO: change this view to display your data your own way.
@@ -83,6 +119,7 @@ class RecommenderXBlock(XBlock):
         The primary view of the RecommenderXBlock, shown to students
         when viewing courses.
         """
+        print "entered"
         if not self.recommendations:
             self.recommendations = self.default_recommendations
 
@@ -92,6 +129,9 @@ class RecommenderXBlock(XBlock):
             self.template_lookup.put_string("resourcebox.html", self.resource_string("static/html/resourcebox.html"))
 
         resources = [{'title' : r['title'], "votes" : r['up'] - r['down']} for r in self.recommendations]
+        # TODO: Sort by votes
+        # Ideally, we'd estimate score based on votes, such that items with 1 vote have a sensible ranking (rather than a perfect rating)
+        # 
 
         frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources))
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
