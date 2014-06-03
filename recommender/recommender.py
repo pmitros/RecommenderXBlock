@@ -86,7 +86,9 @@ class RecommenderXBlock(XBlock):
             self.template_lookup.put_string("recommender.html", self.resource_string("static/html/recommender.html"))
             self.template_lookup.put_string("resourcebox.html", self.resource_string("static/html/resourcebox.html"))
 
-        frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = self.recommendations))
+        resources = [{'title' : r['title'], "votes" : r['up'] - r['down']} for r in self.recommendations]
+
+        frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources))
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/recommender.css"))

@@ -96,7 +96,7 @@
     <div class="recommender_row">
       % for elem in resources:
         <li> ${elem} </li>
-        <%include file="resourcebox.html" args="title=elem['title']" />
+        <%include file="resourcebox.html" args="title=elem['title'],votes=elem['votes']" />
       % endfor
     </div>
   </div>
