@@ -6,7 +6,6 @@ import pkg_resources
 from mako.template import Template
 from mako.lookup import TemplateLookup
 
-
 from xblock.core import XBlock
 from xblock.fields import Scope, Integer, String, BlockScope, List
 from xblock.fragment import Fragment
@@ -21,7 +20,7 @@ class HelpResource(dict):
             self.update(s)
         else:
             raise TypeError("Inappropriate type "+str(type(s))+" initializing HelpResource. Should be str or dict")
-        for e,t in (('title', str), ('url', str), ('upvotes', int), ('downvotes', int)):
+        for e,t in (('title', str), ('url', str), ('upvotes', int), ('downvotes', int), ('thumbnail', str)):
             if e not in self:
                 raise TypeError("Insufficient fields initializing HelpResource. "+e+" required.")
             if not isinstance(self["e"], t):
@@ -73,7 +72,7 @@ class RecommenderXBlock(XBlock):
         return data.decode("utf8")
 
     @XBlock.json_handler
-    def handle_upvote(slef, data, suffix=''):
+    def handle_upvote(self, data, suffix=''):
         print "Upvote clicked!"
         return {"Success": True}
 
@@ -91,7 +90,7 @@ class RecommenderXBlock(XBlock):
             self.template_lookup.put_string("recommender.html", self.resource_string("static/html/recommender.html"))
             self.template_lookup.put_string("resourcebox.html", self.resource_string("static/html/resourcebox.html"))
 
-        resources = [{'title' : r['title'], "votes" : r['up'] - r['down']} for r in self.recommendations]
+        resources = [{'title' : r['title'], "votes" : r['up'] - r['down'], 'url' : r['url'], 'thumbnail' : r['thumbnail']} for r in self.recommendations]
 
         frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources))
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
@@ -110,7 +109,12 @@ class RecommenderXBlock(XBlock):
             ("RecommenderXBlock",
              """<vertical_demo>
                   <recommender> 
-                     {"title": "Textbook page 501", "up" : 50, "down" : 75, "url" : "google.com"}
+                     {"title": "Covalent bonding and periodic trends", "up" : 15, "down" : 5, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Periodic_Trends_and_Bonding/", "thumbnail" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage1.png"}
+                     {"title": "Polar covalent bonds and electronegativity", "up" : 10, "down" : 7, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Covalent_Bonding/", "thumbnail" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage2.png"}
+                     {"title": "Longest wavelength able to to break a C-C bond ...", "up" : 10, "down" : 7, "url" : "https://answers.yahoo.com/question/index?qid=20081112142253AA1kQN1", "thumbnail" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage1.png"}
+                     {"title": "Calculate the maximum wavelength of light for ...", "up" : 10, "down" : 7, "url" : "https://answers.yahoo.com/question/index?qid=20100110115715AA6toHw", "thumbnail" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage2.png"}
+                     {"title": "Covalent bond - wave mechanical concep", "up" : 10, "down" : 7, "url" : "", "thumbnail" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage1.png"}
+                     {"title": "Covalent bond - Energetics of covalent bond", "up" : 10, "down" : 7, "url" : "", "thumbnail" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png"}
                   </recommender>
                 </vertical_demo>
              """),

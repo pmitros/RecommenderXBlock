@@ -3,11 +3,16 @@
   width : 100%;
 }
 
+.recommender_row {
+  width:700px;
+}
+
 .recommender_resource {
   border : 1;
   padding : 1;
-  margin : 10;
-  display:table-cell;
+  margin : 1;
+/*  display:table-cell;*/
+  float:left;
   width:300px;
   border-color:red;
   border-width:1px;
@@ -24,6 +29,11 @@
   flex-grow : 1
 }
 
+.thumbnailImg {
+  width: 600px;
+  height: 450px;
+}
+
 .recommender_recommendations {
   display:table;
   width:100%;
@@ -35,6 +45,10 @@
   width:225px;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+.recommender_url, .recommender_thumbnail {
+  display:none;
 }
 
 .recommender_vote_box {
@@ -65,41 +79,29 @@
 }
 </style>
 
+<div class="question"><img src="http://people.csail.mit.edu/swli/edx/recommendation/img/pset.png" width=700px></div>
+
+
 <div class="recommender_block">
   <div class="recommender_header"> <div class="recommender_title">Helpful resources</div><div class="recommender_add"> <span class="ui-icon ui-icon-plusthick"></span></div></div>
 
   <div class="recommender_recommendations">
-    <div class="recommender_row">
-      <div class="recommender_resource">
-	<div class="recommender_vote_box">
-	  <div class="recommender_vote_arrow_up" role="button" aria-label="upvote" tabindex="0"><span class="ui-icon ui-icon-triangle-1-n"></span></div>
-	  <!--div class="recommender_vote_score_dislikes">2927</div-->
-	  <div class="recommender_vote_score">2926</div>
-	  <!--div class="recommender_vote_score_likes">2927</div-->
-	  <div class="recommender_vote_arrow_down" role="button" aria-label="downvote" tabindex="0"><span class="ui-icon ui-icon-triangle-1-s"></span></div>
-	</div>
-	<div class="recommender_blurb">Textbook Page 501</div>
-	<div class="recommender_edit"><span class="ui-icon ui-icon-pencil"></span></div>
-      </div>
-      <div class="recommender_resource">
-	Textbook Page 502
-      </div>
-    </div>
-    <div class="recommender_row">
-      <div class="recommender_resource">
-	Textbook Page 504
-      </div>
-      <div class="recommender_resource">
-	Textbook Page 505
-      </div>
-    </div>
+<!--
+    <iframe width=800 height=600 src="http://wikipedia.com"></iframe>
+    <iframe width=800 height=600 src="http://www.moocworkshop.org/"></iframe>
+    <iframe width=800 height=600 src="https://answers.yahoo.com/question/index?qid=20081112142253AA1kQN1"></iframe>
+    <iframe style="width:800px height:600px" src="https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Covalent_Bonding/"></iframe>
+-->
+
     <div class="recommender_row">
       % for elem in resources:
-        <li> ${elem} </li>
-        <%include file="resourcebox.html" args="title=elem['title'],votes=elem['votes']" />
+<!--        <li> ${elem} </li>
+-->
+        <%include file="resourcebox.html" args="title=elem['title'],votes=elem['votes'],url=elem['url'],thumbnail=elem['thumbnail']" />
       % endfor
     </div>
   </div>
   <div class="recommender_description">
+    <div class="thumbnailImg"></div>
   </div>
 </div>
