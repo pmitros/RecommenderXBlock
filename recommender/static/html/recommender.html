@@ -1,9 +1,18 @@
 <style>
+.hidden { display: none;}
+
 .recommender_block {
   width : 100%;
 }
 
-.recommender_row {
+.recommender_content {
+  width: 700px;
+  float: left;
+}
+
+.recommender_row { overflow:hidden; }
+
+.question {
   width:700px;
 }
 
@@ -13,8 +22,8 @@
   margin : 1;
 /*  display:table-cell;*/
   float:left;
-  width:300px;
-  border-color:red;
+  width:340px;
+  border-color:gray;
   border-width:1px;
   border-style:solid;
   border-radius:5px;
@@ -26,17 +35,21 @@
 }
 
 .recommender_title {
-  flex-grow : 1
+  flex-grow : 1;
 }
 
-.thumbnailImg {
-  width: 600px;
-  height: 450px;
+.recommender_modify {
+  width: 500px;
+  float: left;
+}
+
+.descriptionImg {
+  height: 400px;
+  overflow-x: scroll;
 }
 
 .recommender_recommendations {
   display:table;
-  width:100%;
 }
 
 .recommender_blurb {
@@ -47,7 +60,7 @@
   text-overflow:ellipsis;
 }
 
-.recommender_url, .recommender_thumbnail {
+.recommender_entryId, .recommender_url, .recommender_descriptionSlot {
   display:none;
 }
 
@@ -77,31 +90,56 @@
   display:inline-block;
   vertical-align: top;
 }
+
+.misuse, .redTxt {
+  color: red;
+}
+
+.addSourceBlockTitle, .editSourceBlockTitle {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.resource_hovered { background: lightsteelblue; }
+.recommender_modify { margin-left: 2em; }
 </style>
 
-<div class="question"><img src="http://people.csail.mit.edu/swli/edx/recommendation/img/pset.png" width=700px></div>
-
-
 <div class="recommender_block">
-  <div class="recommender_header"> <div class="recommender_title">Helpful resources</div><div class="recommender_add"> <span class="ui-icon ui-icon-plusthick"></span></div></div>
+  <div class="recommender_header">
+    <div class="recommender_title">Helpful resources</div>
+  </div>
 
   <div class="recommender_recommendations">
-<!--
-    <iframe width=800 height=600 src="http://wikipedia.com"></iframe>
-    <iframe width=800 height=600 src="http://www.moocworkshop.org/"></iframe>
-    <iframe width=800 height=600 src="https://answers.yahoo.com/question/index?qid=20081112142253AA1kQN1"></iframe>
-    <iframe style="width:800px height:600px" src="https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Covalent_Bonding/"></iframe>
--->
-
+   <div class="recommender_content">
     <div class="recommender_row">
       % for elem in resources:
-<!--        <li> ${elem} </li>
--->
-        <%include file="resourcebox.html" args="title=elem['title'],votes=elem['votes'],url=elem['url'],thumbnail=elem['thumbnail']" />
+        <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isMisuse=elem['isMisuse']" />
       % endfor
     </div>
+    <div class="recommender_description">
+      <div class="descriptionImg"></div>
+    </div>
+   </div>
+    <div class='recommender_modify'>
+      <div class="editSourceBlock">
+      </div>
+      <div class="recommender_add">
+        <div class="addSourceBlockTitle">Add new resource</div>
+        Title: <input type="text" class="in_title"><br>
+        Url: <input type="text" class="in_url"><br>
+        <form id="addResourceForm" action="http://danielswli.s3.amazonaws.com/" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="acl" value="public-read">
+          <input type="hidden" name="Content-Type" value="image/jpeg">
+          <input type="hidden" name="AWSAccessKeyId" value="AKIAIRDHSV6YZJZ4RFGA">
+          <input type="hidden" name="key" value="">
+        </form>
+<!--      Resource description: <input type="text" class="in_description"><br>-->
+      </div>
+    </div>
+
   </div>
+<!--
   <div class="recommender_description">
-    <div class="thumbnailImg"></div>
-  </div>
+    <div class="descriptionImg"></div>
+  </div>-->
 </div>
