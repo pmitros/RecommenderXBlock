@@ -7,10 +7,14 @@
 
 .recommender_content {
   width: 700px;
+/*  width : 100%;*/
   float: left;
 }
 
-.recommender_row { overflow:hidden; }
+.recommender_row { 
+  overflow:scroll;
+  max-height:200px;
+}
 
 .question {
   width:700px;
@@ -22,11 +26,24 @@
   margin : 1;
 /*  display:table-cell;*/
   float:left;
-  width:340px;
+/*  width:340px;*/
+  width : 95%;
   border-color:gray;
   border-width:1px;
   border-style:solid;
   border-radius:5px;
+}
+
+.resource_list_less, .resource_list_more {
+  border : 1;
+  padding : 1;
+  margin : 1;
+  width : 95%;
+  border-color:gray;
+  border-width:1px;
+  border-style:solid;
+  border-radius:5px;
+
 }
 
 .recommender_header {
@@ -46,6 +63,33 @@
 .descriptionImg {
   height: 400px;
   overflow-x: scroll;
+  margin-top: 2em;
+}
+
+.recommender_vote_arrow_down {
+  color: red;
+  cursor: pointer;
+  float: left;
+  width: 20px;
+  margin-left:auto;
+  margin-right:auto;
+  text-align:center;
+}
+
+.recommender_vote_arrow_up {
+  color: green;
+  cursor: pointer;
+  float: left;
+  width: 20px; 
+  margin-left:auto;
+  margin-right:auto;
+  text-align:center;
+}
+
+.recommender_vote_score {
+  float: left;
+  width: 50px; 
+  text-align: center;
 }
 
 .recommender_recommendations {
@@ -55,7 +99,7 @@
 .recommender_blurb {
   display:inline-block;
   vertical-align: middle;
-  width:225px;
+  width:525px;
   overflow:hidden;
   text-overflow:ellipsis;
 }
@@ -67,23 +111,7 @@
 .recommender_vote_box {
   display:inline-block;
   vertical-align: middle;
-  width:45px;
-}
-
-.recommender_vote_arrow_up {
-  margin-left:auto;
-  margin-right:auto;
-  text-align:center;
-}
-
-.recommender_vote_arrow_down {
-  margin-left:auto;
-  margin-right:auto;
-  text-align:center;
-}
-
-.recommender_vote_score {
-  width:100%;
+  width:90px;
 }
 
 .recommender_edit{
@@ -91,42 +119,56 @@
   vertical-align: top;
 }
 
-.misuse, .redTxt {
+.redTxt {
   color: red;
 }
 
+.resource_edit_button { float:left; }
+
 .addSourceBlockTitle, .editSourceBlockTitle {
-  margin-top: 1em;
   margin-bottom: 1em;
 }
 
-.resource_hovered { background: lightsteelblue; }
+.editSourceBlock, .recommender_add {
+  padding: 1em;
+}
+
+.ui-icon.misuse {
+    background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
+}
+
+.resource_hovered { background: #1d9dd9; }
 .recommender_modify { margin-left: 2em; }
+
+form { margin: 0em; }
 </style>
 
 <div class="recommender_block">
   <div class="recommender_header">
     <div class="recommender_title">Helpful resources</div>
+    <a class="inline cboxElement resource_add_button" href="#recommender_add"><span class="ui-icon ui-icon-plusthick"></span></a>
   </div>
 
   <div class="recommender_recommendations">
    <div class="recommender_content">
     <div class="recommender_row">
+      <input type="button" class="resource_list_less" value="Show less">
       % for elem in resources:
         <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isMisuse=elem['isMisuse']" />
       % endfor
+      <input type="button" class="resource_list_more" value="Show more">
     </div>
     <div class="recommender_description">
       <div class="descriptionImg"></div>
     </div>
    </div>
     <div class='recommender_modify'>
-      <div class="editSourceBlock">
+      <div class="editSourceBlock" id="editSourceBlock">
       </div>
-      <div class="recommender_add">
-        <div class="addSourceBlockTitle">Add new resource</div>
-        Title: <input type="text" class="in_title"><br>
-        Url: <input type="text" class="in_url"><br>
+      <div class="recommender_add" id="recommender_add">
+        <div class="addSourceBlockTitle">Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource.</div>
+        Description: <input type="text" class="in_title"><br>
+        HyperLink: <input type="text" class="in_url"><br>
         <form id="addResourceForm" action="http://danielswli.s3.amazonaws.com/" method="post" enctype="multipart/form-data">
           <input type="hidden" name="acl" value="public-read">
           <input type="hidden" name="Content-Type" value="image/jpeg">

@@ -1,12 +1,12 @@
 <%page args="title,votes,url,description,id,isMisuse"/> 
-      <div class="recommender_resource">
+      <div class="recommender_resource hidden">
 	<div class="recommender_vote_box">
-	  <div class="recommender_vote_arrow_up" role="button" aria-label="upvote" tabindex="0"><span class="ui-icon ui-icon-triangle-1-n"></span></div>
+	  <div class="recommender_vote_arrow_up" role="button" aria-label="upvote" tabindex="0">↑</div>
 	  <!--div class="recommender_vote_score_dislikes">2927</div-->
 	  <div class="recommender_vote_score">${votes}</div>
 	  <!--div class="recommender_vote_score_likes">2927</div-->
-	  <div class="recommender_vote_arrow_down" role="button" aria-label="downvote" tabindex="0"><span class="ui-icon ui-icon-triangle-1-s"></span></div>
+	  <div class="recommender_vote_arrow_down" role="button" aria-label="downvote" tabindex="0">↓</div>
 	</div>
 	<div class="recommender_blurb"><div class="recommender_title">${title}</div><div class="recommender_url">${url}</div><div class="recommender_descriptionSlot">${description}</div><div class="recommender_entryId">${id}</div></div>
-	<div class="recommender_edit"><input type="button" value="Edit" class="editResource"><br><input type="button" value="Misuse" class="flagResource ${isMisuse}"></div>
+	<div class="recommender_edit"><a class="inline cboxElement resource_edit_button" href="#editSourceBlock"><span class="ui-icon ui-icon-pencil editResource"></span></a><span class="ui-icon ui-icon-flag flagResource ${isMisuse}"></span></div>
       </div>

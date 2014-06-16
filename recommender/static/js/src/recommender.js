@@ -1,27 +1,42 @@
 function RecommenderXBlock(runtime, element) {
+/*
+	$(document).tooltip({
+      close: function(ev, ui) { addTooltip(); },
+      open: function( ev, ui ) { 
+        var tooltipDiv = $('div[id^="ui-tooltip-"]');
+        if (tooltipDiv.length > 1) {
+          $('div[id^="ui-tooltip-"]:lt(' + (tooltipDiv.length-1).toString() + ')').remove(); 
+        } 
+      }
+    });*/
+	
     var handleUpvoteUrl = runtime.handlerUrl(element, 'handle_upvote');
     var handleDownvoteUrl = runtime.handlerUrl(element, 'handle_downvote');
     var addResourceUrl = runtime.handlerUrl(element, 'add_resource');
     var editResourceUrl = runtime.handlerUrl(element, 'edit_resource');
     var flagResourceUrl = runtime.handlerUrl(element, 'flag_resource');
 
+    var showedResourceLength = 3;
+    var showedResourceIncrement = 2;
+
     var baseUrl = 'http://s3-us-west-2.amazonaws.com/danielswli/'
 
-/*    POLICY_JSON = { "expiration": "2020-12-01T12:00:00.000Z",
-            "conditions": [
-            {"bucket": 'danielswli'},
-            ["starts-with", "$key", "uploads/"],
-            {"acl": "public-read"},
-            ["starts-with", "$Content-Type", ""],
-            ["content-length-range", 0, 524288000]
-            ]
-          };
+    $('.resource_add_button').click(function() {
+      $('.recommender_add').show();
+    });
+    $('.resource_edit_button').click(function() {
+      $('.editSourceBlock').show();
+    });
+    $(document).bind('cbox_closed', function(){
+      $('.recommender_add').hide();
+      $('.editSourceBlock').hide();
+    });
+    $(".inline").colorbox({
+      inline:true, 
+      width:"50%",
+      title:""
+    });
 
-    var secret = 'cqAakBE0RVpl/Z5aFX8IffAhXDoIvFVSbKxvddK2';
-    var secret = this.get('AWSSecretKeyId');
-    var policyBase64 = Base64.encode(JSON.stringify(POLICY_JSON));
-    var signature = b64_hmac_sha1(secret, policyBase64);
-    b64_hmac_sha1(secret, policyBase64);*/
 
     var policyBase64 = 'CnsiZXhwaXJhdGlvbiI6ICIyMDIwLTEyLTAxVDEyOjAwOjAwLjAwMFoiLAogICJjb25kaXRpb25zIjogWwogICAgeyJidWNrZXQiOiAiZGFuaWVsc3dsaSJ9LAogICAgWyJzdGFydHMtd2l0aCIsICIka2V5IiwgInVwbG9hZHMvIl0sCiAgICB7ImFjbCI6ICJwdWJsaWMtcmVhZCJ9LAogICAgWyJzdGFydHMtd2l0aCIsICIkQ29udGVudC1UeXBlIiwgIiJdLAogICAgWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDUyNDI4ODAwMF0KICBdCn0=';
     var signature = 'uRVljXwwHfM5K351eTL2MbYLwcI=';
@@ -65,26 +80,41 @@ function RecommenderXBlock(runtime, element) {
             data: JSON.stringify(data),
             success: function(result) {
               if (result['Success'] == true) {
-                $('.recommender_row').append(
-                  '<div class="recommender_resource">' +
+                var pos = -1;
+                $('.recommender_vote_score').each(function(idx, ele){ 
+                  if (parseInt($(ele).text()) < 0) {
+                    pos = idx;
+                    return false;
+                  }
+                });
+
+                var content = '<div class="recommender_resource">' +
                   '<div class="recommender_vote_box">' +
                   '<div class="recommender_vote_arrow_up" role="button" aria-label="upvote" tabindex="0">' +
-                  '<span class="ui-icon ui-icon-triangle-1-n"></span></div>' +
+                  '↑</div>' +
                   '<div class="recommender_vote_score">0</div>' +
                   '<div class="recommender_vote_arrow_down" role="button" aria-label="downvote" tabindex="0">' +
-                  '<span class="ui-icon ui-icon-triangle-1-s"></span></div>' +
+                  '↓</div>' +
                   '</div>' + 
                   '<div class="recommender_blurb"><div class="recommender_title">' + 
                   data['resource']['title'] + '</div>' +
                   '<div class="recommender_url">' + data['resource']['url'] + 
                   '</div><div class="recommender_descriptionSlot">' + data['resource']['description'] +
                   '</div><div class="recommender_entryId">' + result['id'] +
-                  '</div></div><div class="recommender_edit"><input type="button" value="Edit" class="editResource">' +
-                  '<br><input type="button" value="Misuse" class="flagResource notMisuse"></div></div>');
+                  '</div></div><div class="recommender_edit">' +
+                  '<a class="inline cboxElement resource_edit_button" href="#editSourceBlock">' + 
+                  '<span class="ui-icon ui-icon-pencil editResource"></span></a>' +
+                  '<span class="ui-icon ui-icon-flag flagResource notMisuse" title="Flag irrelevant resource">' +
+                  '</span></div></div>';
+
+                if (pos == -1) { $('.resource_list_more').before(content); }
+                else { $('.recommender_resource:eq(' + pos.toString() + ')').before(content); }
               }
               addResourceReset();
               unbindEvent();
               bindEvent();
+              //addTooltip();
+              $.colorbox.close();
             }
         });
     });
@@ -147,15 +177,14 @@ function RecommenderXBlock(runtime, element) {
             $('.recommender_resource').removeClass('resource_hovered');
             $(this).addClass('resource_hovered');
             $('.descriptionImg').empty();
-            $('.descriptionImg').append('<img src="' + $(this).find('.recommender_descriptionSlot').text() + '" height=100%>');
+            $('.descriptionImg').append('<img class="previewingImg" src="' 
+              + $(this).find('.recommender_descriptionSlot').text() + '" height=100%>');
           }, function() {
           // $('.descriptionImg').empty();
           }
         );
 
       $('.editResource').click(function() {
-        $('.editResource').removeClass('redTxt');
-        $(this).addClass('redTxt');
         $('.editSourceBlock').empty();
         var key = "uploads/" + (new Date).getTime();
         var path = 'http://danielswli.s3.amazonaws.com/';
@@ -171,12 +200,13 @@ function RecommenderXBlock(runtime, element) {
           + '<input type="button" value="Edit resource" class="edit_submit" disabled></form>';
 
         $('.editSourceBlock').append(
-          '<div class="editSourceBlockTitle">Edit selected resource</div>' +
-          'Title: ' + '<input type="text" class="edit_title"><br>' +
-          'Url: <input type="text" class="edit_url"><br>' + uploadForm);
+          '<div class="editSourceBlockTitle">Edit the description, hypelink, and previewing screenshot for the selected resource</div>' +
+          'Description: ' + '<input type="text" class="edit_title"><br>' +
+          'HyperLink: <input type="text" class="edit_url"><br>' + uploadForm);
           //'Edited resource description: ' +
           //'<input type="text" class="edit_description"><br>' +
-  
+
+        addTooltip();
         var divEdit = this;
 
         $("#editResourceForm").submit( function(e) {
@@ -189,7 +219,7 @@ function RecommenderXBlock(runtime, element) {
 
         $('.edit_submit').click(function() {
           var data = {};
-          data['resource'] = parseInt($(divEdit).parent().parent().find('.recommender_entryId').text());
+          data['resource'] = parseInt($(divEdit).parent().parent().parent().find('.recommender_entryId').text());
 //          data['resource'] = findEntry($(divEdit).parent().parent().find('.recommender_entryId').text());
           data['url'] = $('.edit_url').val();
           data['title'] = $('.edit_title').val();
@@ -202,11 +232,11 @@ function RecommenderXBlock(runtime, element) {
               data: JSON.stringify(data),
               success: function(result) {
                 if (result['Success'] == true) {
-                  $(divEdit).parent().parent().find('.recommender_title').text(data['title']);
-                  $(divEdit).parent().parent().find('.recommender_url').text(data['url']);
-                  $(divEdit).parent().parent().find('.recommender_descriptionSlot').text(data['description']);
+                  $(divEdit).parent().parent().parent().find('.recommender_title').text(data['title']);
+                  $(divEdit).parent().parent().parent().find('.recommender_url').text(data['url']);
+                  $(divEdit).parent().parent().parent().find('.recommender_descriptionSlot').text(data['description']);
                   $('.editSourceBlock').empty();
-                  $('.editResource').removeClass('redTxt');
+                  $.colorbox.close();
                 }
               }
           });
@@ -231,8 +261,25 @@ function RecommenderXBlock(runtime, element) {
             data: JSON.stringify(data)
         });
       });
+
+      addTooltip();
     }
     bindEvent();
+
+    $('.resource_list_more').click(function() { showResource(showedResourceIncrement); });
+    $('.resource_list_less').click(function() { 
+      $('.recommender_resource').addClass('hidden');
+      showResource(-showedResourceIncrement); 
+    });
+
+    function showResource(increment) {
+      showedResourceLength += increment;
+      if (showedResourceLength < 1) { showedResourceLength = 1; }
+      if (showedResourceLength > $('.recommender_resource').length)
+        showedResourceLength = $('.recommender_resource').length; 
+      $('.recommender_resource:lt(' + showedResourceLength.toString() + ')').removeClass('hidden');
+    }
+    showResource(0);
 
     function findEntry(id) {
       var entryId = -1;
@@ -247,6 +294,23 @@ function RecommenderXBlock(runtime, element) {
       return entryId;
     }
 
+    function addTooltip() {
+      $('.notMisuse').attr('title', 'Flag this resource as irrelevant');
+      $('.misuse').attr('title', 'Flag this resource as helpful');
+      $('.resource_add_button').attr('title', 'Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource');
+      $('.resource_edit_button').attr('title', 'Edit the description, hypelink, and previewing screenshot of this resource');
+      $('.recommender_vote_arrow_up').attr('title', 'Upvote for a helpful resource');
+      $('.recommender_vote_arrow_down').attr('title', 'Downvote for an irrelevant resource');
+      $('.recommender_vote_score').attr('title', 'Votes');
+      $('.recommender_blurb').attr('title', 'The description of a helpful resource');
+      $('.previewingImg').attr('title', 'Previewing screenshot');
+      $('.in_title').attr('title', 'Type in the description of the resource');
+      $('.in_url').attr('title', 'Type in the hyperlink to the resource');
+      $('.edit_title').attr('title', 'Type in the description of the resource');
+      $('.edit_url').attr('title', 'Type in the hyperlink to the resource');
+    }
+
+//    addTooltip();
 /*    $('.ui-icon-zoomin').click(function(){
         //alert($(this).parent().parent().find('.recommender_url').text());
         $(this).colorbox({iframe:true, width:800, height:600, href:$(this).parent().parent().find('.recommender_url').text()});
