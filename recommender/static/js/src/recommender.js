@@ -16,39 +16,117 @@ function RecommenderXBlock(runtime, element) {
     var editResourceUrl = runtime.handlerUrl(element, 'edit_resource');
     var flagResourceUrl = runtime.handlerUrl(element, 'flag_resource');
 
-    var showedResourceLength = 3;
-    var showedResourceIncrement = 2;
+    var baseUrl = 'http://s3-us-west-2.amazonaws.com/danielswli/';
+    var currentPage = 1;
+    var entriesPerPage = 5;
+    var pageSpan = 2;
 
-    var baseUrl = 'http://s3-us-west-2.amazonaws.com/danielswli/'
+    $(".hide-show").click(function () {
+	  if ($(this).find('.hide-show-icon').text() == '▲') {
+		$(this).find('.hide-show-icon').text('▼');
+		//$(this).parent().find('.more').show();
+		$(this).parent().find('.recommender_row_inner').slideUp('fast');
+		$('.resource_add_button').css('visibility', 'hidden');
+		$(this).css('cursor', 's-resize');
+	  }
+	  else {
+		$(this).find('.hide-show-icon').text('▲');
+	    //$(this).parent().find('.less').show();
+	    $(this).parent().find('.recommender_row_inner').slideDown('fast');
+	    $('.resource_add_button').css('visibility', 'visible');
+	    $(this).css('cursor', 'n-resize');
+	  }
+	  //$(this).hide();
+    });
+
+    function pagination() {
+	  $('.recommender_resource').each(function(index, element) {
+	    if (index < (currentPage-1)*entriesPerPage || index >= currentPage*entriesPerPage) { $(element).hide(); }
+	    else { $(element).show(); }
+      });
+
+      $('.paginationRow').each(function(index, element) {
+	    if (index + 1 == currentPage) { $(element).show(); }
+	    else { $(element).hide(); }
+      });
+	}
+	
+    function paginationRow() {
+      var totalPage = parseInt($('.recommender_resource').length/entriesPerPage + 0.999);
+	  if (totalPage == 1) { return; }
+	  $('.pagination').empty();
+	  $('.paginationCell').unbind();
+
+      for (var pageIdx = 1; pageIdx <= totalPage; pageIdx++) {
+		var content = '<div class="paginationRow">';
+		if (pageIdx == 1) { content += '<div class="paginationCell" style="visibility: hidden;">◄</div>'; }
+		else { content += '<div class="paginationCell">◄</div>'; }
+
+		if (pageIdx - pageSpan > 1) { content += '<div class="paginationCell" style="cursor: default;">...</div>'; }
+		for (var i = pageIdx - pageSpan; i <= pageIdx + pageSpan; i++) {
+			if (i == pageIdx) { content += '<div class="paginationCell" style="background-color: lightgrey;">' + i.toString() + '</div>'; }
+			else if (i > 0 && i <= totalPage) { content += '<div class="paginationCell">' + i.toString() + '</div>'; }
+		}
+		if (pageIdx + pageSpan < totalPage) { content += '<div class="paginationCell" style="cursor: default;">...</div>'; }
+
+		if (pageIdx == totalPage) { content += '<div class="paginationCell" style="visibility: hidden;">►</div>'; }
+		else { content += '<div class="paginationCell">►</div>'; }
+
+	    content += '</div>';	
+	    $('.pagination').append(content);
+      }
+
+      $('.paginationCell').click(function () {
+	    var buttonText = $(this).text();
+	
+	    if (buttonText == '...') { return; }
+        else if (buttonText == '◄') { currentPage -= 1; }
+        else if (buttonText == '►') { currentPage += 1; }
+        else { currentPage = parseInt(buttonText) }
+        pagination();
+      });
+    }
+
+    function initial() {
+	  $(".hide-show").click();
+	  $('.editSourceBlock').hide();
+	  $('.recommender_add').hide();
+	  $('.recommender_modify').hide();
+	  paginationRow();
+	  pagination();
+    }
+    initial();
 
     $('.resource_add_button').click(function() {
+	  addResourceReset();
       $('.recommender_add').show();
+      $('.recommender_content').hide();
+	  $('.recommender_modify').show();
+	  $('.recommender_modify_title').text('Recommend new resource');
     });
-    $('.resource_edit_button').click(function() {
-      $('.editSourceBlock').show();
-    });
-    $(document).bind('cbox_closed', function(){
-      $('.recommender_add').hide();
-      $('.editSourceBlock').hide();
-    });
-    $(".inline").colorbox({
-      inline:true, 
-      width:"50%",
-      title:""
-    });
+    
+    function backToView() {
+	  $('.recommender_add').hide();
+	  $('.editSourceBlock').hide();
+	  $('.recommender_modify').hide();
+	  $('.recommender_content').show();
+    }
 
+    $('.backToViewButton').click(function(){
+	  backToView();
+    });
 
     var policyBase64 = 'CnsiZXhwaXJhdGlvbiI6ICIyMDIwLTEyLTAxVDEyOjAwOjAwLjAwMFoiLAogICJjb25kaXRpb25zIjogWwogICAgeyJidWNrZXQiOiAiZGFuaWVsc3dsaSJ9LAogICAgWyJzdGFydHMtd2l0aCIsICIka2V5IiwgInVwbG9hZHMvIl0sCiAgICB7ImFjbCI6ICJwdWJsaWMtcmVhZCJ9LAogICAgWyJzdGFydHMtd2l0aCIsICIkQ29udGVudC1UeXBlIiwgIiJdLAogICAgWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDUyNDI4ODAwMF0KICBdCn0=';
     var signature = 'uRVljXwwHfM5K351eTL2MbYLwcI=';
     $('#addResourceForm').append('<input type="hidden" name="Policy" value="' + policyBase64 + '">'
           + '<input type="hidden" name="Signature" value="' + signature + '">'
           + 'Previewing screenshot: <input type="file" name="file"><br>'
-          + '<input type="submit" class="submitAddResourceForm" name="submit" value="Upload File">'
-          + '<input type="button" value="Add resource" class="add_submit" disabled>');
+          + '<input type="submit" class="submitAddResourceForm" name="submit" value="Upload File" style="margin-top: 0.5em">'
+          + '<input type="button" value="Add resource" class="add_submit" style="margin-top: 0.5em" disabled >');
 
     function addResourceReset() {
       $('.in_title').val('');
-      $('.in_url').val('')
+      $('.in_url').val('');
       $('#addResourceForm').find("input[name='file']").val('') 
 
       var key = "uploads/" + (new Date).getTime();
@@ -58,10 +136,21 @@ function RecommenderXBlock(runtime, element) {
     }
     addResourceReset();
 
+    function enableAddSubmit(divPtr) {
+	  if ($('.in_title').val() == '' || $('.in_url').val() == '') {
+		$('.add_submit').attr('disabled', true);
+	    return;
+	  }
+	  $('.add_submit').attr('disabled', false);
+    }
+
+    $('.in_title').change(function() { enableAddSubmit(); });
+    $('.in_url').change(function() { enableAddSubmit(); });
+
     $("#addResourceForm").submit( function(e) {
       if ($('#addResourceForm').find("input[name='file']").val() == '') { return false; }
 
-      $('.add_submit').attr('disabled', false);
+      enableAddSubmit();
       $('.submitAddResourceForm').attr('disabled', true);
       return true;
     });    
@@ -90,31 +179,39 @@ function RecommenderXBlock(runtime, element) {
 
                 var content = '<div class="recommender_resource">' +
                   '<div class="recommender_vote_box">' +
-                  '<div class="recommender_vote_arrow_up" role="button" aria-label="upvote" tabindex="0">' +
-                  '↑</div>' +
-                  '<div class="recommender_vote_score">0</div>' +
-                  '<div class="recommender_vote_arrow_down" role="button" aria-label="downvote" tabindex="0">' +
-                  '↓</div>' +
+                  '<div class="recommender_vote_arrow_up nonevoting" role="button" aria-label="upvote" tabindex="0">' +
+                  '<b>↑</b></div>' +
+                  '<div class="recommender_vote_score nonevoting"><b>0</b></div>' +
+                  '<div class="recommender_vote_arrow_down nonevoting" role="button" aria-label="downvote" tabindex="0">' +
+                  '<b>↓</b></div>' +
                   '</div>' + 
                   '<div class="recommender_blurb"><div class="recommender_title">' + 
-                  data['resource']['title'] + '</div>' +
+                  '<a href="' + data['resource']['url'] + '" target="_blank">' + data['resource']['title'] + '</a>' + '</div>' +
                   '<div class="recommender_url">' + data['resource']['url'] + 
                   '</div><div class="recommender_descriptionSlot">' + data['resource']['description'] +
                   '</div><div class="recommender_entryId">' + result['id'] +
                   '</div></div><div class="recommender_edit">' +
-                  '<a class="inline cboxElement resource_edit_button" href="#editSourceBlock">' + 
-                  '<span class="ui-icon ui-icon-pencil editResource"></span></a>' +
-                  '<span class="ui-icon ui-icon-flag flagResource notMisuse" title="Flag irrelevant resource">' +
+                  '<span class="ui-icon ui-icon-pencil resource_edit_button"></span>' +
+                  '<span class="ui-icon ui-icon-flag flagResource notProblematic" title="Flag irrelevant resource">' +
                   '</span></div></div>';
 
-                if (pos == -1) { $('.resource_list_more').before(content); }
-                else { $('.recommender_resource:eq(' + pos.toString() + ')').before(content); }
+                if (pos == -1) {
+	              //$('.pagination').before(content);
+	              $('.recommender_resource:last').after(content);
+	              currentPage = parseInt($('.recommender_resource').length/entriesPerPage + 0.999);
+	            }
+                else {
+	              $('.recommender_resource:eq(' + pos.toString() + ')').before(content);
+                  currentPage = parseInt( (pos + 1)/entriesPerPage + 0.999 ); 
+                }
               }
               addResourceReset();
               unbindEvent();
               bindEvent();
+              paginationRow();
+			  pagination();
               //addTooltip();
-              $.colorbox.close();
+              backToView();
             }
         });
     });
@@ -122,9 +219,9 @@ function RecommenderXBlock(runtime, element) {
     function unbindEvent() {
       $('.recommender_vote_arrow_up').unbind();
       $('.recommender_vote_arrow_down').unbind();
-      $('.recommender_blurb').unbind();
+      //$('.recommender_blurb').unbind();
       $('.recommender_resource').unbind();
-      $('.editResource').unbind();
+      $('.resource_edit_button').unbind();
       $('.flagResource').unbind();
     }
 
@@ -142,7 +239,18 @@ function RecommenderXBlock(runtime, element) {
                 success: function(result) {
                   if (result['Success'] == true) {
                     var scoreDiv = $(divArrowUp).parent().find('.recommender_vote_score');
-                    scoreDiv.text((parseInt(scoreDiv.text()) + 1).toString());
+                    if ($(divArrowUp).hasClass('downvoting')) {
+                      $(divArrowUp).parent().find('.downvoting').removeClass('downvoting').addClass('upvoting');
+                      scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) + 2).toString() + '</b>');
+                    }
+                    else if ($(divArrowUp).hasClass('nonevoting')) {
+			     	  $(divArrowUp).parent().find('.nonevoting').removeClass('nonevoting').addClass('upvoting');
+			          scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) + 1).toString() + '</b>');
+			        }
+			        else if ($(divArrowUp).hasClass('upvoting')) {
+			     	  $(divArrowUp).parent().find('.upvoting').removeClass('upvoting').addClass('nonevoting');
+			          scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) - 1).toString() + '</b>');
+			        }
                   }
                 }
             });
@@ -154,22 +262,28 @@ function RecommenderXBlock(runtime, element) {
 //            data['resource'] = findEntry($(this).parent().parent().find('.recommender_entryId').text());
             if (data['resource'] == -1) { return; }
             var divArrowDown = this;
-	    $.ajax({
+	        $.ajax({
                 type: "POST",
                 url: handleDownvoteUrl,
                 data: JSON.stringify(data),
                 success: function(result) {
                   if (result['Success'] == true) {
                     var scoreDiv = $(divArrowDown).parent().find('.recommender_vote_score');
-                    scoreDiv.text((parseInt(scoreDiv.text()) - 1).toString());
-                  }
+                    if ($(divArrowDown).hasClass('downvoting')) {
+                      $(divArrowDown).parent().find('.downvoting').removeClass('downvoting').addClass('nonevoting');
+                      scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) + 1).toString() + '</b>');
+                    }
+                    else if ($(divArrowDown).hasClass('nonevoting')) {
+			     	  $(divArrowDown).parent().find('.nonevoting').removeClass('nonevoting').addClass('downvoting');
+			          scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) - 1).toString() + '</b>');
+			        }
+			        else if ($(divArrowDown).hasClass('upvoting')) {
+			     	  $(divArrowDown).parent().find('.upvoting').removeClass('upvoting').addClass('downvoting');
+			          scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) - 2).toString() + '</b>');
+			        }
+			      }
                 }
-	    });
-        });
-
-        $('.recommender_blurb').click(function(){
-          var win = window.open($(this).find('.recommender_url').text(), '_blank');
-          win.focus();
+	        });
         });
 
         $('.recommender_resource').hover(
@@ -184,7 +298,12 @@ function RecommenderXBlock(runtime, element) {
           }
         );
 
-      $('.editResource').click(function() {
+      $('.resource_edit_button').click(function() {
+	    $('.editSourceBlock').show();
+	    $('.recommender_content').hide();
+	    $('.recommender_modify').show();
+	    $('.recommender_modify_title').text('Edit existing resource');
+	
         $('.editSourceBlock').empty();
         var key = "uploads/" + (new Date).getTime();
         var path = 'http://danielswli.s3.amazonaws.com/';
@@ -196,30 +315,44 @@ function RecommenderXBlock(runtime, element) {
           + '<input type="hidden" name="Policy" value="' + policyBase64 + '">'
           + '<input type="hidden" name="Signature" value="' + signature + '">'
           + 'Previewing screenshot: <input type="file" name="file"><br>'
-          + '<input type="submit" class="submitEditResourceForm" name="submit" value="Upload File">'
-          + '<input type="button" value="Edit resource" class="edit_submit" disabled></form>';
+          + '<input type="submit" class="submitEditResourceForm" name="submit" value="Upload File" style="margin-top: 0.5em">'
+          + '<input type="button" value="Edit resource" class="edit_submit" style="margin-top: 0.5em" disabled></form>';
 
-        $('.editSourceBlock').append(
+        $('.editSourceBlock').append( 
           '<div class="editSourceBlockTitle">Edit the description, hypelink, and previewing screenshot for the selected resource</div>' +
-          'Description: ' + '<input type="text" class="edit_title"><br>' +
-          'HyperLink: <input type="text" class="edit_url"><br>' + uploadForm);
+          'Description: ' + '<input type="text" class="edit_title" style="height: 25px; position: relative; left: 10px;"><br>' +
+          'HyperLink: <input type="text" class="edit_url" style="height: 25px; position: relative; left: 22px;"><br>' + uploadForm);
           //'Edited resource description: ' +
           //'<input type="text" class="edit_description"><br>' +
+
+        $('.edit_title').val($(this).parent().parent().find('.recommender_title').find('a').text());
+        $('.edit_url').val($(this).parent().parent().find('.recommender_title').find('a').attr('href'));
 
         addTooltip();
         var divEdit = this;
 
+        function enableEditSubmit() {
+		    if ($('.edit_title').val() == '' || $('.edit_url').val() == '') {
+			$('.edit_submit').attr('disabled', true);
+		    return;
+		  }
+		  $('.edit_submit').attr('disabled', false);
+	    }
+
+	    $('.edit_title').change(function() { enableEditSubmit(); });
+	    $('.edit_url').change(function() { enableEditSubmit(); });
+
         $("#editResourceForm").submit( function(e) {
           if ($('#editResourceForm').find("input[name='file']").val() == '') { return false; }
 
-          $('.edit_submit').attr('disabled', false);
+          enableEditSubmit();
           $('.submitEditResourceForm').attr('disabled', 'disabled'); 
           return true;
         });
 
         $('.edit_submit').click(function() {
           var data = {};
-          data['resource'] = parseInt($(divEdit).parent().parent().parent().find('.recommender_entryId').text());
+          data['resource'] = parseInt($(divEdit).parent().parent().find('.recommender_entryId').text());
 //          data['resource'] = findEntry($(divEdit).parent().parent().find('.recommender_entryId').text());
           data['url'] = $('.edit_url').val();
           data['title'] = $('.edit_title').val();
@@ -232,11 +365,11 @@ function RecommenderXBlock(runtime, element) {
               data: JSON.stringify(data),
               success: function(result) {
                 if (result['Success'] == true) {
-                  $(divEdit).parent().parent().parent().find('.recommender_title').text(data['title']);
-                  $(divEdit).parent().parent().parent().find('.recommender_url').text(data['url']);
-                  $(divEdit).parent().parent().parent().find('.recommender_descriptionSlot').text(data['description']);
+	              $(divEdit).parent().parent().find('.recommender_title').find('a').text(data['title']);
+	              $(divEdit).parent().parent().find('.recommender_title').find('a').attr('href', data['url']);
+	              $(divEdit).parent().parent().find('.recommender_descriptionSlot').text(data['description']);
                   $('.editSourceBlock').empty();
-                  $.colorbox.close();
+                  backToView();
                 }
               }
           });
@@ -245,13 +378,13 @@ function RecommenderXBlock(runtime, element) {
 
       $('.flagResource').click(function() {
         var data = {};
-        if ($(this).hasClass('notMisuse')) {
-          data['isMisuse'] = 'misuse';
-          $(this).removeClass('notMisuse').addClass('misuse');
+        if ($(this).hasClass('notProblematic')) {
+          data['isProblematic'] = 'problematic';
+          $(this).removeClass('notProblematic').addClass('problematic');
         }
         else {
-          data['isMisuse'] = 'notMisuse';
-          $(this).removeClass('misuse').addClass('notMisuse');
+          data['isProblematic'] = 'notProblematic';
+          $(this).removeClass('problematic').addClass('notProblematic');
         }
 //        data['resource'] = findEntry($(this).parent().parent().find('.recommender_entryId').text());
         data['resource'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
@@ -265,21 +398,6 @@ function RecommenderXBlock(runtime, element) {
       addTooltip();
     }
     bindEvent();
-
-    $('.resource_list_more').click(function() { showResource(showedResourceIncrement); });
-    $('.resource_list_less').click(function() { 
-      $('.recommender_resource').addClass('hidden');
-      showResource(-showedResourceIncrement); 
-    });
-
-    function showResource(increment) {
-      showedResourceLength += increment;
-      if (showedResourceLength < 1) { showedResourceLength = 1; }
-      if (showedResourceLength > $('.recommender_resource').length)
-        showedResourceLength = $('.recommender_resource').length; 
-      $('.recommender_resource:lt(' + showedResourceLength.toString() + ')').removeClass('hidden');
-    }
-    showResource(0);
 
     function findEntry(id) {
       var entryId = -1;
@@ -295,8 +413,8 @@ function RecommenderXBlock(runtime, element) {
     }
 
     function addTooltip() {
-      $('.notMisuse').attr('title', 'Flag this resource as irrelevant');
-      $('.misuse').attr('title', 'Flag this resource as helpful');
+      $('.notProblematic').attr('title', 'Flag this resource as problematic and give the reason');
+      $('.problematic').attr('title', 'Edit the reason of this problematic resource');
       $('.resource_add_button').attr('title', 'Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource');
       $('.resource_edit_button').attr('title', 'Edit the description, hypelink, and previewing screenshot of this resource');
       $('.recommender_vote_arrow_up').attr('title', 'Upvote for a helpful resource');
@@ -308,11 +426,7 @@ function RecommenderXBlock(runtime, element) {
       $('.in_url').attr('title', 'Type in the hyperlink to the resource');
       $('.edit_title').attr('title', 'Type in the description of the resource');
       $('.edit_url').attr('title', 'Type in the hyperlink to the resource');
+      $('.backToViewButton').attr('title', 'Back to list of related resources');
     }
 
-//    addTooltip();
-/*    $('.ui-icon-zoomin').click(function(){
-        //alert($(this).parent().parent().find('.recommender_url').text());
-        $(this).colorbox({iframe:true, width:800, height:600, href:$(this).parent().parent().find('.recommender_url').text()});
-    });*/
 }
