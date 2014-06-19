@@ -166,10 +166,11 @@ class RecommenderXBlock(XBlock):
             print "Edit failed!"
             return {"Success": False}
         # check url for redundancy
-        recoms = self.recommendations
-        for recom in recoms:
+        for recom in self.recommendations:
+            if self.recommendations[idx]['url'] == data['url']:
+                continue
             if recom['url'] == data['url']:
-                print "edit to esisting resource"
+                print "provided url is existing"
                 return {"Success": False}
 
         for key in data:
@@ -216,7 +217,6 @@ class RecommenderXBlock(XBlock):
 
         frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources, upvotes = self.upvotes, downvotes = self.downvotes))
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
-        frag.add_css_url("//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css")
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/recommender.css"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
