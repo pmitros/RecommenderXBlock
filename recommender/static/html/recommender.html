@@ -207,6 +207,14 @@
 	opacity:1;
 }*/
 
+.downArrowIcon:before { content: '▼'; }
+.upArrowIcon:before { content: '▲'; }
+.plusIcon:before { content: '+'; }
+.rightArrowIcon:before { content: '►'; }
+.leftArrowIcon:before { content: '◄'; }
+.moreIcon:before { content: '...'; }
+.lightgreyBg { background-color: lightgrey; }
+
 a:link { color: black; }
 form { margin: 0em; }
 </style>
@@ -214,8 +222,8 @@ form { margin: 0em; }
 <div class="recommender_block">
   <div class="recommender_recommendations">
 	<div class="recommender_content">
-      <div class="recommender_row_top hide-show">
-	    Related resources<div class='recommender_panel'><span class="resource_add_button">+</span> <span class='hide-show-icon'>▲</span> </div>
+      <div class="recommender_row_top hide-show resource_list_expanded">
+	    Related resources<div class='recommender_panel'><span class="resource_add_button plusIcon"></span> <span class='hide-show-icon upArrowIcon'></span> </div>
 	  </div>
 	  <div class='recommender_row_inner'>
 	    <div class="recommender_row">

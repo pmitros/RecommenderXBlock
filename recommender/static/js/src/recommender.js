@@ -12,18 +12,19 @@ function RecommenderXBlock(runtime, element) {
 
 	/* resource list collapse or expansion */
     $(".hide-show").click(function () {
-	  if ($(this).find('.hide-show-icon').text() == '▲') {
-		$(this).find('.hide-show-icon').text('▼');
+	  if ($(this).hasClass('resource_list_expanded')) {
+		$(this).find('.hide-show-icon').removeClass('upArrowIcon').addClass('downArrowIcon');
 		$(".recommender_row_inner", element).slideUp('fast');
 		$('.resource_add_button').css('visibility', 'hidden');
 		$(this).css('cursor', 's-resize');
 	  }
 	  else {
-		$(this).find('.hide-show-icon').text('▲');
+		$(this).find('.hide-show-icon').removeClass('downArrowIcon').addClass('upArrowIcon');
 	    $(".recommender_row_inner", element).slideDown('fast');
 	    $('.resource_add_button').css('visibility', 'visible');
 	    $(this).css('cursor', 'n-resize');
 	  }
+	  $(this).toggleClass('resource_list_expanded');
 	  addTooltip();
     });
 
@@ -53,19 +54,19 @@ function RecommenderXBlock(runtime, element) {
       for (var pageIdx = 1; pageIdx <= totalPage; pageIdx++) {
 		var content = '<div class="paginationRow">';
 		/* no previous page if current page = 1 */
-		if (pageIdx == 1) { content += '<div class="paginationCell" style="visibility: hidden;">◄</div>'; }
-		else { content += '<div class="paginationCell">◄</div>'; }
+		if (pageIdx == 1) { content += '<div class="paginationCell leftArrowIcon" style="visibility: hidden;"></div>'; }
+		else { content += '<div class="paginationCell leftArrowIcon"></div>'; }
 
-		if (pageIdx - pageSpan > 1) { content += '<div class="paginationCell" style="cursor: default;">...</div>'; }
+		if (pageIdx - pageSpan > 1) { content += '<div class="paginationCell moreIcon" style="cursor: default;"></div>'; }
 		for (var i = pageIdx - pageSpan; i <= pageIdx + pageSpan; i++) {
-			if (i == pageIdx) { content += '<div class="paginationCell" style="background-color: lightgrey;">' + i.toString() + '</div>'; }
+			if (i == pageIdx) { content += '<div class="paginationCell lightgreyBg">' + i.toString() + '</div>'; }
 			else if (i > 0 && i <= totalPage) { content += '<div class="paginationCell">' + i.toString() + '</div>'; }
 		}
-		if (pageIdx + pageSpan < totalPage) { content += '<div class="paginationCell" style="cursor: default;">...</div>'; }
+		if (pageIdx + pageSpan < totalPage) { content += '<div class="paginationCell moreIcon" style="cursor: default;"></div>'; }
 
         /* no next page if current page is last page */
-		if (pageIdx == totalPage) { content += '<div class="paginationCell" style="visibility: hidden;">►</div>'; }
-		else { content += '<div class="paginationCell">►</div>'; }
+		if (pageIdx == totalPage) { content += '<div class="paginationCell rightArrowIcon" style="visibility: hidden;"></div>'; }
+		else { content += '<div class="paginationCell rightArrowIcon"></div>'; }
 
 	    content += '</div>';	
 	    $('.pagination').append(content);
@@ -73,12 +74,10 @@ function RecommenderXBlock(runtime, element) {
 
       /* page change */
       $('.paginationCell').click(function () {
-	    var buttonText = $(this).text();
-	
-	    if (buttonText == '...') { return; }
-        else if (buttonText == '◄') { currentPage -= 1; }
-        else if (buttonText == '►') { currentPage += 1; }
-        else { currentPage = parseInt(buttonText) }
+	    if ($(this).hasClass('moreIcon')) { return; }
+	    else if ($(this).hasClass('leftArrowIcon')) { currentPage -= 1; }
+	    else if ($(this).hasClass('rightArrowIcon')) { currentPage += 1; }
+        else { currentPage = parseInt($(this).text()); }
         pagination();
       });
     }
@@ -411,20 +410,6 @@ function RecommenderXBlock(runtime, element) {
         });
         addTooltip();
       }
-    
-/*
-    function findEntry(id) {
-      var entryId = -1;
-      $('.recommender_resource').find('.recommender_entryId').each(
-        function(idx, ele){
-          if ($(ele).text() == id) {
-            entryId = idx;
-            return;
-          }
-        }
-      );
-      return entryId;
-    }*/
 
     function addTooltip() {
       $('.notProblematic').attr('title', 'Flag this resource as problematic and give the reason');
@@ -441,7 +426,7 @@ function RecommenderXBlock(runtime, element) {
       $('.edit_title').attr('title', 'Type in the description of the resource');
       $('.edit_url').attr('title', 'Type in the hyperlink to the resource');
       $('.backToViewButton').attr('title', 'Back to list of related resources');
-      if ($('.recommender_row_top').find('.hide-show-icon').text() == '▲') { $('.recommender_row_top').attr('title', 'Select to hide the list'); }
+      if ($('.recommender_row_top').hasClass('resource_list_expanded')) { $('.recommender_row_top').attr('title', 'Select to hide the list'); }
       else { $('.recommender_row_top').attr('title', 'Select for expanding resource list' ); }
     }
 
