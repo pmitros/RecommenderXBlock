@@ -47,16 +47,26 @@
     <div class='recommender_modify'>
       <div class='recommender_modify_title_container'><div class='backToViewButton'>&lt; Related resources</div><div class='recommender_modify_title'></div></div>
       <div class="flagSourceBlock">
-        <div class="flagSourceBlockTitle">Give the reason why you flagged this resource (or cancel).</div>
-        Reason: <input type="text" class="flag_reason" style="height: 25px; position: relative; left: 10px;"><br>
-        <input type="button" value="Flag resource" class="flag_reason_submit" style="margin-top: 0.5em">
+        <div class="flagSourceBlockTitle">Why would you like to flag this resource?</div>
+	<input type="text" 
+	       class="flag_reason" 
+	       style="height: 25px; position: relative; left: 10px; width:100%" 
+	       name="flag_rationale"
+	       placeholder="Reason for why this resource should be removed"/><br>
+        <input type="button" value="Flag resource" class="flag_reason_submit" style="margin-top: 0.5em;">
       </div>
       <div class="editSourceBlock">
       </div>
       <div class="recommender_add">
-        <div class="addSourceBlockTitle">Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource.</div>
-        Description: <input type="text" class="in_title" style="height: 25px; position: relative; left: 10px;"><br>
-        HyperLink: <input type="text" class="in_url" style="height: 25px; position: relative; left: 22px;"><br>
+        <div class="addSourceBlockTitle">Suggest a resource which can help other students with this problem.</div>
+        Description <input type="text" 
+			    class="in_title" 
+			    style="height: 25px; position: relative; left: 10px; width:100%"
+			    placeholder="Provide a meaningful description so other students know whether this is useful to them"/><br/>
+        Location <input type="text" 
+			class="in_url" 
+			style="height: 25px; position: relative; left: 22px; width:100%"
+			placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
         <form id="addResourceForm" action="http://danielswli.s3.amazonaws.com/" method="post" enctype="multipart/form-data">
           <input type="hidden" name="acl" value="public-read">
           <input type="hidden" name="Content-Type" value="image/jpeg">

@@ -89,7 +89,7 @@ function RecommenderXBlock(runtime, element) {
       $('.recommender_add').show();
       $('.recommender_content').hide();
 	  $('.recommender_modify').show();
-	  $('.recommender_modify_title').text('Recommend new resource');
+	  $('.recommender_modify_title').text('Suggest resource');
     });
 
     /* change between different mode (resource list or add/edit mode) */
@@ -399,7 +399,7 @@ function RecommenderXBlock(runtime, element) {
 	      $('.flagSourceBlock').show();
 		  $('.recommender_content').hide();
 	  	  $('.recommender_modify').show();
-		  $('.recommender_modify_title').text('Reason for flagging the resource');
+		  $('.recommender_modify_title').text('Flag Resource');
 
           var flagDiv = $(this);
           var flaggedResourceDiv = $(this).parent().parent();
