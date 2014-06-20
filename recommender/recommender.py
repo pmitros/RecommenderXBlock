@@ -1,6 +1,6 @@
 """TO-DO: Write a description of what this XBlock is."""
 
-import json
+import json, string, random, re
 
 import pkg_resources
 from mako.template import Template
@@ -10,6 +10,12 @@ from xblock.core import XBlock
 from xblock.fields import Scope, Integer, String, BlockScope, List
 from xblock.fragment import Fragment
 
+from fs.s3fs import S3FS
+from webob.response import Response
+
+aws_access_key_env='AKIAIRDHSV6YZJZ4RFGA'
+aws_secret_key_env='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'
+ 
 class HelpResource(dict):
     def __str__(self):
         return json.dumps(self)
@@ -129,6 +135,36 @@ class RecommenderXBlock(XBlock):
       print "Downvote clicked!"
       return {"Success": True}
 
+    @XBlock.handler
+    def upload_screenshot(self, request, suffix=''):
+        chars=string.ascii_uppercase + string.digits
+        size=11
+        fileDir = 'uploads/'
+
+        if re.search('.png$', str(request.POST['file'].file)):
+            filetype = '.png'
+        elif re.search('.jpg$', str(request.POST['file'].file)):
+            filetype = '.jpg'
+        else:
+            print "Wrong file type"
+            return {"Success": False}
+        myS3FS = S3FS('danielswli', aws_access_key=aws_access_key_env, aws_secret_key=aws_secret_key_env)
+        while True:
+            file_id = ''.join(random.choice(chars) for _ in range(size))
+            filename = fileDir + file_id + filetype
+            if not myS3FS.exists(filename):
+                break
+        content = request.POST['file'].file.read()
+        fhwrite = myS3FS.open(filename, 'wb')
+        fhwrite.write(content)
+        fhwrite.close()
+        myS3FS.makepublic(filename)
+
+        response = Response()
+        response.body = filename
+        response.headers['Content-Type'] = 'text/plain'
+        print 'before return'
+        return response
 
     @XBlock.json_handler
     def add_resource(self, data, suffix=''):

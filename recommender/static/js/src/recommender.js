@@ -4,6 +4,7 @@ function RecommenderXBlock(runtime, element) {
     var addResourceUrl = runtime.handlerUrl(element, 'add_resource');
     var editResourceUrl = runtime.handlerUrl(element, 'edit_resource');
     var flagResourceUrl = runtime.handlerUrl(element, 'flag_resource');
+    var uploadScreenshotUrl = runtime.handlerUrl(element, 'upload_screenshot');
 
     var baseUrl = 'http://s3-us-west-2.amazonaws.com/danielswli/';
     var currentPage = 1;
@@ -106,24 +107,12 @@ function RecommenderXBlock(runtime, element) {
 	  backToView();
     });
 
-    /* prepare the form for uploading file to S3: TODO, handle this with pyfilesystem */
-    var policyBase64 = 'CnsiZXhwaXJhdGlvbiI6ICIyMDIwLTEyLTAxVDEyOjAwOjAwLjAwMFoiLAogICJjb25kaXRpb25zIjogWwogICAgeyJidWNrZXQiOiAiZGFuaWVsc3dsaSJ9LAogICAgWyJzdGFydHMtd2l0aCIsICIka2V5IiwgInVwbG9hZHMvIl0sCiAgICB7ImFjbCI6ICJwdWJsaWMtcmVhZCJ9LAogICAgWyJzdGFydHMtd2l0aCIsICIkQ29udGVudC1UeXBlIiwgIiJdLAogICAgWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDUyNDI4ODAwMF0KICBdCn0=';
-    var signature = 'uRVljXwwHfM5K351eTL2MbYLwcI=';
-    $('#addResourceForm').append('<input type="hidden" name="Policy" value="' + policyBase64 + '">'
-          + '<input type="hidden" name="Signature" value="' + signature + '">'
-          + 'Previewing screenshot: <input type="file" name="file"><br>'
-          //+ '<input type="submit" class="submitAddResourceForm" name="submit" value="Upload File" style="margin-top: 0.5em">'
-          + '<input type="button" value="Add resource" class="add_submit" style="margin-top: 0.5em" disabled >');
-
     /* initialize add resource mode */
     function addResourceReset() {
       $('.in_title').val('');
       $('.in_url').val('');
-      $('#addResourceForm').find("input[name='file']").val('') 
-
-      /* get time for unique filenames: TODO, randomize filenames */
-      var key = "uploads/" + (new Date).getTime();
-      $('#addResourceForm').find("input[name='key']").val(key);
+      $('#addResourceForm').find("input[name='file']").val('');
+      $('.in_filename').text('');
       $('.add_submit').attr('disabled', true);
     }
 
@@ -143,14 +132,24 @@ function RecommenderXBlock(runtime, element) {
     /* upload once student select a file */
     $('#addResourceForm').find("input[name='file']").change(function (){
 	  if ($(this).val() == '') { return false; }
-	  $("#addResourceForm").submit();
+	  var formDiv = $(this).parent();
+	  var data = new FormData($(formDiv)[0]);
+      $.ajax({
+			type: 'POST',
+			url: uploadScreenshotUrl,
+			data: data,
+			contentType: false,
+			cache: false,
+			processData: false,
+			async: false,
+			/* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATE ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
+			complete: function(data) {
+				/* save filename in hidden div */
+				$('.in_filename').text(data.responseText);
+				enableAddSubmit();
+			},
+      });
     });
-
-    $("#addResourceForm").submit( function(e) {
-      if ($('#addResourceForm').find("input[name='file']").val() == '') { return false; }
-      enableAddSubmit();
-      return true;
-    });    
 
     /* submit the resource, save to database, update the current view */
     $('.add_submit').click(function() {
@@ -159,7 +158,7 @@ function RecommenderXBlock(runtime, element) {
         data['resource'] = {};
         data['resource']['url'] = $('.in_url').val();
         data['resource']['title'] = $('.in_title').val();
-        data['resource']['description'] = baseUrl + $(this).parent().find("input[name='key']").val();
+        data['resource']['description'] = baseUrl + $(this).parent().find('.in_filename').text();
 
         $.ajax({
             type: "POST",
@@ -313,24 +312,15 @@ function RecommenderXBlock(runtime, element) {
 	      $('.recommender_modify_title').text('Edit existing resource');
 	
           $('.editSourceBlock').empty();
-		  /* get time for unique filenames: TODO, randomize filenames */
-          var key = "uploads/" + (new Date).getTime();
-          /* prepare the form for uploading file to S3: TODO, handle this with pyfilesystem */
-          var path = 'http://danielswli.s3.amazonaws.com/';
-          var uploadForm = '<form id="editResourceForm" action="' + path + '" method="post" enctype="multipart/form-data">'
-            + '<input type="hidden" name="key" value="' + key + '">'
-            + '<input type="hidden" name="acl" value="public-read">'
-            + '<input type="hidden" name="Content-Type" value="image/jpeg">'
-            + '<input type="hidden" name="AWSAccessKeyId" value="AKIAIRDHSV6YZJZ4RFGA">'
-            + '<input type="hidden" name="Policy" value="' + policyBase64 + '">'
-            + '<input type="hidden" name="Signature" value="' + signature + '">'
-            + 'Previewing screenshot: <input type="file" name="file"><br>'
+          var uploadForm = '<form id="editResourceForm" method="post">'
+            + 'Previewing screenshot: <input type="file" name="file"><br/>'
+	        + '<div class="edit_filename hidden"></div>'
             + '<input type="button" value="Save change" class="edit_submit" style="margin-top: 0.5em" disabled></form>';
 
           $('.editSourceBlock').append( 
             '<div class="editSourceBlockTitle">Edit the description, hypelink, and previewing screenshot for the selected resource</div>' +
-            'Description: ' + '<input type="text" class="edit_title" style="height: 25px; position: relative; left: 10px;"><br>' +
-            'HyperLink: <input type="text" class="edit_url" style="height: 25px; position: relative; left: 22px;"><br>' + uploadForm);
+            'Description: ' + '<input type="text" class="edit_title" style="height: 25px; position: relative; left: 10px;"><br/>' +
+            'HyperLink: <input type="text" class="edit_url" style="height: 25px; position: relative; left: 22px;"><br/>' + uploadForm);
           
           /* initialize the text area */
           $('.edit_title').val($(this).parent().parent().find('.recommender_title').find('a').text());
@@ -355,15 +345,24 @@ function RecommenderXBlock(runtime, element) {
           /* upload once student select a file */
           $('#editResourceForm').find("input[name='file']").change(function (){
   		    if ($(this).val() == '') { return false; }
-            $("#editResourceForm").submit();
+    		  var formDiv = $(this).parent();
+			  var data = new FormData($(formDiv)[0]);
+		      $.ajax({
+					type: 'POST',
+					url: uploadScreenshotUrl,
+					data: data,
+					contentType: false,
+					cache: false,
+					processData: false,
+					async: false,
+					/* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATE ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
+					complete: function(data) {
+						/* save filename in hidden div */
+						$('.edit_filename').text(data.responseText);
+						enableEditSubmit();
+					},
+		      });
 	      });
- 
-          $("#editResourceForm").submit( function(e) {
-            if ($('#editResourceForm').find("input[name='file']").val() == '') { return false; }
-
-            enableEditSubmit();
-            return true;
-          });
 
           /* submit the edited resource, save to database, update the current view */
           $('.edit_submit').click(function() {
@@ -373,7 +372,7 @@ function RecommenderXBlock(runtime, element) {
             data['url'] = $('.edit_url').val();
             data['title'] = $('.edit_title').val();
             if (data['url'] == '' || data['title'] == '') { return; }
-            if ($('#editResourceForm').find("input[name='file']").val() != '') { data['description'] = baseUrl + key; }
+            if ($(this).parent().find('.edit_filename').text() != '') { data['description'] = baseUrl + $(this).parent().find('.edit_filename').text(); }
 
             $.ajax({
               type: "POST",
