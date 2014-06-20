@@ -114,7 +114,7 @@
   text-overflow:ellipsis;
 }
 
-.recommender_entryId, .recommender_url, .recommender_descriptionSlot {
+.recommender_entryId, .recommender_descriptionSlot, .recommender_problematicReason {
   display:none;
 }
 
@@ -143,11 +143,11 @@
   float: left;
   font-size: small;
 }*/
-.addSourceBlockTitle, .editSourceBlockTitle {
+.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle {
   margin-bottom: 1em;
 }
 
-.editSourceBlock, .recommender_add {
+.editSourceBlock, .recommender_add, .flagSourceBlock {
   padding-left: 1em;
 }
 
@@ -187,24 +187,24 @@
 } */
 /*
 [title]{
-	position:relative;
+    position:relative;
 }
 [title]:after{
-	content:attr(title);
-	color:#fff;
-	background:#333;
-	background:rgba(51,51,51,0.75);
-	padding:5px;
-	position:absolute;
-	left:-9999px;
-	opacity:0;
-	bottom:100%;
-	white-space:nowrap;
-	-webkit-transition:0.25s linear opacity;
+    content:attr(title);
+    color:#fff;
+    background:#333;
+    background:rgba(51,51,51,0.75);
+    padding:5px;
+    position:absolute;
+    left:-9999px;
+    opacity:0;
+    bottom:100%;
+    white-space:nowrap;
+    -webkit-transition:0.25s linear opacity;
 }
 [title]:hover:after{
-	left:5px;
-	opacity:1;
+    left:5px;
+    opacity:1;
 }*/
 
 .downArrowIcon:before { content: '▼'; }
@@ -221,20 +221,30 @@ form { margin: 0em; }
 
 <div class="recommender_block">
   <div class="recommender_recommendations">
-	<div class="recommender_content">
+    <div class="recommender_content">
       <div class="recommender_row_top hide-show resource_list_expanded">
-	    Related resources<div class='recommender_panel'><span class="resource_add_button plusIcon"></span> <span class='hide-show-icon upArrowIcon'></span> </div>
-	  </div>
-	  <div class='recommender_row_inner'>
-	    <div class="recommender_row">
+        Related resources<div class='recommender_panel'><span class="resource_add_button plusIcon"></span> <span class='hide-show-icon upArrowIcon'></span> </div>
+      </div>
+      <div class='recommender_row_inner'>
+        <div class="recommender_row">
           % for elem in resources:
-            % if elem['id'] in downvotes:
-              <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isProblematic=elem['isProblematic'],voteMode='downvoting'" />
-            % elif elem['id'] in upvotes:
-              <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isProblematic=elem['isProblematic'],voteMode='upvoting'" />
-            % else:
-              <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isProblematic=elem['isProblematic'],voteMode='nonevoting'" />
-            % endif
+            <%
+              if elem['id'] in downvotes:
+                voteMode = "downvoting"
+              elif elem['id'] in upvotes:
+                voteMode = 'upvoting'
+              else:
+                voteMode = 'nonevoting'
+        
+              if elem['id'] in flagId:
+                flagMode = 'problematic'
+                reason = flagReason[flagId.index(elem['id'])]
+              else:
+                flagMode = ''
+                reason = ''
+            %>
+            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode" />
+            
           % endfor
         </div>
         <div class='pagination'> </div>
@@ -245,9 +255,15 @@ form { margin: 0em; }
     </div>
     <div class='recommender_modify'>
       <div class='recommender_modify_title_container'><div class='backToViewButton'>&lt; Related resources</div><div class='recommender_modify_title'></div></div>
-      <div class="editSourceBlock" id="editSourceBlock">
+      <div class="flagSourceBlock">
+        <div class="flagSourceBlockTitle">Give or edit the reasons why you flagged this resource, or unflag it.</div>
+        Reasons: <input type="text" class="flag_reason" style="height: 25px; position: relative; left: 10px;"><br>
+        <input type="button" value="Save the reason" class="flag_reason_submit" style="margin-top: 0.5em">
+        <input type="button" value="Unflag the resource" class="unflag_button" style="margin-top: 0.5em">
       </div>
-      <div class="recommender_add" id="recommender_add">
+      <div class="editSourceBlock">
+      </div>
+      <div class="recommender_add">
         <div class="addSourceBlockTitle">Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource.</div>
         Description: <input type="text" class="in_title" style="height: 25px; position: relative; left: 10px;"><br>
         HyperLink: <input type="text" class="in_url" style="height: 25px; position: relative; left: 22px;"><br>

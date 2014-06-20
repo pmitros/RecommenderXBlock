@@ -1,10 +1,15 @@
-<%page args="title,votes,url,description,id,isProblematic,voteMode"/> 
-      <div class="recommender_resource">
+<%page args="title,votes,url,description,id,isProblematic,problematicReason,voteMode"/> 
+  <div class="recommender_resource">
 	<div class="recommender_vote_box">
 	  <div class="recommender_vote_arrow_up ${voteMode}" role="button" aria-label="upvote" tabindex="0"><b>↑</b></div>
 	  <div class="recommender_vote_score ${voteMode}"><b>${votes}</b></div>
 	  <div class="recommender_vote_arrow_down ${voteMode}" role="button" aria-label="downvote" tabindex="0"><b>↓</b></div>
 	</div>
-	<div class="recommender_blurb"><div class="recommender_title"><a href="${url}" target="_blank">${title}</a></div><div class="recommender_descriptionSlot">${description}</div><div class="recommender_entryId">${id}</div></div>
+	<div class="recommender_blurb">
+	  <div class="recommender_title"><a href="${url}" target="_blank">${title}</a></div>
+	  <div class="recommender_descriptionSlot">${description}</div>
+	  <div class="recommender_entryId">${id}</div>
+	  <div class="recommender_problematicReason">${problematicReason}</div>
+    </div>
 	<div class="recommender_edit"> <span class="ui-icon ui-icon-pencil resource_edit_button"></span> <span class="ui-icon ui-icon-flag flagResource ${isProblematic}"></span></div>
-      </div>
+  </div>

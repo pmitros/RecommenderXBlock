@@ -13,17 +13,18 @@ function RecommenderXBlock(runtime, element) {
 	/* resource list collapse or expansion */
     $(".hide-show").click(function () {
 	  if ($(this).hasClass('resource_list_expanded')) {
-		$(this).find('.hide-show-icon').removeClass('upArrowIcon').addClass('downArrowIcon');
+		//$(this).find('.hide-show-icon').removeClass('upArrowIcon').addClass('downArrowIcon');
 		$(".recommender_row_inner", element).slideUp('fast');
 		$('.resource_add_button').css('visibility', 'hidden');
 		$(this).css('cursor', 's-resize');
 	  }
 	  else {
-		$(this).find('.hide-show-icon').removeClass('downArrowIcon').addClass('upArrowIcon');
+		//$(this).find('.hide-show-icon').removeClass('downArrowIcon').addClass('upArrowIcon');
 	    $(".recommender_row_inner", element).slideDown('fast');
 	    $('.resource_add_button').css('visibility', 'visible');
 	    $(this).css('cursor', 'n-resize');
 	  }
+	  $(this).find('.hide-show-icon').toggleClass('upArrowIcon').toggleClass('downArrowIcon');
 	  $(this).toggleClass('resource_list_expanded');
 	  addTooltip();
     });
@@ -93,9 +94,10 @@ function RecommenderXBlock(runtime, element) {
 
     /* change between different mode (resource list or add/edit mode) */
     function backToView() {
-	  $('.recommender_add').hide();
-	  $('.editSourceBlock').hide();
 	  $('.recommender_modify').hide();
+	  $('.flagSourceBlock').hide();
+      $('.editSourceBlock').hide();
+      $('.recommender_add').hide();
 	  $('.recommender_content').show();
 	  if ($('.recommender_row_top').css('cursor') == 's-resize') { $(".hide-show").click(); }
     }
@@ -185,12 +187,12 @@ function RecommenderXBlock(runtime, element) {
                   '</div>' + 
                   '<div class="recommender_blurb"><div class="recommender_title">' + 
                   '<a href="' + data['resource']['url'] + '" target="_blank">' + data['resource']['title'] + '</a>' + '</div>' +
-                  '<div class="recommender_url">' + data['resource']['url'] + 
-                  '</div><div class="recommender_descriptionSlot">' + data['resource']['description'] +
+                  '<div class="recommender_descriptionSlot">' + data['resource']['description'] +
                   '</div><div class="recommender_entryId">' + result['id'] +
-                  '</div></div><div class="recommender_edit">' +
+                  '</div><div class="recommender_problematicReason"></div>' +
+                  '</div><div class="recommender_edit">' +
                   '<span class="ui-icon ui-icon-pencil resource_edit_button"></span>' +
-                  '<span class="ui-icon ui-icon-flag flagResource notProblematic" title="Flag irrelevant resource">' +
+                  '<span class="ui-icon ui-icon-flag flagResource" title="Flag irrelevant resource">' +
                   '</span></div></div>';
 
                 /* show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
@@ -202,13 +204,14 @@ function RecommenderXBlock(runtime, element) {
 	              $('.recommender_resource:eq(' + pos.toString() + ')').before(content);
                   currentPage = Math.ceil((pos + 1)/entriesPerPage); 
                 }
+                addResourceReset();
+	            unbindEvent();
+	            bindEvent();
+	            paginationRow();
+			    pagination();
+	            backToView();
               }
-              addResourceReset();
-              unbindEvent();
-              bindEvent();
-              paginationRow();
-			  pagination();
-              backToView();
+              else { alert('add redundant resource'); }
             }
         });
     });
@@ -385,6 +388,7 @@ function RecommenderXBlock(runtime, element) {
                   $('.editSourceBlock').empty();
                   backToView();
                 }
+                else { alert('add redundant resource'); }
               }
             });
           });
@@ -392,28 +396,71 @@ function RecommenderXBlock(runtime, element) {
 
 		/* flag problematic resource: TODO */
         $('.flagResource').click(function() {
-          var data = {};
-          if ($(this).hasClass('notProblematic')) {
-            data['isProblematic'] = 'problematic';
-            $(this).removeClass('notProblematic').addClass('problematic');
-          }
-          else {
-            data['isProblematic'] = 'notProblematic';
-            $(this).removeClass('problematic').addClass('notProblematic');
-          }
-          data['resource'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
-          $.ajax({
-            type: "POST",
-            url: flagResourceUrl,
-            data: JSON.stringify(data)
-          });
-        });
+	      $('.flagSourceBlock').show();
+		  $('.recommender_content').hide();
+	  	  $('.recommender_modify').show();
+		  $('.recommender_modify_title').text('Reasons for flagging the resource');
+
+          var flagDiv = $(this);
+          var flaggedResourceDiv = $(this).parent().parent();
+          $('.flag_reason').val($(flaggedResourceDiv).find('.recommender_problematicReason').text());
+
+          if (!$(this).hasClass('problematic')){
+            data = {};
+            data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
+            data['reason'] = '';
+            data['isProblematic'] = true;
+	        $.ajax({
+	          type: "POST",
+	          url: flagResourceUrl,
+	          data: JSON.stringify(data),
+	          success: function(result) {
+		        $(flagDiv).addClass('problematic');
+	          }
+	        });
+	      }
+	      addTooltip();
+	      $('.flag_reason_submit').unbind();
+	      $('.unflag_button').unbind();
+	
+	      $('.flag_reason_submit').click(function() {
+            data = {};
+            data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
+            data['reason'] = $('.flag_reason').val();
+            data['isProblematic'] = true;
+            $.ajax({
+	            type: "POST",
+	            url: flagResourceUrl,
+	            data: JSON.stringify(data),
+	            success: function(result) {
+		          $(flagDiv).addClass('problematic');
+		          $(flaggedResourceDiv).find('.recommender_problematicReason').text(data['reason']);
+		          backToView();
+	            }
+	        });
+	      });
+		
+		  $('.unflag_button').click(function() {
+            data = {};
+            data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
+            data['isProblematic'] = false;
+            $.ajax({
+	            type: "POST",
+	            url: flagResourceUrl,
+	            data: JSON.stringify(data),
+	            success: function(result) {
+		          $(flagDiv).removeClass('problematic');
+		          $(flaggedResourceDiv).find('.recommender_problematicReason').text('');
+		          backToView();
+	            }
+	        });
+	      });
+		});
+
         addTooltip();
       }
 
     function addTooltip() {
-      $('.notProblematic').attr('title', 'Flag this resource as problematic and give the reason');
-      $('.problematic').attr('title', 'Edit the reason of this problematic resource');
       $('.resource_add_button').attr('title', 'Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource');
       $('.resource_edit_button').attr('title', 'Edit the description, hypelink, and previewing screenshot of this resource');
       $('.recommender_vote_arrow_up').attr('title', 'Upvote for a helpful resource');
@@ -426,15 +473,20 @@ function RecommenderXBlock(runtime, element) {
       $('.edit_title').attr('title', 'Type in the description of the resource');
       $('.edit_url').attr('title', 'Type in the hyperlink to the resource');
       $('.backToViewButton').attr('title', 'Back to list of related resources');
+
+      if ($('.flagResource').hasClass('problematic')) { $('.flagResource').attr('title', 'Unflag this problematic resource or edit the reason for it'); }
+      else { $('.flagResource').attr('title', 'Flag this resource as problematic and give the reason' ); }
+
       if ($('.recommender_row_top').hasClass('resource_list_expanded')) { $('.recommender_row_top').attr('title', 'Select to hide the list'); }
       else { $('.recommender_row_top').attr('title', 'Select for expanding resource list' ); }
     }
 
     function initial() {
 	  $(".hide-show").click();
-	  $('.editSourceBlock').hide();
-	  $('.recommender_add').hide();
 	  $('.recommender_modify').hide();
+	  $('.flagSourceBlock').hide();
+      $('.editSourceBlock').hide();
+      $('.recommender_add').hide();
 	  paginationRow();
 	  pagination();
 	  addResourceReset();
