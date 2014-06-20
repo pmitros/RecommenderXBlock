@@ -325,7 +325,7 @@ function RecommenderXBlock(runtime, element) {
             + '<input type="hidden" name="Policy" value="' + policyBase64 + '">'
             + '<input type="hidden" name="Signature" value="' + signature + '">'
             + 'Previewing screenshot: <input type="file" name="file"><br>'
-            + '<input type="button" value="Edit resource" class="edit_submit" style="margin-top: 0.5em" disabled></form>';
+            + '<input type="button" value="Save change" class="edit_submit" style="margin-top: 0.5em" disabled></form>';
 
           $('.editSourceBlock').append( 
             '<div class="editSourceBlockTitle">Edit the description, hypelink, and previewing screenshot for the selected resource</div>' +
@@ -399,7 +399,7 @@ function RecommenderXBlock(runtime, element) {
 	      $('.flagSourceBlock').show();
 		  $('.recommender_content').hide();
 	  	  $('.recommender_modify').show();
-		  $('.recommender_modify_title').text('Reasons for flagging the resource');
+		  $('.recommender_modify_title').text('Reason for flagging the resource');
 
           var flagDiv = $(this);
           var flaggedResourceDiv = $(this).parent().parent();
