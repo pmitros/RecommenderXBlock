@@ -7,26 +7,55 @@
 
 .recommender_content {
   width: 700px;
+/*  width : 100%;*/
   float: left;
 }
 
-.recommender_row { overflow:hidden; }
+.recommender_row_top { 
+/*  overflow:scroll;
+  max-height:200px;*/
+  font-size: 20px;
+  background-color:rgb(204, 198, 198);
+}
+
+.recommender_row { 
+  height: 380px;
+}
 
 .question {
   width:700px;
 }
 
 .recommender_resource {
+/*  border : 1;*/
+  padding-top : 0.25em;
+  padding-bottom : 0.25em;
+/*  margin : 1;*/
+/*  display:table-cell;*/
+  float:left;
+/*  width:340px;*/
+  width : 100%;
+/*  border-color:gray;
+  border-width:1px;
+  border-style:solid;
+  border-radius:5px;*/
+}
+
+.recommender_panel {
+  float: right;
+  width: 50px;
+}
+
+.resource_list_less, .resource_list_more {
   border : 1;
   padding : 1;
   margin : 1;
-/*  display:table-cell;*/
-  float:left;
-  width:340px;
+  width : 95%;
   border-color:gray;
   border-width:1px;
   border-style:solid;
   border-radius:5px;
+
 }
 
 .recommender_header {
@@ -39,107 +68,213 @@
 }
 
 .recommender_modify {
-  width: 500px;
+  width: 700px;
   float: left;
 }
 
 .descriptionImg {
   height: 400px;
   overflow-x: scroll;
+  margin-top: 2em;
+  float: left;
 }
 
-.recommender_recommendations {
-  display:table;
-}
-
-.recommender_blurb {
-  display:inline-block;
-  vertical-align: middle;
-  width:225px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.recommender_entryId, .recommender_url, .recommender_descriptionSlot {
-  display:none;
-}
-
-.recommender_vote_box {
-  display:inline-block;
-  vertical-align: middle;
-  width:45px;
-}
-
-.recommender_vote_arrow_up {
+.recommender_vote_arrow_down {
+  width: 100%;
   margin-left:auto;
   margin-right:auto;
   text-align:center;
 }
 
-.recommender_vote_arrow_down {
+.recommender_vote_arrow_up {
+  width: 100%; 
   margin-left:auto;
   margin-right:auto;
   text-align:center;
 }
 
 .recommender_vote_score {
-  width:100%;
+  width: 100%; 
+  text-align: center;
+  cursor: default;
+}
+
+.recommender_recommendations { display: table; }
+
+.pagination {
+  display: table;
+  margin: 0 auto;
+}
+
+.recommender_blurb {
+  display:inline-block;
+  vertical-align: middle;
+  width:525px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.recommender_entryId, .recommender_descriptionSlot, .recommender_problematicReason {
+  display:none;
+}
+
+.recommender_vote_box {
+  display:inline-block;
+  vertical-align: middle;
+  width:50px;
 }
 
 .recommender_edit{
   display:inline-block;
   vertical-align: top;
+  float: right;
+  width: 40px;
 }
 
-.misuse, .redTxt {
+.redTxt {
   color: red;
 }
 
-.addSourceBlockTitle, .editSourceBlockTitle {
-  margin-top: 1em;
+.recommender_vote_arrow_down, .recommender_vote_arrow_up, .recommender_title, .resource_edit_button, .flagResource, .resource_add_button, .hide-show, .paginationCell, .backToViewButton { cursor: pointer; }
+
+.resource_add_button { float: left; font-weight: bold; }
+.resource_edit_button { float: left; }
+/*.hide-show { 
+  float: left;
+  font-size: small;
+}*/
+.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle {
   margin-bottom: 1em;
 }
 
-.resource_hovered { background: lightsteelblue; }
-.recommender_modify { margin-left: 2em; }
+.editSourceBlock, .recommender_add, .flagSourceBlock {
+  padding-left: 1em;
+}
+
+.paginationCell {
+  display:table-cell;
+  text-align:center;
+  vertical-align: middle;
+  width:25px;
+}
+
+.backToViewButton { color: #1d9dd9; float: left; }
+.recommender_modify_title { position: relative; left: 50px; overflow: auto; }
+
+.ui-icon.problematic {
+    background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
+}
+
+.resource_hovered { background-color:#F2F7FA }
+
+.recommender_modify_title_container { background: rgb(204, 198, 198); font-size: 20px; }
+
+.nonevoting { color: rgb(204, 198, 198); }
+.hide-show-icon { margin-left: 0.5em; }
+
+.recommender_vote_score.upvoting, .recommender_vote_arrow_up.upvoting { color: rgb(69, 194, 10); }
+.recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: red; }
+.recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: rgb(204, 198, 198); }
+
+/*.tooltip {
+    display:none;
+    background-color:#ffa;
+    border:1px solid #cc9;
+    padding:3px;
+    font-size:13px;
+    -moz-box-shadow: 2px 2px 11px #666;
+    -webkit-box-shadow: 2px 2px 11px #666;
+} */
+/*
+[title]{
+    position:relative;
+}
+[title]:after{
+    content:attr(title);
+    color:#fff;
+    background:#333;
+    background:rgba(51,51,51,0.75);
+    padding:5px;
+    position:absolute;
+    left:-9999px;
+    opacity:0;
+    bottom:100%;
+    white-space:nowrap;
+    -webkit-transition:0.25s linear opacity;
+}
+[title]:hover:after{
+    left:5px;
+    opacity:1;
+}*/
+
+.downArrowIcon:before { content: '▼'; }
+.upArrowIcon:before { content: '▲'; }
+.plusIcon:before { content: '+'; }
+.rightArrowIcon:before { content: '►'; }
+.leftArrowIcon:before { content: '◄'; }
+.moreIcon:before { content: '...'; }
+.lightgreyBg { background-color: lightgrey; }
+
+a:link { color: black; }
+form { margin: 0em; }
 </style>
 
 <div class="recommender_block">
-  <div class="recommender_header">
-    <div class="recommender_title">Helpful resources</div>
-  </div>
-
   <div class="recommender_recommendations">
-   <div class="recommender_content">
-    <div class="recommender_row">
-      % for elem in resources:
-        <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isMisuse=elem['isMisuse']" />
-      % endfor
+    <div class="recommender_content">
+      <div class="recommender_row_top hide-show resource_list_expanded">
+        Related resources<div class='recommender_panel'><span class="resource_add_button plusIcon"></span> <span class='hide-show-icon upArrowIcon'></span> </div>
+      </div>
+      <div class='recommender_row_inner'>
+        <div class="recommender_row">
+          % for elem in resources:
+            <%
+              if elem['id'] in downvotes:
+                voteMode = "downvoting"
+              elif elem['id'] in upvotes:
+                voteMode = 'upvoting'
+              else:
+                voteMode = 'nonevoting'
+        
+              if elem['id'] in flagId:
+                flagMode = 'problematic'
+                reason = flagReason[flagId.index(elem['id'])]
+              else:
+                flagMode = ''
+                reason = ''
+            %>
+            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode" />
+            
+          % endfor
+        </div>
+        <div class='pagination'> </div>
+        <div class="recommender_description">
+          <div class="descriptionImg"></div>
+        </div>
+      </div>
     </div>
-    <div class="recommender_description">
-      <div class="descriptionImg"></div>
-    </div>
-   </div>
     <div class='recommender_modify'>
+      <div class='recommender_modify_title_container'><div class='backToViewButton'>&lt; Related resources</div><div class='recommender_modify_title'></div></div>
+      <div class="flagSourceBlock">
+        <div class="flagSourceBlockTitle">Give or edit the reason why you flagged this resource, or unflag it.</div>
+        Reason: <input type="text" class="flag_reason" style="height: 25px; position: relative; left: 10px;"><br>
+        <input type="button" value="Save the reason" class="flag_reason_submit" style="margin-top: 0.5em">
+        <input type="button" value="Unflag the resource" class="unflag_button" style="margin-top: 0.5em">
+      </div>
       <div class="editSourceBlock">
       </div>
       <div class="recommender_add">
-        <div class="addSourceBlockTitle">Add new resource</div>
-        Title: <input type="text" class="in_title"><br>
-        Url: <input type="text" class="in_url"><br>
+        <div class="addSourceBlockTitle">Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource.</div>
+        Description: <input type="text" class="in_title" style="height: 25px; position: relative; left: 10px;"><br>
+        HyperLink: <input type="text" class="in_url" style="height: 25px; position: relative; left: 22px;"><br>
         <form id="addResourceForm" action="http://danielswli.s3.amazonaws.com/" method="post" enctype="multipart/form-data">
           <input type="hidden" name="acl" value="public-read">
           <input type="hidden" name="Content-Type" value="image/jpeg">
           <input type="hidden" name="AWSAccessKeyId" value="AKIAIRDHSV6YZJZ4RFGA">
           <input type="hidden" name="key" value="">
         </form>
-<!--      Resource description: <input type="text" class="in_description"><br>-->
       </div>
     </div>
-
+    
   </div>
-<!--
-  <div class="recommender_description">
-    <div class="descriptionImg"></div>
-  </div>-->
 </div>
