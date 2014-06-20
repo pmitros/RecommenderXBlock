@@ -394,7 +394,7 @@ function RecommenderXBlock(runtime, element) {
           });
         });
 
-		/* flag problematic resource: TODO */
+		/* flag problematic resource */
         $('.flagResource').click(function() {
 	      $('.flagSourceBlock').show();
 		  $('.recommender_content').hide();
@@ -405,6 +405,7 @@ function RecommenderXBlock(runtime, element) {
           var flaggedResourceDiv = $(this).parent().parent();
           $('.flag_reason').val($(flaggedResourceDiv).find('.recommender_problematicReason').text());
 
+          /* record the flagging once user click on the flag button */
           if (!$(this).hasClass('problematic')){
             data = {};
             data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
@@ -423,6 +424,7 @@ function RecommenderXBlock(runtime, element) {
 	      $('.flag_reason_submit').unbind();
 	      $('.unflag_button').unbind();
 	
+	      /* record the reason for problematic resource */ 
 	      $('.flag_reason_submit').click(function() {
             data = {};
             data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
@@ -433,13 +435,13 @@ function RecommenderXBlock(runtime, element) {
 	            url: flagResourceUrl,
 	            data: JSON.stringify(data),
 	            success: function(result) {
-		          $(flagDiv).addClass('problematic');
 		          $(flaggedResourceDiv).find('.recommender_problematicReason').text(data['reason']);
 		          backToView();
 	            }
 	        });
 	      });
 		
+		  /* unflag the resource */
 		  $('.unflag_button').click(function() {
             data = {};
             data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
@@ -474,6 +476,7 @@ function RecommenderXBlock(runtime, element) {
       $('.edit_url').attr('title', 'Type in the hyperlink to the resource');
       $('.backToViewButton').attr('title', 'Back to list of related resources');
 
+      $('.flag_reason').attr('title', 'Type in the reason why you flag the resource');
       if ($('.flagResource').hasClass('problematic')) { $('.flagResource').attr('title', 'Unflag this problematic resource or edit the reason for it'); }
       else { $('.flagResource').attr('title', 'Flag this resource as problematic and give the reason' ); }
 
