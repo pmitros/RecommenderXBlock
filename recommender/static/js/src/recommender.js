@@ -14,13 +14,11 @@ function RecommenderXBlock(runtime, element) {
 	/* resource list collapse or expansion */
     $(".hide-show").click(function () {
 	  if ($(this).hasClass('resource_list_expanded')) {
-		//$(this).find('.hide-show-icon').removeClass('upArrowIcon').addClass('downArrowIcon');
 		$(".recommender_row_inner", element).slideUp('fast');
 		$('.resource_add_button').css('visibility', 'hidden');
 		$(this).css('cursor', 's-resize');
 	  }
 	  else {
-		//$(this).find('.hide-show-icon').removeClass('downArrowIcon').addClass('upArrowIcon');
 	    $(".recommender_row_inner", element).slideDown('fast');
 	    $('.resource_add_button').css('visibility', 'visible');
 	    $(this).css('cursor', 'n-resize');
@@ -112,7 +110,6 @@ function RecommenderXBlock(runtime, element) {
       $('.in_title').val('');
       $('.in_url').val('');
       $('#addResourceForm').find("input[name='file']").val('');
-      $('.in_filename').text('');
       $('.add_submit').attr('disabled', true);
     }
 
@@ -129,91 +126,99 @@ function RecommenderXBlock(runtime, element) {
     $('.in_title').bind('input propertychange', function() { enableAddSubmit(); });
     $('.in_url').bind('input propertychange', function() { enableAddSubmit(); });
 
-    /* upload once student select a file */
-    $('#addResourceForm').find("input[name='file']").change(function (){
-	  if ($(this).val() == '') { return false; }
-	  var formDiv = $(this).parent();
-	  var data = new FormData($(formDiv)[0]);
-      $.ajax({
-			type: 'POST',
-			url: uploadScreenshotUrl,
-			data: data,
-			contentType: false,
-			cache: false,
-			processData: false,
-			async: false,
-			/* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATE ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
-			complete: function(data) {
-				/* save filename in hidden div */
-				$('.in_filename').text(data.responseText);
-				enableAddSubmit();
-			},
-      });
-    });
-
-    /* submit the resource, save to database, update the current view */
+    /* upload screenshot, submit the resource, save to database, update the current view */
     $('.add_submit').click(function() {
 	    /* data: parameter passed to database */
         var data = {};
         data['resource'] = {};
         data['resource']['url'] = $('.in_url').val();
         data['resource']['title'] = $('.in_title').val();
-        data['resource']['description'] = baseUrl + $(this).parent().find('.in_filename').text();
-
-        $.ajax({
-            type: "POST",
-            url: addResourceUrl,
-            data: JSON.stringify(data),
-            success: function(result) {
-              if (result['Success'] == true) {
-	            /* decide the rigth place for the added resource (pos), based on sorting the votes */
-                var pos = -1;
-                $('.recommender_vote_score').each(function(idx, ele){ 
-                  if (parseInt($(ele).text()) < 0) {
-                    pos = idx;
-                    return false;
-                  }
-                });
-
-                /* html for the new resource */
-                var content = '<div class="recommender_resource">' +
-                  '<div class="recommender_vote_box">' +
-                  '<div class="recommender_vote_arrow_up nonevoting" role="button" aria-label="upvote" tabindex="0">' +
-                  '<b>↑</b></div>' +
-                  '<div class="recommender_vote_score nonevoting"><b>0</b></div>' +
-                  '<div class="recommender_vote_arrow_down nonevoting" role="button" aria-label="downvote" tabindex="0">' +
-                  '<b>↓</b></div>' +
-                  '</div>' + 
-                  '<div class="recommender_blurb"><div class="recommender_title">' + 
-                  '<a href="' + data['resource']['url'] + '" target="_blank">' + data['resource']['title'] + '</a>' + '</div>' +
-                  '<div class="recommender_descriptionSlot">' + data['resource']['description'] +
-                  '</div><div class="recommender_entryId">' + result['id'] +
-                  '</div><div class="recommender_problematicReason"></div>' +
-                  '</div><div class="recommender_edit">' +
-                  '<span class="ui-icon ui-icon-pencil resource_edit_button"></span>' +
-                  '<span class="ui-icon ui-icon-flag flagResource" title="Flag irrelevant resource">' +
-                  '</span></div></div>';
-
-                /* show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
-                if (pos == -1) {
-	              $('.recommender_resource:last').after(content);
-	              currentPage = Math.ceil($('.recommender_resource').length/entriesPerPage);
-	            }
-                else {
-	              $('.recommender_resource:eq(' + pos.toString() + ')').before(content);
-                  currentPage = Math.ceil((pos + 1)/entriesPerPage); 
+        data['resource']['description'] = '';
+        var formDiv = $('#addResourceForm');
+		var file = new FormData($(formDiv)[0]);
+		
+        if ($(formDiv).find("input[name='file']").val() == '') { addResource(data); }
+        else {
+	      /* upload once student select a file */
+	      $.ajax({
+		 	type: 'POST',
+		 	url: uploadScreenshotUrl,
+		 	data: file,
+	 		contentType: false,
+	 		cache: false,
+	 		processData: false,
+	 		async: false,
+	 		/* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATES ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
+		 	complete: function(result) {
+		 		if (result.responseText == 'FILETYPEERROR') {
+		 		  alert('Please upload an image');
+ 				  $(formDiv).find("input[name='file']").val('');
+  	  		    }
+ 			    else {
+    		    /* update new entry */
+                  data['resource']['description'] = baseUrl + result.responseText;
+                  addResource(data);
                 }
-                addResourceReset();
-	            unbindEvent();
-	            bindEvent();
-	            paginationRow();
-			    pagination();
-	            backToView();
-              }
-              else { alert('add redundant resource'); }
-            }
-        });
+			},
+		  });
+        }
     });
+
+    function addResource(data) {
+      $.ajax({
+        type: "POST",
+        url: addResourceUrl,
+        data: JSON.stringify(data),
+        success: function(result) {
+          if (result['Success'] == true) {
+            /* decide the rigth place for the added resource (pos), based on sorting the votes */
+            var pos = -1;
+            $('.recommender_vote_score').each(function(idx, ele){ 
+              if (parseInt($(ele).text()) < 0) {
+                pos = idx;
+                return false;
+              }
+            });
+
+            /* html for the new resource */
+            var content = '<div class="recommender_resource">' +
+              '<div class="recommender_vote_box">' +
+              '<div class="recommender_vote_arrow_up nonevoting" role="button" aria-label="upvote" tabindex="0">' +
+              '<b>↑</b></div>' +
+              '<div class="recommender_vote_score nonevoting"><b>0</b></div>' +
+              '<div class="recommender_vote_arrow_down nonevoting" role="button" aria-label="downvote" tabindex="0">' +
+              '<b>↓</b></div>' +
+              '</div>' + 
+              '<div class="recommender_blurb"><div class="recommender_title">' + 
+              '<a href="' + data['resource']['url'] + '" target="_blank">' + data['resource']['title'] + '</a>' + '</div>' +
+              '<div class="recommender_descriptionSlot">' + data['resource']['description'] +
+              '</div><div class="recommender_entryId">' + result['id'] +
+              '</div><div class="recommender_problematicReason"></div>' +
+              '</div><div class="recommender_edit">' +
+              '<span class="ui-icon ui-icon-pencil resource_edit_button"></span>' +
+              '<span class="ui-icon ui-icon-flag flagResource" title="Flag irrelevant resource">' +
+              '</span></div></div>';
+
+            /* show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
+            if (pos == -1) {
+              $('.recommender_resource:last').after(content);
+              currentPage = Math.ceil($('.recommender_resource').length/entriesPerPage);
+            }
+            else {
+              $('.recommender_resource:eq(' + pos.toString() + ')').before(content);
+              currentPage = Math.ceil((pos + 1)/entriesPerPage); 
+            }
+            addResourceReset();
+            unbindEvent();
+            bindEvent();
+            paginationRow();
+		    pagination();
+            backToView();
+          }
+          else { alert('add redundant resource'); }
+        }
+      });
+    }
 
     /* unbind event for each entry of resources */
     function unbindEvent() {
@@ -311,23 +316,12 @@ function RecommenderXBlock(runtime, element) {
   	      $('.recommender_modify').show();
 	      $('.recommender_modify_title').text('Edit existing resource');
 	
-          $('.editSourceBlock').empty();
-          var uploadForm = '<form id="editResourceForm" method="post">'
-            + 'Previewing screenshot: <input type="file" name="file"><br/>'
-	        + '<div class="edit_filename hidden"></div>'
-            + '<input type="button" value="Save change" class="edit_submit" style="margin-top: 0.5em" disabled></form>';
-
-          $('.editSourceBlock').append( 
-            '<div class="editSourceBlockTitle">Edit the description, hypelink, and previewing screenshot for the selected resource</div>' +
-            'Description: ' + '<input type="text" class="edit_title" style="height: 25px; position: relative; left: 10px;"><br/>' +
-            'HyperLink: <input type="text" class="edit_url" style="height: 25px; position: relative; left: 22px;"><br/>' + uploadForm);
-          
           /* initialize the text area */
           $('.edit_title').val($(this).parent().parent().find('.recommender_title').find('a').text());
           $('.edit_url').val($(this).parent().parent().find('.recommender_title').find('a').attr('href'));
-
-          addTooltip();
-          var divEdit = this;
+          $('#editResourceForm').find("input[name='file']").val('');
+	      $('.edit_submit').attr('disabled', true);
+	      var divEdit = this;
 
 		  /* check whether enough information (title/url) is provided for editing a resource, if yes, enable summission button */
           function enableEditSubmit() {
@@ -339,57 +333,68 @@ function RecommenderXBlock(runtime, element) {
   	      }
 
 		  /* check whether the input text area is changed, if yes, check whether student can submit the resource */
+		  $('.edit_title').unbind();
+		  $('.edit_url').unbind();
 	      $('.edit_title').bind('input propertychange', function() { enableEditSubmit(); });
 	      $('.edit_url').bind('input propertychange', function() { enableEditSubmit(); });
 
-          /* upload once student select a file */
-          $('#editResourceForm').find("input[name='file']").change(function (){
-  		    if ($(this).val() == '') { return false; }
-    		  var formDiv = $(this).parent();
-			  var data = new FormData($(formDiv)[0]);
-		      $.ajax({
-					type: 'POST',
-					url: uploadScreenshotUrl,
-					data: data,
-					contentType: false,
-					cache: false,
-					processData: false,
-					async: false,
-					/* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATE ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
-					complete: function(data) {
-						/* save filename in hidden div */
-						$('.edit_filename').text(data.responseText);
-						enableEditSubmit();
-					},
-		      });
-	      });
-
-          /* submit the edited resource, save to database, update the current view */
+          /* upload the screen shot, submit the edited resource, save to database, update the current view */
+          $('.edit_submit').unbind();
           $('.edit_submit').click(function() {
 			/* data: parameter passed to database */
             var data = {};
             data['resource'] = parseInt($(divEdit).parent().parent().find('.recommender_entryId').text());
             data['url'] = $('.edit_url').val();
             data['title'] = $('.edit_title').val();
+            data['description'] = ''
             if (data['url'] == '' || data['title'] == '') { return; }
-            if ($(this).parent().find('.edit_filename').text() != '') { data['description'] = baseUrl + $(this).parent().find('.edit_filename').text(); }
 
-            $.ajax({
-              type: "POST",
-              url: editResourceUrl,
-              data: JSON.stringify(data),
-              success: function(result) {
-                if (result['Success'] == true) {
-				  /* show the edited resource */
-	              $(divEdit).parent().parent().find('.recommender_title').find('a').text(data['title']);
-	              $(divEdit).parent().parent().find('.recommender_title').find('a').attr('href', data['url']);
-				  if ("description" in data) { $(divEdit).parent().parent().find('.recommender_descriptionSlot').text(data['description']); }
-                  $('.editSourceBlock').empty();
-                  backToView();
+	        var formDiv = $('#editResourceForm');
+			var file = new FormData($(formDiv)[0]);
+
+	        if ($(formDiv).find("input[name='file']").val() == '') { editResource(data); }
+	        else {
+		      /* upload once student select a file */
+		      $.ajax({
+			 	type: 'POST',
+			 	url: uploadScreenshotUrl,
+			 	data: file,
+		 		contentType: false,
+		 		cache: false,
+		 		processData: false,
+		 		async: false,
+		 		/* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATES ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
+			 	complete: function(result) {
+			 		if (result.responseText == 'FILETYPEERROR') {
+			 		  alert('Please upload an image');
+	 				  $(formDiv).find("input[name='file']").val('');
+	  	  		    }
+	 			    else {
+	    		    /* update new entry */
+	                  data['description'] = baseUrl + result.responseText;
+	                  editResource(data);
+	                }
+				},
+			  });
+	        }
+	
+            function editResource (data) {
+              $.ajax({
+                type: "POST",
+                url: editResourceUrl,
+                data: JSON.stringify(data),
+                success: function(result) {
+                  if (result['Success'] == true) {
+				    /* show the edited resource */
+	                $(divEdit).parent().parent().find('.recommender_title').find('a').text(data['title']);
+	                $(divEdit).parent().parent().find('.recommender_title').find('a').attr('href', data['url']);
+				    if (data["description"] != "") { $(divEdit).parent().parent().find('.recommender_descriptionSlot').text(data['description']); }
+                    backToView();
+                  }
+                  else { alert('add redundant resource'); }
                 }
-                else { alert('add redundant resource'); }
-              }
-            });
+              });
+            }
           });
         });
 
@@ -493,6 +498,10 @@ function RecommenderXBlock(runtime, element) {
 	  pagination();
 	  addResourceReset();
 	  bindEvent();
+	
+	  if ($('.recommender_resource').length == 0) {
+		$('.noResourceIntro').show();
+	  }
     }
     initial();
 }

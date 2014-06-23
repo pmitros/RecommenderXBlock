@@ -3,6 +3,9 @@
 import json, string, random, re
 
 import pkg_resources
+
+from eventtracking import tracker
+
 from mako.template import Template
 from mako.lookup import TemplateLookup
 
@@ -102,9 +105,11 @@ class RecommenderXBlock(XBlock):
       ''' untested '''
       resource = data['resource']
       idx = self.getEntryIndex(resource, self.recommendations)
+      oldVotes = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
       if resource in self.upvotes:
         del self.upvotes[self.upvotes.index(resource)]
         self.recommendations[idx]['upvotes'] -= 1
+        tracker.emit('recommender_upvote', {'id': resource, 'oldVotes': oldVotes, 'newVotes': self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']})
         print "Upvote unclicked!"
         return {"Success": True}
     
@@ -113,6 +118,7 @@ class RecommenderXBlock(XBlock):
         self.recommendations[idx]['downvotes'] -= 1
       self.upvotes.append(resource)
       self.recommendations[idx]['upvotes'] += 1
+      tracker.emit('recommender_upvote', {'id': resource, 'oldVotes': oldVotes, 'newVotes': self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']})
       print "Upvote clicked!"
       return {"Success": True}
 
@@ -121,9 +127,11 @@ class RecommenderXBlock(XBlock):
       ''' untested '''
       resource = data['resource']
       idx = self.getEntryIndex(resource, self.recommendations)
+      oldVotes = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
       if resource in self.downvotes:
         del self.downvotes[self.downvotes.index(resource)]
         self.recommendations[idx]['downvotes'] -= 1
+        tracker.emit('recommender_downvote', {'id': resource, 'oldVotes': oldVotes, 'newVotes': self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']})
         print "Downvote unclicked!"
         return {"Success": True}
     
@@ -132,6 +140,7 @@ class RecommenderXBlock(XBlock):
         self.recommendations[idx]['upvotes'] -= 1
       self.downvotes.append(resource)
       self.recommendations[idx]['downvotes'] += 1
+      tracker.emit('recommender_downvote', {'id': resource, 'oldVotes': oldVotes, 'newVotes': self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']})
       print "Downvote clicked!"
       return {"Success": True}
 
@@ -146,8 +155,13 @@ class RecommenderXBlock(XBlock):
         elif re.search('.jpg$', str(request.POST['file'].file)):
             filetype = '.jpg'
         else:
+            tracker.emit('upload_screenshot', {'uploadedFileName': 'FILETYPEERROR'})
             print "Wrong file type"
-            return {"Success": False}
+            response = Response()
+            response.body = 'FILETYPEERROR'
+            response.headers['Content-Type'] = 'text/plain'
+            return response
+    
         myS3FS = S3FS('danielswli', aws_access_key=aws_access_key_env, aws_secret_key=aws_secret_key_env)
         while True:
             file_id = ''.join(random.choice(chars) for _ in range(size))
@@ -163,30 +177,34 @@ class RecommenderXBlock(XBlock):
         response = Response()
         response.body = filename
         response.headers['Content-Type'] = 'text/plain'
-        print 'before return'
+        tracker.emit('upload_screenshot', {'uploadedFileName': filename})
         return response
 
     @XBlock.json_handler
     def add_resource(self, data, suffix=''):
         ''' untested '''
         resource = data['resource']
-        # check url for redundancy
-        for recom in self.recommendations:
-            if recom['url'] == data['resource']['url']:
-                print "add redundant resource"
-                return {"Success": False}
-
         # Construct new resource
         valid_fields = ['url', 'title', 'description']
         new_resource = {}
         for field in valid_fields:
             new_resource[field] = data['resource'][field]
+
+        # check url for redundancy
+        for recom in self.recommendations:
+            if recom['url'] == data['resource']['url']:
+                print "add redundant resource"
+                new_resource['error'] = 'redundant resource'
+                tracker.emit('add_resource', new_resource)
+                return {"Success": False}
+
+        new_resource['id'] = self.getResourceNewId()
+        tracker.emit('add_resource', new_resource)
+
         new_resource['upvotes'] = 0
         new_resource['downvotes'] = 0
-        new_resource['id'] = self.getResourceNewId()
         new_resource['isProblematic'] = "notProblematic"
         new_resource['problematicReason'] = ""
-#        self.resources.append(new_resource)
         self.recommendations.append(new_resource)
         return {"Success": True, "id": new_resource['id']}
 
@@ -196,36 +214,54 @@ class RecommenderXBlock(XBlock):
         idx = self.getEntryIndex(resource, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
             print "Edit failed!"
+            tracker.emit('edit_resource', {'id': resource, 'error': 'bad id'})
             return {"Success": False}
+
+        valid_fields = ['url', 'title', 'description']
+        resource_log = {}
+        resource_log['id'] = resource
+        for field in valid_fields:
+            resource_log['old_' + field] = self.recommendations[idx][field]
+            resource_log[field] = data[field]
         # check url for redundancy
         for recom in self.recommendations:
             if self.recommendations[idx]['url'] == data['url']:
                 continue
             if recom['url'] == data['url']:
+                resource_log['error'] = 'existing url'
                 print "provided url is existing"
+                tracker.emit('edit_resource', resource_log)
                 return {"Success": False}
 
         for key in data:
           if key == 'resource':
-            next
-          if data[key] == '':
-            next
+            continue
+          if data[key] == "":
+            continue
           self.recommendations[idx][key] = data[key]
+        tracker.emit('edit_resource', resource_log)
         return {"Success": True}
 
     @XBlock.json_handler
     def flag_resource(self, data, suffix=''):
+        flagLog = {}
+        flagLog['id'] = data['resource']
+        flagLog['isProblematic'] = data['isProblematic']
+        flagLog['reason'] = data['reason']
         if data['isProblematic'] == True:
             if data['resource'] in self.flagId:
+                flagLog['oldReason'] = self.flagReason[self.flagId.index(data['resource'])]
                 self.flagReason[self.flagId.index(data['resource'])] = data['reason']
             else:
                 self.flagId.append(data['resource'])
                 self.flagReason.append(data['reason'])
         else:
             if data['resource'] in self.flagId:
+                flagLog['oldReason'] = self.flagReason[self.flagId.index(data['resource'])]
                 idx = self.flagId.index(data['resource'])
                 del self.flagId[idx]
                 del self.flagReason[idx]
+        tracker.emit('flag_resource', flagLog)
         return {"Success": True}
 
     # TO-DO: change this view to display your data your own way.
