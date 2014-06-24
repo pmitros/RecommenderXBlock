@@ -5,7 +5,7 @@
   <div class="recommender_recommendations">
     <div class="recommender_content">
       <div class="recommender_row_top hide-show resource_list_expanded">
-        Related resources<div class='recommender_panel'><span class="resource_add_button plusIcon"></span> <span class='hide-show-icon upArrowIcon'></span> </div>
+        Related resources<div class='recommender_panel'> <span class='hide-show-icon upArrowIcon'></span> </div>
       </div>
       <div class='recommender_row_inner'>
         <div class="recommender_row">
@@ -34,10 +34,19 @@
             <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode" />
           % endfor
         </div>
-        <div class='pagination'> </div>
+        <div class="resource_add_button">Add new resource &gt;&gt;</div>
+        <div class='pagination'>
+          <div class="paginationRowTemplate hidden">
+		    <div class="paginationCell leftArrowIcon"></div>
+		    <div class="paginationCell moreIcon leftMoreIcon" style="cursor: default;"></div>
+		    <div class="paginationCell lightgreyBg"></div>
+		    <div class="paginationCell moreIcon rightMoreIcon" style="cursor: default;"></div>
+		    <div class="paginationCell rightArrowIcon"></div>
+          </div>
+        </div>
         <div class="recommender_description">
           <div class="descriptionImg">
-            <div> This is a list of resources your fellow students
+            <div class='descriptionIntro'> This is a list of resources your fellow students
             thought might be helpful. If you find another useful
             resource, either on edx.org or elsewhere, please add
             it. If you can improve the description or preview of a
@@ -45,6 +54,8 @@
             helpful, upvote it. If it&rsquo;s not so helpful, downvote
             it. If it has issues (illegal material, incorrect, etc.),
             please flag it and let us know the reason. </div>
+
+            <img class="previewingImg hidden" src="" style="height: 100%" />
           </div>
         </div>
       </div>
@@ -55,7 +66,6 @@
         <div class="flagSourceBlockTitle">Why would you like to flag this resource?</div>
         <input type="text" 
           class="flag_reason" 
-          style="height: 25px; position: relative; left: 10px; width:100%" 
           name="flag_rationale"
           placeholder="Reason for why this resource should be removed"/><br/>
         <input type="button" value="Flag resource" class="flag_reason_submit" style="margin-top: 0.5em;">

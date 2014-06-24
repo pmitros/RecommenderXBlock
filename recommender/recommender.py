@@ -4,7 +4,13 @@ import json, string, random, re
 
 import pkg_resources
 
-from eventtracking import tracker
+try:
+	from eventtracking import tracker
+except:
+	class tracker:
+		@staticmethod
+		def emit(a,b):
+			pass
 
 from mako.template import Template
 from mako.lookup import TemplateLookup
@@ -224,14 +230,16 @@ class RecommenderXBlock(XBlock):
             resource_log['old_' + field] = self.recommendations[idx][field]
             resource_log[field] = data[field]
         # check url for redundancy
-        for recom in self.recommendations:
-            if self.recommendations[idx]['url'] == data['url']:
-                continue
-            if recom['url'] == data['url']:
-                resource_log['error'] = 'existing url'
-                print "provided url is existing"
-                tracker.emit('edit_resource', resource_log)
-                return {"Success": False}
+        if self.recommendations[idx]['url'] != data['url']:
+            for recom in self.recommendations:
+                if recom['url'] == data['url']:
+                    resource_log['error'] = 'existing url'
+                    for field in valid_fields:
+                        resource_log['dup_' + field] = self.recommendations[self.recommendations.index(recom)][field]
+                    resource_log['dup_id'] = self.recommendations[self.recommendations.index(recom)]['id']
+                    print "provided url is existing"
+                    tracker.emit('edit_resource', resource_log)
+                    return {"Success": False}
 
         for key in data:
           if key == 'resource':
@@ -290,6 +298,7 @@ class RecommenderXBlock(XBlock):
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/recommender.css"))
+        frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
         frag.initialize_js('RecommenderXBlock')
         return frag

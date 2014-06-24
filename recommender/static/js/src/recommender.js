@@ -1,3 +1,9 @@
+if (typeof Logger == 'undefined') {
+	var Logger = {
+	    log: function(a) { return; }
+	}
+}
+
 function RecommenderXBlock(runtime, element) {
     var handleUpvoteUrl = runtime.handlerUrl(element, 'handle_upvote');
     var handleDownvoteUrl = runtime.handlerUrl(element, 'handle_downvote');
@@ -14,13 +20,20 @@ function RecommenderXBlock(runtime, element) {
 	/* resource list collapse or expansion */
     $(".hide-show").click(function () {
 	  if ($(this).hasClass('resource_list_expanded')) {
+		/* Initiate at least once for every session */
+		Logger.log('hide-show.click.event', {
+		    'status': 'hide'
+		});
 		$(".recommender_row_inner", element).slideUp('fast');
-		$('.resource_add_button').css('visibility', 'hidden');
+		//$('.resource_add_button').css('visibility', 'hidden');
 		$(this).css('cursor', 's-resize');
 	  }
 	  else {
+		Logger.log('hide-show.click.event', {
+		    'status': 'show'
+		});
 	    $(".recommender_row_inner", element).slideDown('fast');
-	    $('.resource_add_button').css('visibility', 'visible');
+	    //$('.resource_add_button').css('visibility', 'visible');
 	    $(this).css('cursor', 'n-resize');
 	  }
 	  $(this).find('.hide-show-icon').toggleClass('upArrowIcon').toggleClass('downArrowIcon');
@@ -47,48 +60,75 @@ function RecommenderXBlock(runtime, element) {
     function paginationRow() {
       var totalPage = Math.ceil($('.recommender_resource').length/entriesPerPage);
 	  if (totalPage == 1) { return; }
-	  $('.pagination').empty();
+	  $('.paginationRow').remove();
 	  $('.paginationCell').unbind();
 
       /* each paginationRow correspond to each page of resource list */
       for (var pageIdx = 1; pageIdx <= totalPage; pageIdx++) {
-		var content = '<div class="paginationRow">';
+		var paginationRowDiv = $('.paginationRowTemplate').clone().removeClass('hidden').removeClass('paginationRowTemplate').addClass('paginationRow');
 		/* no previous page if current page = 1 */
-		if (pageIdx == 1) { content += '<div class="paginationCell leftArrowIcon" style="visibility: hidden;"></div>'; }
-		else { content += '<div class="paginationCell leftArrowIcon"></div>'; }
-
-		if (pageIdx - pageSpan > 1) { content += '<div class="paginationCell moreIcon" style="cursor: default;"></div>'; }
+		if (pageIdx == 1) { paginationRowDiv.find('.leftArrowIcon').css("visibility", "hidden"); }
+		if (pageIdx - pageSpan <= 1) { paginationRowDiv.find('.leftMoreIcon').css("visibility", "hidden"); }
+		
 		for (var i = pageIdx - pageSpan; i <= pageIdx + pageSpan; i++) {
-			if (i == pageIdx) { content += '<div class="paginationCell lightgreyBg">' + i.toString() + '</div>'; }
-			else if (i > 0 && i <= totalPage) { content += '<div class="paginationCell">' + i.toString() + '</div>'; }
+			var currentCellDiv = paginationRowDiv.find('.lightgreyBg');
+			if (i == pageIdx) { currentCellDiv.text(i.toString()); }
+			else {
+				var cellDiv = currentCellDiv.clone().removeClass('lightgreyBg').text(i.toString());
+				if (i <= 0 || i > totalPage) { cellDiv.css("visibility", "hidden"); }
+				if (i > pageIdx) { paginationRowDiv.find('.rightMoreIcon').before(cellDiv); }
+				else { currentCellDiv.before(cellDiv); }
+			}
 		}
-		if (pageIdx + pageSpan < totalPage) { content += '<div class="paginationCell moreIcon" style="cursor: default;"></div>'; }
-
+		if (pageIdx + pageSpan >= totalPage) { paginationRowDiv.find('.rightMoreIcon').css("visibility", "hidden"); }
         /* no next page if current page is last page */
-		if (pageIdx == totalPage) { content += '<div class="paginationCell rightArrowIcon" style="visibility: hidden;"></div>'; }
-		else { content += '<div class="paginationCell rightArrowIcon"></div>'; }
+        if (pageIdx == totalPage) { paginationRowDiv.find('.rightArrowIcon').css("visibility", "hidden"); }
 
-	    content += '</div>';	
-	    $('.pagination').append(content);
+	    $('.pagination').append(paginationRowDiv);
       }
 
       /* page change */
       $('.paginationCell').click(function () {
-	    if ($(this).hasClass('moreIcon')) { return; }
-	    else if ($(this).hasClass('leftArrowIcon')) { currentPage -= 1; }
+	    var logStr = 'From page ' + currentPage.toString();
+	    if ($(this).hasClass('moreIcon')) {
+          Logger.log('pagination.click.event', {
+		    'status': 'moreIcon'
+		  });
+		  return;
+		}
+	    else if ($(this).hasClass('leftArrowIcon')) {
+		  currentPage -= 1;
+		}
 	    else if ($(this).hasClass('rightArrowIcon')) { currentPage += 1; }
         else { currentPage = parseInt($(this).text()); }
+        logStr += ' To page ' + currentPage.toString();
+        Logger.log('pagination.click.event', {
+		  'status': logStr
+		});
         pagination();
       });
     }
 
     /* button for adding new resource */
     $('.resource_add_button').click(function() {
+	  Logger.log('addResource.click.event', {
+		'status': 'Entering add resource mode'
+	  });
+	
 	  addResourceReset();
       $('.recommender_add').show();
       $('.recommender_content').hide();
 	  $('.recommender_modify').show();
 	  $('.recommender_modify_title').text('Suggest resource');
+	
+	  /* Don't trigger event bound to parent div */ 
+	  /*
+	  (function(e) {
+	    var e = window.event || e;
+        if (e.stopPropagation) e.stopPropagation();
+        else e.cancelBubble = true;
+      })(event);
+      */
     });
 
     /* change between different mode (resource list or add/edit mode) */
@@ -98,10 +138,13 @@ function RecommenderXBlock(runtime, element) {
       $('.editSourceBlock').hide();
       $('.recommender_add').hide();
 	  $('.recommender_content').show();
-	  if ($('.recommender_row_top').css('cursor') == 's-resize') { $(".hide-show").click(); }
+	  //if ($('.recommender_row_top').css('cursor') == 's-resize') { $(".hide-show").click(); }
     }
 
-    $('.backToViewButton').click(function(){
+    $('.backToViewButton').click(function() {
+	  Logger.log('backToView.click.event', {
+	    'status': 'Back to resource list mode'
+	  });
 	  backToView();
     });
 
@@ -136,6 +179,12 @@ function RecommenderXBlock(runtime, element) {
         data['resource']['description'] = '';
         var formDiv = $('#addResourceForm');
 		var file = new FormData($(formDiv)[0]);
+        Logger.log('addResource.click.event', {
+		  'status': 'Add new resource',
+		  'title': data['resource']['title'],
+		  'url': data['resource']['url'],
+		  'description': $(formDiv).find("input[name='file']").val()
+		});
 		
         if ($(formDiv).find("input[name='file']").val() == '') { addResource(data); }
         else {
@@ -180,34 +229,30 @@ function RecommenderXBlock(runtime, element) {
               }
             });
 
-            /* html for the new resource */
-            var content = '<div class="recommender_resource">' +
-              '<div class="recommender_vote_box">' +
-              '<div class="recommender_vote_arrow_up nonevoting" role="button" aria-label="upvote" tabindex="0">' +
-              '<b>↑</b></div>' +
-              '<div class="recommender_vote_score nonevoting"><b>0</b></div>' +
-              '<div class="recommender_vote_arrow_down nonevoting" role="button" aria-label="downvote" tabindex="0">' +
-              '<b>↓</b></div>' +
-              '</div>' + 
-              '<div class="recommender_blurb"><div class="recommender_title">' + 
-              '<a href="' + data['resource']['url'] + '" target="_blank">' + data['resource']['title'] + '</a>' + '</div>' +
-              '<div class="recommender_descriptionSlot">' + data['resource']['description'] +
-              '</div><div class="recommender_entryId">' + result['id'] +
-              '</div><div class="recommender_problematicReason"></div>' +
-              '</div><div class="recommender_edit">' +
-              '<span class="ui-icon ui-icon-pencil resource_edit_button"></span>' +
-              '<span class="ui-icon ui-icon-flag flagResource" title="Flag irrelevant resource">' +
-              '</span></div></div>';
-
             /* show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
             if (pos == -1) {
-              $('.recommender_resource:last').after(content);
+              var toDiv = $('.recommender_resource:last');
               currentPage = Math.ceil($('.recommender_resource').length/entriesPerPage);
             }
             else {
-              $('.recommender_resource:eq(' + pos.toString() + ')').before(content);
+              var toDiv = $('.recommender_resource:eq(' + pos.toString() + ')');
               currentPage = Math.ceil((pos + 1)/entriesPerPage); 
             }
+            /* div for the new resource */
+            var newDiv = $(toDiv).clone();
+            $(newDiv).find('.recommender_vote_arrow_up,.recommender_vote_score,.recommender_vote_arrow_down')
+              .removeClass('downvoting').removeClass('upvoting').addClass('nonevoting');
+            $(newDiv).find('.recommender_vote_score').text('0');
+            $(newDiv).find('a').attr('href', data['resource']['url']);
+            $(newDiv).find('a').text(data['resource']['title']);
+            $(newDiv).find('.recommender_descriptionSlot').text(data['resource']['description']);
+            $(newDiv).find('.recommender_entryId').text(result['id']);
+            $(newDiv).find('.recommender_problematicReason').text('');
+            $(newDiv).find('.flagResource').removeClass('problematic');
+
+            if (pos == -1) { $(toDiv).after(newDiv); }
+            else { $(toDiv).before(newDiv); }
+
             addResourceReset();
             unbindEvent();
             bindEvent();
@@ -236,6 +281,11 @@ function RecommenderXBlock(runtime, element) {
             var data = {};
             data['resource'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
             if (data['resource'] == -1) { return; }
+            Logger.log('arrowUp.click.event', {
+			  'status': 'Arrow up',
+			  'id': data['resource']
+			});
+			
             var divArrowUp = this;
             $.ajax({
                 type: "POST",
@@ -247,17 +297,17 @@ function RecommenderXBlock(runtime, element) {
 					/* change downvoting to upvoting */
                     if ($(divArrowUp).hasClass('downvoting')) {
                       $(divArrowUp).parent().find('.downvoting').removeClass('downvoting').addClass('upvoting');
-                      scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) + 2).toString() + '</b>');
+                      scoreDiv.html((parseInt(scoreDiv.text()) + 2).toString());
                     }
 					/* upvoting */
                     else if ($(divArrowUp).hasClass('nonevoting')) {
 			     	  $(divArrowUp).parent().find('.nonevoting').removeClass('nonevoting').addClass('upvoting');
-			          scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) + 1).toString() + '</b>');
+			          scoreDiv.html((parseInt(scoreDiv.text()) + 1).toString());
 			        }
 					/* undo upvoting */
 			        else if ($(divArrowUp).hasClass('upvoting')) {
 			     	  $(divArrowUp).parent().find('.upvoting').removeClass('upvoting').addClass('nonevoting');
-			          scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) - 1).toString() + '</b>');
+			          scoreDiv.html((parseInt(scoreDiv.text()) - 1).toString());
 			        }
                   }
                 }
@@ -269,6 +319,11 @@ function RecommenderXBlock(runtime, element) {
             var data = {};
             data['resource'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
             if (data['resource'] == -1) { return; }
+            Logger.log('arrowDown.click.event', {
+			  'status': 'Arrow down',
+			  'id': data['resource']
+			});
+
             var divArrowDown = this;
 	        $.ajax({
                 type: "POST",
@@ -280,17 +335,17 @@ function RecommenderXBlock(runtime, element) {
 					/* undo downvoting */
                     if ($(divArrowDown).hasClass('downvoting')) {
                       $(divArrowDown).parent().find('.downvoting').removeClass('downvoting').addClass('nonevoting');
-                      scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) + 1).toString() + '</b>');
+                      scoreDiv.html((parseInt(scoreDiv.text()) + 1).toString());
                     }
 					/* downvoting */
                     else if ($(divArrowDown).hasClass('nonevoting')) {
 			     	  $(divArrowDown).parent().find('.nonevoting').removeClass('nonevoting').addClass('downvoting');
-			          scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) - 1).toString() + '</b>');
+			          scoreDiv.html((parseInt(scoreDiv.text()) - 1).toString());
 			        }
 					/* change voting to downvoting */
 			        else if ($(divArrowDown).hasClass('upvoting')) {
 			     	  $(divArrowDown).parent().find('.upvoting').removeClass('upvoting').addClass('downvoting');
-			          scoreDiv.html('<b>' + (parseInt(scoreDiv.text()) - 2).toString() + '</b>');
+			          scoreDiv.html((parseInt(scoreDiv.text()) - 2).toString());
 			        }
 			      }
                 }
@@ -302,9 +357,14 @@ function RecommenderXBlock(runtime, element) {
           function() {
             $('.recommender_resource').removeClass('resource_hovered');
             $(this).addClass('resource_hovered');
-            $('.descriptionImg').empty();
-            $('.descriptionImg').append('<img class="previewingImg" src="' 
-              + $(this).find('.recommender_descriptionSlot').text() + '" height=100%>');
+            $('.descriptionIntro').hide();
+            $('.previewingImg').removeClass('hidden');
+            $('.previewingImg').attr('src', $(this).find('.recommender_descriptionSlot').text());
+
+            Logger.log('resource.hover.event', {
+			  'status': 'Hovering resource',
+			  'id': $(this).find('.recommender_entryId').text()
+			});
           }, function() {
           }
         );
@@ -322,6 +382,11 @@ function RecommenderXBlock(runtime, element) {
           $('#editResourceForm').find("input[name='file']").val('');
 	      $('.edit_submit').attr('disabled', true);
 	      var divEdit = this;
+	
+	      Logger.log('editResource.click.event', {
+			'status': 'Entering edit resource mode',
+			'id': $(this).parent().parent().find('.recommender_entryId').text()
+		  });
 
 		  /* check whether enough information (title/url) is provided for editing a resource, if yes, enable summission button */
           function enableEditSubmit() {
@@ -348,9 +413,16 @@ function RecommenderXBlock(runtime, element) {
             data['title'] = $('.edit_title').val();
             data['description'] = ''
             if (data['url'] == '' || data['title'] == '') { return; }
-
-	        var formDiv = $('#editResourceForm');
+            var formDiv = $('#editResourceForm');
 			var file = new FormData($(formDiv)[0]);
+
+            Logger.log('editResource.click.event', {
+			  'status': 'Edit existing resource',
+			  'title': data['title'],
+			  'url': data['url'],
+			  'description': $(formDiv).find("input[name='file']").val(),
+			  'id': $(divEdit).parent().parent().find('.recommender_entryId').text()
+			});
 
 	        if ($(formDiv).find("input[name='file']").val() == '') { editResource(data); }
 	        else {
@@ -391,7 +463,7 @@ function RecommenderXBlock(runtime, element) {
 				    if (data["description"] != "") { $(divEdit).parent().parent().find('.recommender_descriptionSlot').text(data['description']); }
                     backToView();
                   }
-                  else { alert('add redundant resource'); }
+                  else { alert('The url you entered has been already provided by your fellows'); }
                 }
               });
             }
@@ -409,8 +481,13 @@ function RecommenderXBlock(runtime, element) {
           var flaggedResourceDiv = $(this).parent().parent();
           $('.flag_reason').val($(flaggedResourceDiv).find('.recommender_problematicReason').text());
 
+          Logger.log('flagResource.click.event', {
+			'status': 'Entering flag resource mode',
+			'id': $(flaggedResourceDiv).find('.recommender_entryId').text()
+		  });
+
           /* record the flagging once user click on the flag button */
-          if (!$(this).hasClass('problematic')){
+          if (!$(this).hasClass('problematic')) {
             data = {};
             data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
             data['reason'] = '';
@@ -421,10 +498,11 @@ function RecommenderXBlock(runtime, element) {
 	          data: JSON.stringify(data),
 	          success: function(result) {
 		        $(flagDiv).addClass('problematic');
+		        addTooltip();
 	          }
 	        });
 	      }
-	      addTooltip();
+	      
 	      $('.flag_reason_submit').unbind();
 	      $('.unflag_button').unbind();
 	
@@ -434,6 +512,13 @@ function RecommenderXBlock(runtime, element) {
             data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
             data['reason'] = $('.flag_reason').val();
             data['isProblematic'] = true;
+            Logger.log('flagResource.click.event', {
+			  'status': 'Flagging resource',
+			  'id': $(flaggedResourceDiv).find('.recommender_entryId').text(),
+			  'reason': data['reason'],
+			  'isProblematic': true
+			});
+
             $.ajax({
 	            type: "POST",
 	            url: flagResourceUrl,
@@ -450,6 +535,12 @@ function RecommenderXBlock(runtime, element) {
             data = {};
             data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
             data['isProblematic'] = false;
+            Logger.log('flagResource.click.event', {
+			  'status': 'Unflagging resource',
+			  'id': $(flaggedResourceDiv).find('.recommender_entryId').text(),
+			  'isProblematic': false
+			});
+			
             $.ajax({
 	            type: "POST",
 	            url: flagResourceUrl,
@@ -467,25 +558,9 @@ function RecommenderXBlock(runtime, element) {
       }
 
     function addTooltip() {
-      $('.resource_add_button').attr('title', 'Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource');
-      $('.resource_edit_button').attr('title', 'Edit the description, hypelink, and previewing screenshot of this resource');
-      $('.recommender_vote_arrow_up').attr('title', 'Upvote for a helpful resource');
-      $('.recommender_vote_arrow_down').attr('title', 'Downvote for an irrelevant resource');
-      $('.recommender_vote_score').attr('title', 'Votes');
-      $('.recommender_blurb').attr('title', 'The description of a helpful resource');
-      $('.previewingImg').attr('title', 'Previewing screenshot');
-      $('.in_title').attr('title', 'Type in the description of the resource');
-      $('.in_url').attr('title', 'Type in the hyperlink to the resource');
-      $('.edit_title').attr('title', 'Type in the description of the resource');
-      $('.edit_url').attr('title', 'Type in the hyperlink to the resource');
-      $('.backToViewButton').attr('title', 'Back to list of related resources');
-
-      $('.flag_reason').attr('title', 'Type in the reason why you flag the resource');
-      if ($('.flagResource').hasClass('problematic')) { $('.flagResource').attr('title', 'Unflag this problematic resource or edit the reason for it'); }
-      else { $('.flagResource').attr('title', 'Flag this resource as problematic and give the reason' ); }
-
-      if ($('.recommender_row_top').hasClass('resource_list_expanded')) { $('.recommender_row_top').attr('title', 'Select to hide the list'); }
-      else { $('.recommender_row_top').attr('title', 'Select for expanding resource list' ); }
+	  tooltipsCats.forEach(function(ele, ind) {
+		$(ele).attr('title', tooltipsCatsText[ele]);
+	  });
     }
 
     function initial() {
