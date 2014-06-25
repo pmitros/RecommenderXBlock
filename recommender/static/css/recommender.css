@@ -27,7 +27,7 @@
   padding-left: 0.5em;
   background-color: #f5efef;
   height: 40px;
-  color: darkgray;
+  color: #948f8f;
 }
 
 .recommender_row { 
@@ -79,10 +79,18 @@
 }
 
 .descriptionImg {
-  height: 400px;
+  /*height: 400px;
   overflow-x: scroll;
   margin-top: 2em;
-  float: left;
+  float: left;*/
+  height: 600px;
+  width: 700px;
+  margin-top: 2em;
+}
+
+.previewingImg {
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .recommender_vote_arrow_down {
@@ -184,12 +192,12 @@
 
 .recommender_modify_title { float: right; padding-right: 2em; overflow: auto; }
 
-.nonevoting { color: #bdbdb4; }
+.nonevoting { color: #948f8f; }
 .hide-show-icon { margin-left: 0.5em; }
 
 .recommender_vote_score.upvoting, .recommender_vote_arrow_up.upvoting { color: rgb(69, 194, 10); }
 .recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: red; }
-.recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #bdb4b4; }
+.recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #948f8f; }
 
 
 .downArrowIcon:before { content: '▼'; }
