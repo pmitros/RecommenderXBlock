@@ -31,8 +31,23 @@
                 flagMode = ''
                 reason = ''
             %>
-            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode" />
+            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode" />
           % endfor
+          <div class="recommender_resourceTemplate hidden">
+			<div class="recommender_vote_box">
+			  <div class="recommender_vote_arrow_up" role="button" aria-label="upvote" tabindex="0"><b>↑</b></div>
+			  <div class="recommender_vote_score"></div>
+			  <div class="recommender_vote_arrow_down" role="button" aria-label="downvote" tabindex="0"><b>↓</b></div>
+			</div>
+			<div class="recommender_blurb">
+			  <div class="recommender_title"><a href="" target="_blank"></a></div>
+			  <div class="recommender_descriptionText"></div>
+			  <div class="recommender_descriptionImg"></div>
+			  <div class="recommender_entryId"></div>
+			  <div class="recommender_problematicReason"></div>
+		    </div>
+			<div class="recommender_edit"> <span class="ui-icon ui-icon-pencil resource_edit_button"></span> <span class="ui-icon ui-icon-flag flagResource "></span></div>
+		  </div>
         </div>
         <div class="resource_add_button">Add new resource &gt;&gt;</div>
         <div class='pagination'>
@@ -46,7 +61,7 @@
         </div>
         <div class="recommender_description">
           <div class="descriptionImg">
-            <div class='descriptionIntro'> This is a list of resources your fellow students
+            <div class='descriptionText'> This is a list of resources your fellow students
             thought might be helpful. If you find another useful
             resource, either on edx.org or elsewhere, please add
             it. If you can improve the description or preview of a
@@ -72,14 +87,18 @@
       </div>
       <div class="editSourceBlock">
 		<div class="editSourceBlockTitle">Edit the description, hypelink, and previewing screenshot for the selected resource.</div>
-        <div style="float: left">Description&nbsp;</div><div class = 'redTxt'>*</div>
+        <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
         <textarea 
           class="edit_title" 
-          placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
+          placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea><br/>
         <div style="float: left">Location&nbsp;</div><div class = 'redTxt'>*</div>
         <input type="text" 
           class="edit_url" 
           placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
+        <div style="float: left">Description&nbsp;</div>
+        <textarea 
+          class="edit_descriptionText" 
+          placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" id="editResourceForm">
           Previewing screenshot: <input type="file" name="file"><br/>
           <input type="button" value="Save change" class="edit_submit" style="margin-top: 0.5em" disabled >
@@ -87,12 +106,18 @@
       </div>
       <div class="recommender_add">
         <div class="addSourceBlockTitle">Suggest a resource which can help other students with this problem.</div>
-        <div style="float: left">Description&nbsp;</div><div class = 'redTxt'>*</div><textarea 
+        <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
+        <textarea 
           class="in_title" 
-          placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
-        <div style="float: left">Location&nbsp;</div><div class = 'redTxt'>*</div> <input type="text" 
+          placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea><br/>
+        <div style="float: left">Location&nbsp;</div><div class = 'redTxt'>*</div>
+        <input type="text" 
           class="in_url" 
-          placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
+           placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
+        <div style="float: left">Description&nbsp;</div>
+        <textarea 
+          class="in_descriptionText" 
+          placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" id="addResourceForm">
           Previewing screenshot: <input type="file" name="file"><br/>
           <input type="button" value="Add resource" class="add_submit" style="margin-top: 0.5em" disabled >

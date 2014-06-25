@@ -188,10 +188,9 @@ class RecommenderXBlock(XBlock):
 
     @XBlock.json_handler
     def add_resource(self, data, suffix=''):
-        ''' untested '''
         resource = data['resource']
         # Construct new resource
-        valid_fields = ['url', 'title', 'description']
+        valid_fields = ['url', 'title', 'description', 'descriptionText']
         new_resource = {}
         for field in valid_fields:
             new_resource[field] = data['resource'][field]
@@ -209,8 +208,8 @@ class RecommenderXBlock(XBlock):
 
         new_resource['upvotes'] = 0
         new_resource['downvotes'] = 0
-        new_resource['isProblematic'] = "notProblematic"
-        new_resource['problematicReason'] = ""
+        #new_resource['isProblematic'] = "notProblematic"
+        #new_resource['problematicReason'] = ""
         self.recommendations.append(new_resource)
         return {"Success": True, "id": new_resource['id']}
 
@@ -223,7 +222,7 @@ class RecommenderXBlock(XBlock):
             tracker.emit('edit_resource', {'id': resource, 'error': 'bad id'})
             return {"Success": False}
 
-        valid_fields = ['url', 'title', 'description']
+        valid_fields = ['url', 'title', 'description', 'descriptionText']
         resource_log = {}
         resource_log['id'] = resource
         for field in valid_fields:
@@ -291,7 +290,7 @@ class RecommenderXBlock(XBlock):
 
         # Ideally, we'd estimate score based on votes, such that items with 1 vote have a sensible ranking (rather than a perfect rating)
         # 
-        resources = [{'id' : r['id'], 'title' : r['title'], "votes" : r['upvotes'] - r['downvotes'], 'url' : r['url'], 'description' : r['description']} for r in self.recommendations]
+        resources = [{'id' : r['id'], 'title' : r['title'], "votes" : r['upvotes'] - r['downvotes'], 'url' : r['url'], 'description' : r['description'], 'descriptionText' : r['descriptionText']} for r in self.recommendations]
         resources = sorted(resources, key = lambda r: r['votes'], reverse=True)
 
         frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources, upvotes = self.upvotes, downvotes = self.downvotes, flagId = self.flagId, flagReason = self.flagReason))
@@ -313,18 +312,15 @@ class RecommenderXBlock(XBlock):
              """<vertical_demo>
                <html_demo><img class="question" src="http://people.csail.mit.edu/swli/edx/recommendation/img/pset.png"></img></html_demo> 
                <recommender> 
-                     {"id": 1, "title": "Covalent bonding and periodic trends", "upvotes" : 15, "downvotes" : 5, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Periodic_Trends_and_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage1.png"}
-                     {"id": 2, "title": "Polar covalent bonds and electronegativity", "upvotes" : 10, "downvotes" : 7, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Covalent_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage2.png"}
-                     {"id": 3, "title": "Longest wavelength able to to break a C-C bond ...", "upvotes" : 1230, "downvotes" : 7, "url" : "https://answers.yahoo.com/question/index?qid=20081112142253AA1kQN1", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage1.png"}
-                     {"id": 4, "title": "Calculate the maximum wavelength of light for ...", "upvotes" : 10, "downvotes" : 3457, "url" : "https://answers.yahoo.com/question/index?qid=20100110115715AA6toHw", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage2.png"}
+                     {"id": 1, "title": "Covalent bonding and periodic trends", "upvotes" : 15, "downvotes" : 5, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Periodic_Trends_and_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage1.png", "descriptionText" : "short description for Covalent bonding and periodic trends"}
+                     {"id": 2, "title": "Polar covalent bonds and electronegativity", "upvotes" : 10, "downvotes" : 7, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Covalent_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage2.png", "descriptionText" : "short description for Polar covalent bonds and electronegativity"}
+                     {"id": 3, "title": "Longest wavelength able to to break a C-C bond ...", "upvotes" : 1230, "downvotes" : 7, "url" : "https://answers.yahoo.com/question/index?qid=20081112142253AA1kQN1", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage1.png", "descriptionText" : "short description for Longest wavelength able to to break a C-C bond ..."}
+                     {"id": 4, "title": "Calculate the maximum wavelength of light for ...", "upvotes" : 10, "downvotes" : 3457, "url" : "https://answers.yahoo.com/question/index?qid=20100110115715AA6toHw", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage2.png", "descriptionText" : "short description for Calculate the maximum wavelength of light for ..."}
+                     {"id": 5, "title": "Covalent bond - wave mechanical concept", "upvotes" : 10, "downvotes" : 7, "url" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage1.png", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage1.png", "descriptionText" : "short description for Covalent bond - wave mechanical concept"}
+                     {"id": 6, "title": "Covalent bond - Energetics of covalent bond", "upvotes" : 10, "downvotes" : 7, "url" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "descriptionText" : "short description for Covalent bond - Energetics of covalent bond"}
                   </recommender>
                 </vertical_demo>
              """),
-#                     {"id": 5, "title": "Covalent bond - wave mechanical concep", "upvotes" : 10, "downvotes" : 7, "url" : "", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage1.png", "isProblematic": "notProblematic"}
-#                     {"id": 6, "title": "Covalent bond - Energetics of covalent bond", "upvotes" : 10, "downvotes" : 7, "url" : "", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "isProblematic": "notProblematic"}
-#                  </recommender>
-#                </vertical_demo>
-#             """),
         ]
 
     @classmethod

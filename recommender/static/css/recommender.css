@@ -88,7 +88,14 @@
   margin-top: 2em;
 }
 
+.descriptionText { 
+  padding: 0.5em;
+  background-color: #f5efef;
+  color: #948f8f;
+}
+
 .previewingImg {
+  margin-top: 1em;
   max-width: 100%;
   max-height: 100%;
 }
@@ -129,7 +136,7 @@
   text-overflow:ellipsis;
 }
 
-.recommender_entryId, .recommender_descriptionSlot, .recommender_problematicReason {
+.recommender_entryId, .recommender_descriptionImg, .recommender_problematicReason, .recommender_descriptionText {
   display:none;
 }
 
@@ -175,15 +182,13 @@
     background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
 }
 
-.in_title, .edit_title { 
+.in_title, .edit_title, .in_descriptionText, .edit_descriptionText { 
   height: 75px;
-  position: relative;
   margin-left: 0.5em;
   width:100%;
 }
 .in_url, .edit_url, .flag_reason {
   height: 25px;
-  position: relative;
   margin-left: 0.5em;
   width:100%;
 }
@@ -206,8 +211,8 @@
 .rightArrowIcon:before { content: '►'; }
 .leftArrowIcon:before { content: '◄'; }
 .moreIcon:before { content: '...'; }
-.lightgreyBg { background-color: #f5efef; }
+.lightgreyBg { background-color: #948f8f; }
 
 a { word-break: break-all; }
-a:link { color: black; }
+a:link, a:visited { color: black; }
 form { margin: 0em; }

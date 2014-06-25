@@ -24,7 +24,7 @@ var tooltipsCatsText = {
     '.recommender_vote_arrow_up': 'Upvote for a helpful resource',
     '.recommender_vote_arrow_down': 'Downvote for an irrelevant resource',
     '.recommender_vote_score': 'Votes',
-    '.recommender_blurb': 'The description of a helpful resource',
+    '.recommender_blurb': 'The title of a helpful resource',
     '.previewingImg': 'Previewing screenshot',
     '.in_title': 'Type in the description of the resource',
     '.in_url': 'Type in the hyperlink to the resource',

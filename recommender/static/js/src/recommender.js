@@ -152,6 +152,7 @@ function RecommenderXBlock(runtime, element) {
     function addResourceReset() {
       $('.in_title').val('');
       $('.in_url').val('');
+      $('.in_descriptionText').val('');
       $('#addResourceForm').find("input[name='file']").val('');
       $('.add_submit').attr('disabled', true);
     }
@@ -176,6 +177,7 @@ function RecommenderXBlock(runtime, element) {
         data['resource'] = {};
         data['resource']['url'] = $('.in_url').val();
         data['resource']['title'] = $('.in_title').val();
+        data['resource']['descriptionText'] = $('.in_descriptionText').val();
         data['resource']['description'] = '';
         var formDiv = $('#addResourceForm');
 		var file = new FormData($(formDiv)[0]);
@@ -183,7 +185,8 @@ function RecommenderXBlock(runtime, element) {
 		  'status': 'Add new resource',
 		  'title': data['resource']['title'],
 		  'url': data['resource']['url'],
-		  'description': $(formDiv).find("input[name='file']").val()
+		  'description': $(formDiv).find("input[name='file']").val(),
+		  'descriptionText': data['resource']['descriptionText']
 		});
 		
         if ($(formDiv).find("input[name='file']").val() == '') { addResource(data); }
@@ -230,28 +233,40 @@ function RecommenderXBlock(runtime, element) {
             });
 
             /* show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
-            if (pos == -1) {
-              var toDiv = $('.recommender_resource:last');
-              currentPage = Math.ceil($('.recommender_resource').length/entriesPerPage);
-            }
+            if ($('.recommender_resource').length == 0) {
+	          $('.noResourceIntro').addClass('hidden');
+	          $('.descriptionText').show();
+              currentPage = 1;
+              var newDiv = $('.recommender_resourceTemplate').clone().removeClass('hidden').removeClass('recommender_resourceTemplate').addClass('recommender_resource');
+	        }
             else {
-              var toDiv = $('.recommender_resource:eq(' + pos.toString() + ')');
-              currentPage = Math.ceil((pos + 1)/entriesPerPage); 
+	          if (pos == -1) {
+                var toDiv = $('.recommender_resource:last');
+                currentPage = Math.ceil(($('.recommender_resource').length+1)/entriesPerPage);
+              }
+              else {
+                var toDiv = $('.recommender_resource:eq(' + pos.toString() + ')');
+                currentPage = Math.ceil((pos + 1)/entriesPerPage); 
+              }
+              var newDiv = $(toDiv).clone();
             }
             /* div for the new resource */
-            var newDiv = $(toDiv).clone();
             $(newDiv).find('.recommender_vote_arrow_up,.recommender_vote_score,.recommender_vote_arrow_down')
               .removeClass('downvoting').removeClass('upvoting').addClass('nonevoting');
             $(newDiv).find('.recommender_vote_score').text('0');
             $(newDiv).find('a').attr('href', data['resource']['url']);
             $(newDiv).find('a').text(data['resource']['title']);
-            $(newDiv).find('.recommender_descriptionSlot').text(data['resource']['description']);
+            $(newDiv).find('.recommender_descriptionImg').text(data['resource']['description']);
+			$(newDiv).find('.recommender_descriptionText').text(data['resource']['descriptionText']);
             $(newDiv).find('.recommender_entryId').text(result['id']);
             $(newDiv).find('.recommender_problematicReason').text('');
             $(newDiv).find('.flagResource').removeClass('problematic');
 
-            if (pos == -1) { $(toDiv).after(newDiv); }
-            else { $(toDiv).before(newDiv); }
+            if ($('.recommender_resource').length == 0) { $('.recommender_resourceTemplate').before(newDiv); }
+	        else {
+              if (pos == -1) { $(toDiv).after(newDiv); }
+              else { $(toDiv).before(newDiv); }
+            }
 
             addResourceReset();
             unbindEvent();
@@ -357,9 +372,10 @@ function RecommenderXBlock(runtime, element) {
           function() {
             $('.recommender_resource').removeClass('resource_hovered');
             $(this).addClass('resource_hovered');
-            $('.descriptionIntro').hide();
+//            $('.descriptionText').hide();
             $('.previewingImg').removeClass('hidden');
-            $('.previewingImg').attr('src', $(this).find('.recommender_descriptionSlot').text());
+            $('.previewingImg').attr('src', $(this).find('.recommender_descriptionImg').text());
+            $('.descriptionText').text($(this).find('.recommender_descriptionText').text());
 
             Logger.log('resource.hover.event', {
 			  'status': 'Hovering resource',
@@ -379,6 +395,7 @@ function RecommenderXBlock(runtime, element) {
           /* initialize the text area */
           $('.edit_title').val($(this).parent().parent().find('.recommender_title').find('a').text());
           $('.edit_url').val($(this).parent().parent().find('.recommender_title').find('a').attr('href'));
+          $('.edit_descriptionText').val($(this).parent().parent().find('.recommender_descriptionText').text());
           $('#editResourceForm').find("input[name='file']").val('');
 	      $('.edit_submit').attr('disabled', true);
 	      var divEdit = this;
@@ -398,10 +415,12 @@ function RecommenderXBlock(runtime, element) {
   	      }
 
 		  /* check whether the input text area is changed, if yes, check whether student can submit the resource */
-		  $('.edit_title').unbind();
-		  $('.edit_url').unbind();
-	      $('.edit_title').bind('input propertychange', function() { enableEditSubmit(); });
-	      $('.edit_url').bind('input propertychange', function() { enableEditSubmit(); });
+		  $('.edit_title,.edit_url,.edit_descriptionText').unbind();
+	      $('.edit_title,.edit_url,.edit_descriptionText').bind('input propertychange', function() { enableEditSubmit(); });
+	      $('#editResourceForm').find("input[name='file']").unbind();
+          $('#editResourceForm').find("input[name='file']").change(function() {
+			if ($(this).val() != '') { enableEditSubmit(); }
+          });
 
           /* upload the screen shot, submit the edited resource, save to database, update the current view */
           $('.edit_submit').unbind();
@@ -411,6 +430,7 @@ function RecommenderXBlock(runtime, element) {
             data['resource'] = parseInt($(divEdit).parent().parent().find('.recommender_entryId').text());
             data['url'] = $('.edit_url').val();
             data['title'] = $('.edit_title').val();
+			data['descriptionText'] = $('.edit_descriptionText').val();
             data['description'] = ''
             if (data['url'] == '' || data['title'] == '') { return; }
             var formDiv = $('#editResourceForm');
@@ -420,6 +440,7 @@ function RecommenderXBlock(runtime, element) {
 			  'status': 'Edit existing resource',
 			  'title': data['title'],
 			  'url': data['url'],
+			  'descriptionText': data['descriptionText'],
 			  'description': $(formDiv).find("input[name='file']").val(),
 			  'id': $(divEdit).parent().parent().find('.recommender_entryId').text()
 			});
@@ -460,7 +481,8 @@ function RecommenderXBlock(runtime, element) {
 				    /* show the edited resource */
 	                $(divEdit).parent().parent().find('.recommender_title').find('a').text(data['title']);
 	                $(divEdit).parent().parent().find('.recommender_title').find('a').attr('href', data['url']);
-				    if (data["description"] != "") { $(divEdit).parent().parent().find('.recommender_descriptionSlot').text(data['description']); }
+				    if (data["description"] != "") { $(divEdit).parent().parent().find('.recommender_descriptionImg').text(data['description']); }
+				    if (data["descriptionText"] != "") { $(divEdit).parent().parent().find('.recommender_descriptionText').text(data['descriptionText']); }
                     backToView();
                   }
                   else { alert('The url you entered has been already provided by your fellows'); }
@@ -487,6 +509,7 @@ function RecommenderXBlock(runtime, element) {
 		  });
 
           /* record the flagging once user click on the flag button */
+          /*
           if (!$(this).hasClass('problematic')) {
             data = {};
             data['resource'] = parseInt($(flaggedResourceDiv).find('.recommender_entryId').text());
@@ -502,7 +525,7 @@ function RecommenderXBlock(runtime, element) {
 	          }
 	        });
 	      }
-	      
+	      */
 	      $('.flag_reason_submit').unbind();
 	      $('.unflag_button').unbind();
 	
@@ -575,7 +598,8 @@ function RecommenderXBlock(runtime, element) {
 	  bindEvent();
 	
 	  if ($('.recommender_resource').length == 0) {
-		$('.noResourceIntro').show();
+		$('.noResourceIntro').removeClass('hidden');
+		$('.descriptionText').hide();
 	  }
     }
     initial();
