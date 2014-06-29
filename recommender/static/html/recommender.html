@@ -5,7 +5,7 @@
   <div class="recommender_recommendations">
     <div class="recommender_content">
       <div class="recommender_row_top hide-show resource_list_expanded">
-        Related resources<div class='recommender_panel'> <span class='hide-show-icon upArrowIcon'></span> </div>
+        Related Resources<div class='recommender_panel'> <span class='hide-show-icon upArrowIcon'></span> </div>
       </div>
       <div class='recommender_row_inner'>
         <div class="recommender_row">
@@ -17,16 +17,16 @@
           </div>
           % for elem in resources:
             <%
-              if elem['id'] in downvotes:
+              if elem['id'] in downvotedIds:
                 voteMode = "downvoting"
-              elif elem['id'] in upvotes:
+              elif elem['id'] in upvotedIds:
                 voteMode = 'upvoting'
               else:
-                voteMode = 'nonevoting'
+	            voteMode = ''
         
-              if elem['id'] in flagId:
+              if elem['id'] in flaggedIds:
                 flagMode = 'problematic'
-                reason = flagReason[flagId.index(elem['id'])]
+                reason = flaggedReasons[flaggedIds.index(elem['id'])]
               else:
                 flagMode = ''
                 reason = ''
@@ -77,13 +77,19 @@
     </div>
     <div class='recommender_modify'>
       <div class='recommender_modify_title_container'><div class='backToViewButton'>&lt; Related resources</div><div class='recommender_modify_title'></div></div>
+      <div class="staffEditionBlock">
+        <div class="staffEditionBlockTitle">Delete, endorse or de-endorse a resource.</div>
+        <input type="button" value="Delete resource" class="delete_resource">
+        <input type="button" value="Endorse resource" class="endorse_resource">
+        <input type="button" value="De-endorse resource" class="deendorse_resource">
+      </div>
       <div class="flagSourceBlock">
         <div class="flagSourceBlockTitle">Why would you like to flag this resource?</div>
         <input type="text" 
           class="flag_reason" 
           name="flag_rationale"
           placeholder="Reason for why this resource should be removed"/><br/>
-        <input type="button" value="Flag resource" class="flag_reason_submit" style="margin-top: 0.5em;">
+        <input type="button" value="Flag resource" class="flag_reason_submit">
       </div>
       <div class="editSourceBlock">
 		<div class="editSourceBlockTitle">Edit the description, hypelink, and previewing screenshot for the selected resource.</div>
@@ -101,7 +107,7 @@
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" id="editResourceForm">
           Previewing screenshot: <input type="file" name="file"><br/>
-          <input type="button" value="Save change" class="edit_submit" style="margin-top: 0.5em" disabled >
+          <input type="button" value="Save change" class="edit_submit" disabled >
         </form>
       </div>
       <div class="recommender_add">
@@ -120,7 +126,7 @@
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" id="addResourceForm">
           Previewing screenshot: <input type="file" name="file"><br/>
-          <input type="button" value="Add resource" class="add_submit" style="margin-top: 0.5em" disabled >
+          <input type="button" value="Add resource" class="add_submit" disabled >
         </form>
       </div>
     </div>

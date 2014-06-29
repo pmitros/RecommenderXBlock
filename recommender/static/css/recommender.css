@@ -22,13 +22,16 @@
 .recommender_row_top, .recommender_modify_title_container { 
 /*  overflow:scroll;
   max-height:200px;*/
-  font-size: 20px;
+  font-size: 14px;
   padding-top: 0.5em;
   padding-left: 0.5em;
   background-color: #f5efef;
-  height: 40px;
+  height: 28px;
   color: #948f8f;
 }
+
+.recommender_row_top:before { content: 'Show'; }
+.recommender_row_top.resource_list_expanded:before { content: 'Hide'; }
 
 .recommender_row { 
   height: 380px;
@@ -131,9 +134,9 @@
 .recommender_blurb {
   display:inline-block;
   vertical-align: middle;
-  width:525px;
+  width:585px;
   overflow:hidden;
-  text-overflow:ellipsis;
+  word-wrap: break-word;
 }
 
 .recommender_entryId, .recommender_descriptionImg, .recommender_problematicReason, .recommender_descriptionText {
@@ -157,7 +160,7 @@
   color: red;
 }
 
-.recommender_vote_arrow_down, .recommender_vote_arrow_up, .recommender_title, .resource_edit_button, .flagResource, .resource_add_button, .hide-show, .paginationCell, .backToViewButton { cursor: pointer; }
+.recommender_vote_arrow_down, .recommender_vote_arrow_up, .recommender_title, .resource_edit_button, .flagResource, .staffEdition, .resource_add_button, .hide-show, .paginationCell, .backToViewButton { cursor: pointer; }
 
 .resource_add_button { text-align: right; font-weight: bold; }
 .resource_edit_button { float: left; }
@@ -178,6 +181,10 @@
 
 .backToViewButton { color: #1d9dd9; float: left; }
 
+.flag_reason_submit, .edit_submit, .add_submit { margin-top: 0.5em; }
+
+.delete_resource, .endorse_resource, .deendorse_resource { margin-top: 0.5em; float:left; }
+
 .ui-icon.problematic {
     background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
 }
@@ -197,9 +204,9 @@
 
 .recommender_modify_title { float: right; padding-right: 2em; overflow: auto; }
 
-.nonevoting { color: #948f8f; }
 .hide-show-icon { margin-left: 0.5em; }
 
+.recommender_vote_score, .recommender_vote_arrow_up, .recommender_vote_arrow_down { color: #948f8f; }
 .recommender_vote_score.upvoting, .recommender_vote_arrow_up.upvoting { color: rgb(69, 194, 10); }
 .recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: red; }
 .recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #948f8f; }
@@ -213,6 +220,5 @@
 .moreIcon:before { content: '...'; }
 .lightgreyBg { background-color: #948f8f; }
 
-a { word-break: break-all; }
 a:link, a:visited { color: black; }
 form { margin: 0em; }

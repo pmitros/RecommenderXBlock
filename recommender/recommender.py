@@ -5,12 +5,12 @@ import json, string, random, re
 import pkg_resources
 
 try:
-	from eventtracking import tracker
+    from eventtracking import tracker
 except:
-	class tracker:
-		@staticmethod
-		def emit(a,b):
-			pass
+    class tracker:
+        @staticmethod
+        def emit(a,b):
+            pass
 
 from mako.template import Template
 from mako.lookup import TemplateLookup
@@ -24,252 +24,372 @@ from webob.response import Response
 
 aws_access_key_env='AKIAIRDHSV6YZJZ4RFGA'
 aws_secret_key_env='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'
- 
-class HelpResource(dict):
-    def __str__(self):
-        return json.dumps(self)
-    def __init__(s):
-        if isinstance(s, str):
-            self.update(json.loads(s))
-        elif isinstance(s, dict):
-            self.update(s)
-        else:
-            raise TypeError("Inappropriate type "+str(type(s))+" initializing HelpResource. Should be str or dict")
-        for e,t in (('id', int), ('title', str), ('url', str), ('upvotes', int), ('downvotes', int), ('description', str)):
-            if e not in self:
-                raise TypeError("Insufficient fields initializing HelpResource. "+e+" required.")
-            if not isinstance(self["e"], t):
-                raise TypeError("Incorrect field type initializing HelpResource. "+e+" should be "+str(t)+". It is "+type(self[e]))
-
-    @property
-    def title(self):
-        return self["title"]
-    @title.setter
-    def title(self, newtitle):
-        self["title"] = newtitle
-    @property
-    def url(self):
-        return self["url"]
-    @url.setter
-    def url(self, newurl):
-        self["url"] = newurl
-    @property
-    def upvotes(self):
-        return self["upvotes"]
-    @upvotes.setter
-    def upvotes(self, newupvotes):
-        self["upvotes"] = newupvotes
-    @property
-    def downvotes(self):
-        return self["downvotes"]
-    @downvotes.setter
-    def downvotes(self, newdownvotes):
-        self["downvotes"] = newdownvotes
+bucketName='danielswli'
+uploadedFileDir = 'uploads/'
 
 class RecommenderXBlock(XBlock):
     """
-    This XBlock will show a set of recommended resources
+    This XBlock will show a set of recommended resources provided by students.
     """
     # Scope-wide. List of JSON objects corresponding to recommendations combine XML and user. 
     default_recommendations = List(help="List of help resources", default=[], scope=Scope.content)
     # Scope-wide. List of JSON objects corresponding to recommendations as defined in XML. 
     recommendations = List(help="List of help resources", default=[], scope=Scope.user_state_summary)
-    # Upvotes for this particular user
-    upvotes = List(help="List of items user gave upvote to", default=[], scope=Scope.user_state)
-    # Downvotes for this particular user
-    downvotes = List(help="List of items user gave downvote to", default=[], scope=Scope.user_state)
-    # Flag resource id (for problematic resource) for this particular user
-    flagId = List(help="List of items user flagged to", default=[], scope=Scope.user_state)
-    # Flag resource reason (for problematic resource) for this particular user
-    flagReason = List(help="List of reasons of items user flagged to", default=[], scope=Scope.user_state)
+    # List of deleted recommendation ID.
+    deletedRecommendationIds = List(help="List of help resources", default=[], scope=Scope.user_state_summary)
+    # Ids of upvoted resources for this particular user
+    upvotedIds = List(help="List of items user gave upvote to", default=[], scope=Scope.user_state)
+    # Ids of downvoted resources for this particular user
+    downvotedIds = List(help="List of items user gave downvote to", default=[], scope=Scope.user_state)
+    # Ids of flagged resource (problematic resource) for this particular user
+    flaggedIds = List(help="List of items user flagged to", default=[], scope=Scope.user_state)
+    # Reasons of flagged resource (problematic resource) for this particular user
+    flaggedReasons = List(help="List of reasons of items user flagged to", default=[], scope=Scope.user_state)
     
     template_lookup = None
+    resource_content_fields = ['url', 'title', 'description', 'descriptionText']
 
     def resource_string(self, path):
-        """Handy helper for getting resources from our kit."""
+        """Handy helper for getting static file resources from our Python package."""
         data = pkg_resources.resource_string(__name__, path)
         return data.decode("utf8")
 
     def getResourceNewId(self):
-        recoms = self.recommendations
-        if not recoms:
-            recoms = self.default_recommendations
+        """
+        Generate a unique Id for each resource.
+        """
+        recommendations = self.recommendations
+        if not recommendations:
+            recommendations = self.default_recommendations
         resourceId = -1
-        for recom in recoms:
-            if recom['id'] > resourceId:
-                resourceId = recom['id']
+        for recommendation in recommendations:
+            if recommendation['id'] > resourceId:
+                resourceId = recommendation['id']
+        for deletedRecommendationId in self.deletedRecommendationIds:
+            if deletedRecommendationId > resourceId:
+                resourceId = deletedRecommendationId
         return resourceId + 1
 
     def getEntryIndex(self, entryId, entryList):
+        """
+        Get the element index in a list based on its ID.
+        """
         for idx in range(0, len(entryList)):
             if entryList[idx]['id'] == entryId:
                 return idx
         return -1
 
     @XBlock.json_handler
+    def delete_resource(self, data, suffix=''):
+        """
+        Delete an entry of resource.
+        
+        Args:
+                data: dict in JSON format
+                data['id']: the ID of the resouce to be deleted
+        Returns:
+                result: dict in JSON format
+                result['Success']: the boolean indicator for whether the deletion is complete
+                result['error']: the error message generated when the deletion fails
+                result[resource_content_field]: the content of the deleted resource
+        """
+        resourceId = data['id']
+        result = {}
+        result['id'] = resourceId
+        idx = self.getEntryIndex(resourceId, self.recommendations)
+        if idx not in range(0, len(self.recommendations)):
+            result['error'] = 'bad id';
+            tracker.emit('delete_resource', result)
+            result['Success'] = False
+            return result
+        
+        result['upvotes'] = self.recommendations[idx]['upvotes']
+        result['downvotes'] = self.recommendations[idx]['downvotes']
+        for field in self.resource_content_fields:
+            result[field] = self.recommendations[idx][field]
+        tracker.emit('delete_resource', result)
+        self.deletedRecommendationIds.append(resourceId)
+        del self.recommendations[idx]
+        result['Success'] = True
+        return result
+
+    @XBlock.json_handler
     def handle_upvote(self, data, suffix=''):
-      ''' untested '''
-      resource = data['resource']
-      idx = self.getEntryIndex(resource, self.recommendations)
-      oldVotes = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
-      if resource in self.upvotes:
-        del self.upvotes[self.upvotes.index(resource)]
-        self.recommendations[idx]['upvotes'] -= 1
-        tracker.emit('recommender_upvote', {'id': resource, 'oldVotes': oldVotes, 'newVotes': self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']})
-        print "Upvote unclicked!"
-        return {"Success": True}
+        """
+        Add one vote to an entry of resource.
+        
+        Args:
+                data: dict in JSON format
+                data['id']: the ID of the resouce which was upvoted
+        Returns:
+                result: dict in JSON format
+                result['Success']: the boolean indicator for whether the process of this voting action is complete
+                result['error']: the error message generated when the process fails
+                result['oldVotes']: the original votes
+                result['newVotes']: the votes after this action
+                result['toggle']: the boolean indicator for whether the resource was switched from downvoted to upvoted
+        """
+        resourceId = data['id']
+        idx = self.getEntryIndex(resourceId, self.recommendations)
+        result = {}
+        result['id'] = resourceId
+        if idx not in range(0, len(self.recommendations)):
+            result['error'] = 'bad id';
+            tracker.emit('recommender_upvote', result)
+            result['Success'] = False
+            return result
+
+        result['oldVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+        if resourceId in self.upvotedIds:
+            del self.upvotedIds[self.upvotedIds.index(resourceId)]
+            self.recommendations[idx]['upvotes'] -= 1
+            result['newVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+            tracker.emit('recommender_upvote', result)
+            result['Success'] = True
+            return result
     
-      if resource in self.downvotes:
-        del self.downvotes[self.downvotes.index(resource)]
-        self.recommendations[idx]['downvotes'] -= 1
-      self.upvotes.append(resource)
-      self.recommendations[idx]['upvotes'] += 1
-      tracker.emit('recommender_upvote', {'id': resource, 'oldVotes': oldVotes, 'newVotes': self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']})
-      print "Upvote clicked!"
-      return {"Success": True}
+        if resourceId in self.downvotedIds:
+            del self.downvotedIds[self.downvotedIds.index(resourceId)]
+            self.recommendations[idx]['downvotes'] -= 1
+            result['toggle'] = True
+        self.upvotedIds.append(resourceId)
+        self.recommendations[idx]['upvotes'] += 1
+        result['newVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+        tracker.emit('recommender_upvote', result)
+        result['Success'] = True
+        return result
 
     @XBlock.json_handler
     def handle_downvote(self, data, suffix=''):
-      ''' untested '''
-      resource = data['resource']
-      idx = self.getEntryIndex(resource, self.recommendations)
-      oldVotes = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
-      if resource in self.downvotes:
-        del self.downvotes[self.downvotes.index(resource)]
-        self.recommendations[idx]['downvotes'] -= 1
-        tracker.emit('recommender_downvote', {'id': resource, 'oldVotes': oldVotes, 'newVotes': self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']})
-        print "Downvote unclicked!"
-        return {"Success": True}
+        """
+        Subtract one vote from an entry of resource.
+        
+        Args:
+                data: dict in JSON format
+                data['id']: the ID of the resouce which was downvoted
+        Returns:
+                result: dict in JSON format
+                result['Success']: the boolean indicator for whether the process of this voting action is complete
+                result['error']: the error message generated when the process fails
+                result['oldVotes']: the original votes
+                result['newVotes']: the votes after this action
+                result['toggle']: the boolean indicator for whether the resource was switched from upvoted to downvoted
+        """
+        resourceId = data['id']
+        idx = self.getEntryIndex(resourceId, self.recommendations)
+        result = {}
+        result['id'] = resourceId
+        if idx not in range(0, len(self.recommendations)):
+            result['error'] = 'bad id';
+            tracker.emit('recommender_downvote', result)
+            result['Success'] = False
+            return result
+
+        result['oldVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+        if resourceId in self.downvotedIds:
+            del self.downvotedIds[self.downvotedIds.index(resourceId)]
+            self.recommendations[idx]['downvotes'] -= 1
+            result['newVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+            tracker.emit('recommender_downvote', result)
+            result['Success'] = True
+            return result
     
-      if resource in self.upvotes:
-        del self.upvotes[self.upvotes.index(resource)]
-        self.recommendations[idx]['upvotes'] -= 1
-      self.downvotes.append(resource)
-      self.recommendations[idx]['downvotes'] += 1
-      tracker.emit('recommender_downvote', {'id': resource, 'oldVotes': oldVotes, 'newVotes': self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']})
-      print "Downvote clicked!"
-      return {"Success": True}
+        if resourceId in self.upvotedIds:
+            del self.upvotedIds[self.upvotedIds.index(resourceId)]
+            self.recommendations[idx]['upvotes'] -= 1
+            result['toggle'] = True
+        self.downvotedIds.append(resourceId)
+        self.recommendations[idx]['downvotes'] += 1
+        result['newVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+        tracker.emit('recommender_downvote', result)
+        result['Success'] = True
+        return result
 
     @XBlock.handler
     def upload_screenshot(self, request, suffix=''):
+        """
+        Upload a screenshot for an entry of resource as a preview, to S3.
+        
+        Args:
+                request: HTTP POST request
+                request.POST['file'].file: the file to be uploaded
+        Returns:
+                response: HTTP response
+                response.body (response.responseText): name of the uploaded file
+        Env variables:
+                aws_access_key_env: s3 access key
+                aws_secret_key_env: s3 secret key
+                bucket: name of the s3 bucket
+        """
         chars=string.ascii_uppercase + string.digits
-        size=11
-        fileDir = 'uploads/'
+        fileNameLength=11
 
-        if re.search('.png$', str(request.POST['file'].file)):
-            filetype = '.png'
-        elif re.search('.jpg$', str(request.POST['file'].file)):
-            filetype = '.jpg'
-        else:
+        fileType = ''
+        allowedTypes = ['.png', '.jpg', '.gif']
+        for allowedType in allowedTypes:
+            if str(request.POST['file'].file).endswith(allowedType):
+                fileType = allowedType
+        if fileType == '':
             tracker.emit('upload_screenshot', {'uploadedFileName': 'FILETYPEERROR'})
-            print "Wrong file type"
             response = Response()
             response.body = 'FILETYPEERROR'
             response.headers['Content-Type'] = 'text/plain'
             return response
     
-        myS3FS = S3FS('danielswli', aws_access_key=aws_access_key_env, aws_secret_key=aws_secret_key_env)
+        S3FS_handler = S3FS(bucketName, aws_access_key=aws_access_key_env, aws_secret_key=aws_secret_key_env)
         while True:
-            file_id = ''.join(random.choice(chars) for _ in range(size))
-            filename = fileDir + file_id + filetype
-            if not myS3FS.exists(filename):
+            fileId = ''.join(random.choice(chars) for _ in range(fileNameLength))
+            fileName = uploadedFileDir + fileId + fileType
+            if not S3FS_handler.exists(fileName):
                 break
         content = request.POST['file'].file.read()
-        fhwrite = myS3FS.open(filename, 'wb')
+        fhwrite = S3FS_handler.open(fileName, 'wb')
         fhwrite.write(content)
         fhwrite.close()
-        myS3FS.makepublic(filename)
+        S3FS_handler.makepublic(fileName)
 
         response = Response()
-        response.body = filename
+        response.body = fileName
         response.headers['Content-Type'] = 'text/plain'
-        tracker.emit('upload_screenshot', {'uploadedFileName': filename})
+        tracker.emit('upload_screenshot', {'uploadedFileName': fileName})
         return response
 
     @XBlock.json_handler
     def add_resource(self, data, suffix=''):
-        resource = data['resource']
+        """
+        Add an entry of new resource.
+        
+        Args:
+                data: dict in JSON format
+                data[resource_content_field]: the content of the resource to be added
+        Returns:
+                result: dict in JSON format
+                result['Success']: the boolean indicator for whether the addition is complete
+                result['error']: the error message generated when the addition fails
+                result[resource_content_field]: the content of the added resource
+        """
         # Construct new resource
-        valid_fields = ['url', 'title', 'description', 'descriptionText']
-        new_resource = {}
-        for field in valid_fields:
-            new_resource[field] = data['resource'][field]
+        result = {}
+        for field in self.resource_content_fields:
+            result[field] = data[field]
 
         # check url for redundancy
-        for recom in self.recommendations:
-            if recom['url'] == data['resource']['url']:
-                print "add redundant resource"
-                new_resource['error'] = 'redundant resource'
-                tracker.emit('add_resource', new_resource)
-                return {"Success": False}
+        for recommendation in self.recommendations:
+            if recommendation['url'] == data['url']:
+                result['error'] = 'redundant resource'
+                tracker.emit('add_resource', result)
+                result['Success'] = False
+                return result
 
-        new_resource['id'] = self.getResourceNewId()
-        tracker.emit('add_resource', new_resource)
+        result['id'] = self.getResourceNewId()
+        tracker.emit('add_resource', result)
 
-        new_resource['upvotes'] = 0
-        new_resource['downvotes'] = 0
-        #new_resource['isProblematic'] = "notProblematic"
-        #new_resource['problematicReason'] = ""
-        self.recommendations.append(new_resource)
-        return {"Success": True, "id": new_resource['id']}
+        result['upvotes'] = 0
+        result['downvotes'] = 0
+        self.recommendations.append(dict(result))
+        result['Success'] = True
+        return result
 
     @XBlock.json_handler
     def edit_resource(self, data, suffix=''):
-        resource = data['resource']
-        idx = self.getEntryIndex(resource, self.recommendations)
+        """
+        Edit an entry of existing resource.
+        
+        Args:
+                data: dict in JSON format
+                data['id']: the ID of the edited resouce
+                data[resource_content_field]: the content of the resource to be edited
+        Returns:
+                result: dict in JSON format
+                result['Success']: the boolean indicator for whether the edit is complete
+                result['error']: the error message generated when the edit fails
+                result[old_resource_content_field]: the content of the resource before edited
+                result[resource_content_field]: the content of the resource after edited
+        """
+        resourceId = data['id']
+        result = {}
+        result['id'] = resourceId
+        idx = self.getEntryIndex(resourceId, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            print "Edit failed!"
-            tracker.emit('edit_resource', {'id': resource, 'error': 'bad id'})
-            return {"Success": False}
+            result['error'] = 'bad id';
+            tracker.emit('edit_resource', result)
+            result['Success'] = False
+            return result
 
-        valid_fields = ['url', 'title', 'description', 'descriptionText']
-        resource_log = {}
-        resource_log['id'] = resource
-        for field in valid_fields:
-            resource_log['old_' + field] = self.recommendations[idx][field]
-            resource_log[field] = data[field]
+        for field in self.resource_content_fields:
+            result['old_' + field] = self.recommendations[idx][field]
+            result[field] = data[field]
         # check url for redundancy
         if self.recommendations[idx]['url'] != data['url']:
-            for recom in self.recommendations:
-                if recom['url'] == data['url']:
-                    resource_log['error'] = 'existing url'
-                    for field in valid_fields:
-                        resource_log['dup_' + field] = self.recommendations[self.recommendations.index(recom)][field]
-                    resource_log['dup_id'] = self.recommendations[self.recommendations.index(recom)]['id']
-                    print "provided url is existing"
-                    tracker.emit('edit_resource', resource_log)
-                    return {"Success": False}
+            for recommendation in self.recommendations:
+                if recommendation['url'] == data['url']:
+                    result['error'] = 'existing url'
+                    for field in self.resource_content_fields:
+                        result['dup_' + field] = self.recommendations[self.recommendations.index(recommendation)][field]
+                    result['dup_id'] = self.recommendations[self.recommendations.index(recommendation)]['id']
+                    tracker.emit('edit_resource', result)
+                    result['Success'] = False
+                    return result
 
-        for key in data:
-          if key == 'resource':
-            continue
-          if data[key] == "":
-            continue
-          self.recommendations[idx][key] = data[key]
-        tracker.emit('edit_resource', resource_log)
-        return {"Success": True}
+        for field in data:
+            if field == 'id':
+                continue
+            if data[field] == "":
+                continue
+            self.recommendations[idx][field] = data[field]
+        tracker.emit('edit_resource', result)
+        result['Success'] = True
+        return result
 
     @XBlock.json_handler
     def flag_resource(self, data, suffix=''):
-        flagLog = {}
-        flagLog['id'] = data['resource']
-        flagLog['isProblematic'] = data['isProblematic']
-        flagLog['reason'] = data['reason']
+        """
+        Flag (or unflag) an entry of problematic resource and give the reason.
+        
+        Args:
+                data: dict in JSON format
+                data['id']: the ID of the problematic resouce
+                data['isProblematic']: the boolean indicator for whether the resource is problematic
+                data['reason']: the reason why the user believes the resource is problematic
+        Returns:
+                result: dict in JSON format
+                result['Success']: the boolean indicator for whether the edit is complete
+                result['reason']: the new reason
+                result['oldReason']: the old reason
+                result['id']: the ID of the problematic resouce
+                result['isProblematic']: the boolean indicator for whether the resource is problematic
+        """
+        result = {}
+        result['id'] = data['id']
+        result['isProblematic'] = data['isProblematic']
+        result['reason'] = data['reason']
         if data['isProblematic'] == True:
-            if data['resource'] in self.flagId:
-                flagLog['oldReason'] = self.flagReason[self.flagId.index(data['resource'])]
-                self.flagReason[self.flagId.index(data['resource'])] = data['reason']
+            if data['id'] in self.flaggedIds:
+                result['oldReason'] = self.flaggedReasons[self.flaggedIds.index(data['id'])]
+                self.flaggedReasons[self.flaggedIds.index(data['id'])] = data['reason']
             else:
-                self.flagId.append(data['resource'])
-                self.flagReason.append(data['reason'])
+                self.flaggedIds.append(data['id'])
+                self.flaggedReasons.append(data['reason'])
         else:
-            if data['resource'] in self.flagId:
-                flagLog['oldReason'] = self.flagReason[self.flagId.index(data['resource'])]
-                idx = self.flagId.index(data['resource'])
-                del self.flagId[idx]
-                del self.flagReason[idx]
-        tracker.emit('flag_resource', flagLog)
-        return {"Success": True}
+            if data['id'] in self.flaggedIds:
+                result['oldReason'] = self.flaggedReasons[self.flaggedIds.index(data['id'])]
+                result['reason'] = ''
+                idx = self.flaggedIds.index(data['id'])
+                del self.flaggedIds[idx]
+                del self.flaggedReasons[idx]
+        tracker.emit('flag_resource', result)
+        result['Success'] = True
+        return result
+
+    @XBlock.json_handler
+    def is_user_staff(self, data, suffix=''):
+        """
+        Return whether the user is staff.
+        
+        Returns:
+                is_user_staff: indicator for whether the user is staff 
+        """
+        return {'is_user_staff': self.xmodule_runtime.user_is_staff}
 
     # TO-DO: change this view to display your data your own way.
     def student_view(self, context=None):
@@ -277,7 +397,7 @@ class RecommenderXBlock(XBlock):
         The primary view of the RecommenderXBlock, shown to students
         when viewing courses.
         """
-        print "entered"
+
         if not self.recommendations:
             self.recommendations = self.default_recommendations
         if not self.recommendations:
@@ -293,7 +413,7 @@ class RecommenderXBlock(XBlock):
         resources = [{'id' : r['id'], 'title' : r['title'], "votes" : r['upvotes'] - r['downvotes'], 'url' : r['url'], 'description' : r['description'], 'descriptionText' : r['descriptionText']} for r in self.recommendations]
         resources = sorted(resources, key = lambda r: r['votes'], reverse=True)
 
-        frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources, upvotes = self.upvotes, downvotes = self.downvotes, flagId = self.flagId, flagReason = self.flagReason))
+        frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources, upvotedIds = self.upvotedIds, downvotedIds = self.downvotedIds, flaggedIds = self.flaggedIds, flaggedReasons = self.flaggedReasons))
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/recommender.css"))
@@ -337,7 +457,6 @@ class RecommenderXBlock(XBlock):
         for line in node.text.split('\n'):
             line = line.strip()
             if len(line) > 2:
-                print "Decoding", line
                 lines.append(json.loads(line))
     
         block.default_recommendations = lines
