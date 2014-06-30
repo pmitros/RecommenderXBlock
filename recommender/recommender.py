@@ -16,16 +16,11 @@ from mako.template import Template
 from mako.lookup import TemplateLookup
 
 from xblock.core import XBlock
-from xblock.fields import Scope, Integer, String, BlockScope, List
+from xblock.fields import Scope, Integer, String, BlockScope, List, Dict
 from xblock.fragment import Fragment
 
 from fs.s3fs import S3FS
 from webob.response import Response
-
-aws_access_key_env='AKIAIRDHSV6YZJZ4RFGA'
-aws_secret_key_env='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'
-bucketName='danielswli'
-uploadedFileDir = 'uploads/'
 
 class RecommenderXBlock(XBlock):
     """
@@ -33,8 +28,10 @@ class RecommenderXBlock(XBlock):
     """
     # Scope-wide. List of JSON objects corresponding to recommendations combine XML and user. 
     default_recommendations = List(help="List of help resources", default=[], scope=Scope.content)
-    # Scope-wide. List of JSON objects corresponding to recommendations as defined in XML. 
+    # Block-wide. List of JSON objects corresponding to recommendations as defined in XML. 
     recommendations = List(help="List of help resources", default=[], scope=Scope.user_state_summary)
+    # Block-wide. Dict of JSON objects corresponding to configurations of amazon web service for file uploading. 
+    s3_configuration = Dict(help="List of help resources", default={}, scope=Scope.user_state_summary)
     # List of deleted recommendation ID.
     deletedRecommendationIds = List(help="List of help resources", default=[], scope=Scope.user_state_summary)
     # Ids of upvoted resources for this particular user
@@ -217,10 +214,17 @@ class RecommenderXBlock(XBlock):
                 response: HTTP response
                 response.body (response.responseText): name of the uploaded file
         Env variables:
-                aws_access_key_env: s3 access key
-                aws_secret_key_env: s3 secret key
+                aws_access_key: s3 access key
+                aws_secret_key: s3 secret key
                 bucket: name of the s3 bucket
         """
+        if self.s3_configuration == {}:
+            tracker.emit('upload_screenshot', {'uploadedFileName': 'IMPROPER_S3_SETUP'})
+            response = Response()
+            response.body = 'IMPROPER_S3_SETUP'
+            response.headers['Content-Type'] = 'text/plain'
+            return response
+
         chars=string.ascii_uppercase + string.digits
         fileNameLength=11
 
@@ -235,21 +239,34 @@ class RecommenderXBlock(XBlock):
             response.body = 'FILETYPEERROR'
             response.headers['Content-Type'] = 'text/plain'
             return response
-    
-        S3FS_handler = S3FS(bucketName, aws_access_key=aws_access_key_env, aws_secret_key=aws_secret_key_env)
-        while True:
-            fileId = ''.join(random.choice(chars) for _ in range(fileNameLength))
-            fileName = uploadedFileDir + fileId + fileType
-            if not S3FS_handler.exists(fileName):
-                break
-        content = request.POST['file'].file.read()
-        fhwrite = S3FS_handler.open(fileName, 'wb')
-        fhwrite.write(content)
-        fhwrite.close()
-        S3FS_handler.makepublic(fileName)
 
+        try:
+            fileId = ''
+            fileName = ''
+            S3FS_handler = S3FS(self.s3_configuration['bucketName'], aws_access_key=self.s3_configuration['aws_access_key'], aws_secret_key=self.s3_configuration['aws_secret_key'])
+            while True:
+                fileId = ''.join(random.choice(chars) for _ in range(fileNameLength))
+                fileName = str(self.s3_configuration['uploadedFileDir']) + fileId + fileType
+                if not S3FS_handler.exists(fileName):
+                    break
+            dirUrl = S3FS_handler.getpathurl("/")
+            content = request.POST['file'].file.read()
+            fhwrite = S3FS_handler.open(fileName, 'wb')
+            fhwrite.write(content)
+            fhwrite.close()
+            S3FS_handler.makepublic(fileName)
+        except:
+            tracker.emit('upload_screenshot', {'uploadedFileName': 'IMPROPER_S3_SETUP'})
+            response = Response()
+            response.body = 'IMPROPER_S3_SETUP'
+            response.headers['Content-Type'] = 'text/plain'
+            return response
+       
         response = Response()
-        response.body = fileName
+        if self.s3_configuration['uploadedFileDir'] == "/":
+            response.body = str(dirUrl + fileId + fileType)
+        else:
+            response.body = str(dirUrl + self.s3_configuration['uploadedFileDir'] + fileId + fileType)
         response.headers['Content-Type'] = 'text/plain'
         tracker.emit('upload_screenshot', {'uploadedFileName': fileName})
         return response
@@ -391,7 +408,30 @@ class RecommenderXBlock(XBlock):
         """
         return {'is_user_staff': self.xmodule_runtime.user_is_staff}
 
-    # TO-DO: change this view to display your data your own way.
+    @XBlock.json_handler
+    def set_s3_info(self, data, suffix=''):
+        """
+        Set required information of amazon web service for file uploading.
+
+        Args:
+                data: dict in JSON format
+                data['aws_access_key']: Amazon Web Services access key
+                data['aws_secret_key']: Amazon Web Services secret key
+                data['bucketName']: Bucket name of your Amazon Web Services
+                data['uploadedFileDir']: Directory for your upload files
+        Returns:
+                result['Success']: the boolean indicator for whether the setting is complete
+        """
+        print 
+        self.s3_configuration['aws_access_key'] = data['aws_access_key']
+        self.s3_configuration['aws_secret_key'] = data['aws_secret_key']
+        self.s3_configuration['bucketName'] = data['bucketName']
+        if data['uploadedFileDir'][len(data['uploadedFileDir'])-1] == '/':
+            self.s3_configuration['uploadedFileDir'] = data['uploadedFileDir']
+        else:
+            self.s3_configuration['uploadedFileDir'] = data['uploadedFileDir'] + '/'
+        return {'Success': True}
+
     def student_view(self, context=None):
         """
         The primary view of the RecommenderXBlock, shown to students

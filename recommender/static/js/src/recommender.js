@@ -14,9 +14,9 @@ function RecommenderXBlock(runtime, element) {
 	var uploadScreenshotUrl = runtime.handlerUrl(element, 'upload_screenshot');
 	var isUserStaffUrl = runtime.handlerUrl(element, 'is_user_staff');
 	var deleteResourceUrl = runtime.handlerUrl(element, 'delete_resource');
+	var setS3InfoUrl = runtime.handlerUrl(element, 'set_s3_info');
 
     /* Parameters for resource display */
-	var baseUrl = 'http://s3-us-west-2.amazonaws.com/danielswli/';
 	var currentPage = 1;
 	var entriesPerPage = 5;
 	var pageSpan = 2;
@@ -158,9 +158,8 @@ function RecommenderXBlock(runtime, element) {
 
 	/* Initialize resource addition mode */
 	function addResourceReset() {
-		$('.in_title').val('');
-		$('.in_url').val('');
-		$('.in_descriptionText').val('');
+		$('.recommender_add').find('input[type="text"]').val('');
+		$('.recommender_add').find('textarea').val('')
 		$('#addResourceForm').find("input[name='file']").val('');
 		$('.add_submit').attr('disabled', true);
 	}
@@ -215,9 +214,13 @@ function RecommenderXBlock(runtime, element) {
 						alert('Please upload an image');
 						$(formDiv).find("input[name='file']").val('');
 					}
+					else if (result.responseText == 'IMPROPER_S3_SETUP'){
+						alert('The configuration of Amazon Web Services is not properly set');
+						$(formDiv).find("input[name='file']").val('');
+					}
 					else {
 						/* Submit the new resource */
-						data['description'] = baseUrl + result.responseText;
+						data['description'] = result.responseText;
 						addResource(data);
 					}
 				},
@@ -484,9 +487,13 @@ function RecommenderXBlock(runtime, element) {
 								alert('Please upload an image');
 								$(formDiv).find("input[name='file']").val('');
 							}
+							else if (result.responseText == 'IMPROPER_S3_SETUP'){
+								alert('The configuration of Amazon Web Services is not properly set');
+								$(formDiv).find("input[name='file']").val('');
+							}
 							else {
 								/* Submit the edited resource */
-								data['description'] = baseUrl + result.responseText;
+								data['description'] = result.responseText;
 								editResource(data);
 							}
 						},
@@ -633,6 +640,52 @@ function RecommenderXBlock(runtime, element) {
 				if (result['is_user_staff']) {
 					/* Add the button for entering staff-edit mode */
 					$('.recommender_edit').append('<span class="ui-icon ui-icon-gear staffEdition"></span>');
+					/* Add buttons in the staff-edit mode */
+					staff_edit_textareas.forEach(function(ele, ind) {
+						$('.staffEditionBlock').append('<div>' + staff_edit_textareas_text[ele] + '</div>')
+							.append('<input type="text" class="' + ele + '" placeholder="' + staff_edit_textareas_placeholder[ele] + '"/><br/>');
+					});
+					staff_edit_buttons.forEach(function(ele, ind) {
+						$('.staffEditionBlock').append('<input type="button" value="' + staff_edit_buttons_text[ele] + '" class="' + ele + '">');
+						if (ind == 0) {
+							$('.' + ele).attr('disabled', true);
+							$('.staffEditionBlock').append('<div class="division_line"></div>');
+						}
+					});
+					
+					/* Check whether enough information is provided for S3, if yes, enable summission button */
+					function enableS3Submit(divPtr) {
+						var emptyFlag = false;
+						staff_edit_textareas.forEach(function(ele, ind) {
+							if ($('.' + ele).val() == '') {
+								$('.submit_s3_info').attr('disabled', true);
+								emptyFlag = true;
+								return;
+							}
+						});
+						if (!emptyFlag) { $('.submit_s3_info').attr('disabled', false); }
+					}
+					/* If the input (text) area is changed, check whether staff provides enough information for S3 */
+					staff_edit_textareas.forEach(function(ele, ind) {
+						$('.' + ele).bind('input propertychange', function() { enableS3Submit(); });
+					});
+					
+					/* Submit the information for S3; this action is independent of selected resource */
+					$('.submit_s3_info').click(function() {
+						var data = {};
+						staff_edit_textareas.forEach(function(ele, ind) {
+							data[ele] = $('.' + ele).val();
+						});
+ 						$.ajax({
+							type: "POST",
+							url: setS3InfoUrl,
+							data: JSON.stringify(data),
+							success: function(result) {
+								if (result['Success']) { backToView(); }
+								else { alert('Submission of S3 information is failed'); }
+							}
+						});
+					});
 					
 					/* Enter staff-edit mode */
 					$('.staffEdition').click(function() {
@@ -640,6 +693,7 @@ function RecommenderXBlock(runtime, element) {
 						$('.recommender_content').hide();
 						$('.recommender_modify').show();
 						$('.recommender_modify_title').text('Staff manipulation');
+						$('.staffEditionBlock').find('input[type="text"]').val('');
 						var data = {};
 						data['id'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
 						

@@ -37,3 +37,38 @@ var tooltipsCatsText = {
     '.recommender_row_top': 'Select for expanding resource list',
     '.recommender_row_top.resource_list_expanded': 'Select to hide the list'
 };
+
+var staff_edit_buttons = [
+	"submit_s3_info",
+	'delete_resource'/*,
+    "endorse_resource",
+    "deendorse_resource"*/
+]
+
+var staff_edit_buttons_text = {
+	'delete_resource': "Delete resource",
+    "endorse_resource": "Endorse resource",
+    "deendorse_resource": "De-endorse resource",
+	"submit_s3_info": "Submit information for Amazon Web Services S3"
+}
+
+var staff_edit_textareas = [
+	'aws_access_key',
+	'aws_secret_key',
+	'bucketName',
+	'uploadedFileDir'
+]
+
+var staff_edit_textareas_text = {
+	'aws_access_key': 'Amazon Web Services access key',
+	'aws_secret_key': 'Amazon Web Services secret key',
+	'bucketName': 'Bucket name of your Amazon Web Services',
+	'uploadedFileDir': 'Directory for your upload files'
+}
+
+var staff_edit_textareas_placeholder = {
+	'aws_access_key': '',
+	'aws_secret_key': '',
+	'bucketName': 'danielswli',
+	'uploadedFileDir': 'uploads/'
+}
