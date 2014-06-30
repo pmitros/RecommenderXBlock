@@ -6,7 +6,9 @@
 
 .recommender_block p {
     cursor: pointer;
-}.hidden { display: none;}
+}
+
+.hidden { display: none;}
 
 .recommender_block {
   width : 100%;
@@ -17,15 +19,28 @@
   float: left;
 }
 
-.recommender_row_top { 
+.recommender_row_top, .recommender_modify_title_container { 
 /*  overflow:scroll;
   max-height:200px;*/
-  font-size: 20px;
-  background-color:rgb(204, 198, 198);
+  font-size: 14px;
+  padding-top: 0.5em;
+  padding-left: 0.5em;
+  background-color: #f5efef;
+  height: 28px;
+  color: #948f8f;
 }
+
+.recommender_row_top:before { content: 'Show'; }
+.recommender_row_top.resource_list_expanded:before { content: 'Hide'; }
 
 .recommender_row { 
   height: 380px;
+}
+
+.recommender_title {
+  flex-grow : 1;
+  max-height: 65px;
+  overflow-y: scroll;
 }
 
 .question {
@@ -61,20 +76,31 @@
   padding : 0 0 10 0;
 }
 
-.recommender_title {
-  flex-grow : 1;
-}
-
 .recommender_modify {
   width: 700px;
-  float: left;
+/*  float: left; */
 }
 
 .descriptionImg {
-  height: 400px;
+  /*height: 400px;
   overflow-x: scroll;
   margin-top: 2em;
-  float: left;
+  float: left;*/
+  height: 600px;
+  width: 700px;
+  margin-top: 2em;
+}
+
+.descriptionText { 
+  padding: 0.5em;
+  background-color: #f5efef;
+  color: #948f8f;
+}
+
+.previewingImg {
+  margin-top: 1em;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .recommender_vote_arrow_down {
@@ -95,6 +121,7 @@
   width: 100%; 
   text-align: center;
   cursor: default;
+  font-weight: 900;
 }
 
 .recommender_recommendations { display: table; }
@@ -107,12 +134,12 @@
 .recommender_blurb {
   display:inline-block;
   vertical-align: middle;
-  width:525px;
+  width:585px;
   overflow:hidden;
-  text-overflow:ellipsis;
+  word-wrap: break-word;
 }
 
-.recommender_entryId, .recommender_descriptionSlot, .recommender_problematicReason {
+.recommender_entryId, .recommender_descriptionImg, .recommender_problematicReason, .recommender_descriptionText {
   display:none;
 }
 
@@ -133,9 +160,9 @@
   color: red;
 }
 
-.recommender_vote_arrow_down, .recommender_vote_arrow_up, .recommender_title, .resource_edit_button, .flagResource, .resource_add_button, .hide-show, .paginationCell, .backToViewButton { cursor: pointer; }
+.recommender_vote_arrow_down, .recommender_vote_arrow_up, .recommender_title, .resource_edit_button, .flagResource, .staffEdition, .resource_add_button, .hide-show, .paginationCell, .backToViewButton { cursor: pointer; }
 
-.resource_add_button { float: left; font-weight: bold; }
+.resource_add_button { text-align: right; font-weight: bold; }
 .resource_edit_button { float: left; }
 .addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle {
   margin-bottom: 1em;
@@ -153,22 +180,36 @@
 }
 
 .backToViewButton { color: #1d9dd9; float: left; }
-.recommender_modify_title { position: relative; left: 50px; overflow: auto; }
+
+.flag_reason_submit, .edit_submit, .add_submit { margin-top: 0.5em; }
+
+.delete_resource, .endorse_resource, .deendorse_resource { margin-top: 0.5em; float:left; }
 
 .ui-icon.problematic {
     background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
 }
 
+.in_title, .edit_title, .in_descriptionText, .edit_descriptionText { 
+  height: 75px;
+  margin-left: 0.5em;
+  width:100%;
+}
+.in_url, .edit_url, .flag_reason {
+  height: 25px;
+  margin-left: 0.5em;
+  width:100%;
+}
+
 .resource_hovered { background-color:#F2F7FA }
 
-.recommender_modify_title_container { background: rgb(204, 198, 198); font-size: 20px; }
+.recommender_modify_title { float: right; padding-right: 2em; overflow: auto; }
 
-.nonevoting { color: rgb(204, 198, 198); }
 .hide-show-icon { margin-left: 0.5em; }
 
+.recommender_vote_score, .recommender_vote_arrow_up, .recommender_vote_arrow_down { color: #948f8f; }
 .recommender_vote_score.upvoting, .recommender_vote_arrow_up.upvoting { color: rgb(69, 194, 10); }
 .recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: red; }
-.recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: rgb(204, 198, 198); }
+.recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #948f8f; }
 
 
 .downArrowIcon:before { content: '▼'; }
@@ -177,7 +218,7 @@
 .rightArrowIcon:before { content: '►'; }
 .leftArrowIcon:before { content: '◄'; }
 .moreIcon:before { content: '...'; }
-.lightgreyBg { background-color: lightgrey; }
+.lightgreyBg { background-color: #948f8f; }
 
-a:link { color: black; }
+a:link, a:visited { color: black; }
 form { margin: 0em; }

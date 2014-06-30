@@ -1,77 +1,132 @@
 <style>
 </style>
-
 <div class="recommender_block">
   <div class="recommender_recommendations">
     <div class="recommender_content">
       <div class="recommender_row_top hide-show resource_list_expanded">
-        Related resources<div class='recommender_panel'><span class="resource_add_button plusIcon"></span> <span class='hide-show-icon upArrowIcon'></span> </div>
+        Related Resources<div class='recommender_panel'> <span class='hide-show-icon upArrowIcon'></span> </div>
       </div>
       <div class='recommender_row_inner'>
         <div class="recommender_row">
+	      <div class="noResourceIntro hidden">	
+		    This will be a list of resources your fellow students
+            thought might be helpful, but it is empty currently.
+            If you find useful resources, either on edx.org or 
+            elsewhere, please add it.
+          </div>
           % for elem in resources:
             <%
-              if elem['id'] in downvotes:
+              if elem['id'] in downvotedIds:
                 voteMode = "downvoting"
-              elif elem['id'] in upvotes:
+              elif elem['id'] in upvotedIds:
                 voteMode = 'upvoting'
               else:
-                voteMode = 'nonevoting'
+	            voteMode = ''
         
-              if elem['id'] in flagId:
+              if elem['id'] in flaggedIds:
                 flagMode = 'problematic'
-                reason = flagReason[flagId.index(elem['id'])]
+                reason = flaggedReasons[flaggedIds.index(elem['id'])]
               else:
                 flagMode = ''
                 reason = ''
             %>
-            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode" />
-            
+            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode" />
           % endfor
+          <div class="recommender_resourceTemplate hidden">
+			<div class="recommender_vote_box">
+			  <div class="recommender_vote_arrow_up" role="button" aria-label="upvote" tabindex="0"><b>↑</b></div>
+			  <div class="recommender_vote_score"></div>
+			  <div class="recommender_vote_arrow_down" role="button" aria-label="downvote" tabindex="0"><b>↓</b></div>
+			</div>
+			<div class="recommender_blurb">
+			  <div class="recommender_title"><a href="" target="_blank"></a></div>
+			  <div class="recommender_descriptionText"></div>
+			  <div class="recommender_descriptionImg"></div>
+			  <div class="recommender_entryId"></div>
+			  <div class="recommender_problematicReason"></div>
+		    </div>
+			<div class="recommender_edit"> <span class="ui-icon ui-icon-pencil resource_edit_button"></span> <span class="ui-icon ui-icon-flag flagResource "></span></div>
+		  </div>
         </div>
-        <div class='pagination'> </div>
+        <div class="resource_add_button">Add new resource &gt;&gt;</div>
+        <div class='pagination'>
+          <div class="paginationRowTemplate hidden">
+		    <div class="paginationCell leftArrowIcon"></div>
+		    <div class="paginationCell moreIcon leftMoreIcon" style="cursor: default;"></div>
+		    <div class="paginationCell lightgreyBg"></div>
+		    <div class="paginationCell moreIcon rightMoreIcon" style="cursor: default;"></div>
+		    <div class="paginationCell rightArrowIcon"></div>
+          </div>
+        </div>
         <div class="recommender_description">
           <div class="descriptionImg">
-	    <div> This is a list of resources your fellow students
-	    thought might be helpful. If you find another useful
-	    resource, either on edx.org or elsewhere, please add
-	    it. If you can improve the description or preview of a
-	    resource, please do so as well. If you find a resource
-	    helpful, upvote it. If it's not so helpful, downvote
-	    it. If it has issues (illegal material, incorrect, etc.),
-	    please flag it and let us know the reason. </div>
-	  </div>
+            <div class='descriptionText'> This is a list of resources your fellow students
+            thought might be helpful. If you find another useful
+            resource, either on edx.org or elsewhere, please add
+            it. If you can improve the description or preview of a
+            resource, please do so as well. If you find a resource
+            helpful, upvote it. If it&rsquo;s not so helpful, downvote
+            it. If it has issues (illegal material, incorrect, etc.),
+            please flag it and let us know the reason. </div>
+
+            <img class="previewingImg hidden" src=""/>
+          </div>
         </div>
       </div>
     </div>
     <div class='recommender_modify'>
       <div class='recommender_modify_title_container'><div class='backToViewButton'>&lt; Related resources</div><div class='recommender_modify_title'></div></div>
+      <div class="staffEditionBlock">
+        <div class="staffEditionBlockTitle">Delete, endorse or de-endorse a resource.</div>
+        <input type="button" value="Delete resource" class="delete_resource">
+        <input type="button" value="Endorse resource" class="endorse_resource hidden">
+        <input type="button" value="De-endorse resource" class="deendorse_resource hidden">
+		<!-- TODO: endorsement and de-endorsement  -->
+      </div>
       <div class="flagSourceBlock">
         <div class="flagSourceBlockTitle">Why would you like to flag this resource?</div>
-	<input type="text" 
-	       class="flag_reason" 
-	       style="height: 25px; position: relative; left: 10px; width:100%" 
-	       name="flag_rationale"
-	       placeholder="Reason for why this resource should be removed"/><br>
-        <input type="button" value="Flag resource" class="flag_reason_submit" style="margin-top: 0.5em;">
+        <input type="text" 
+          class="flag_reason" 
+          name="flag_rationale"
+          placeholder="Reason for why this resource should be removed"/><br/>
+        <input type="button" value="Flag resource" class="flag_reason_submit">
       </div>
       <div class="editSourceBlock">
+		<div class="editSourceBlockTitle">Edit the description, hypelink, and previewing screenshot for the selected resource.</div>
+        <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
+        <textarea 
+          class="edit_title" 
+          placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea><br/>
+        <div style="float: left">Location&nbsp;</div><div class = 'redTxt'>*</div>
+        <input type="text" 
+          class="edit_url" 
+          placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
+        <div style="float: left">Description&nbsp;</div>
+        <textarea 
+          class="edit_descriptionText" 
+          placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
+        <form method="post" id="editResourceForm">
+          Previewing screenshot: <input type="file" name="file"><br/>
+          <input type="button" value="Save change" class="edit_submit" disabled >
+        </form>
       </div>
       <div class="recommender_add">
         <div class="addSourceBlockTitle">Suggest a resource which can help other students with this problem.</div>
-        Description <input type="text" 
-			    class="in_title" 
-			    style="height: 25px; position: relative; left: 10px; width:100%"
-			    placeholder="Provide a meaningful description so other students know whether this is useful to them"/><br/>
-        Location <input type="text" 
-			class="in_url" 
-			style="height: 25px; position: relative; left: 22px; width:100%"
-			placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
-        <form id="addResourceForm" action="http://danielswli.s3.amazonaws.com/" method="post" enctype="multipart/form-data">
-          <input type="hidden" name="acl" value="public-read">
-          <input type="hidden" name="Content-Type" value="image/jpeg">
-          <input type="hidden" name="AWSAccessKeyId" value="AKIAIRDHSV6YZJZ4RFGA">
-          <input type="hidden" name="key" value="">
+        <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
+        <textarea 
+          class="in_title" 
+          placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea><br/>
+        <div style="float: left">Location&nbsp;</div><div class = 'redTxt'>*</div>
+        <input type="text" 
+          class="in_url" 
+           placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
+        <div style="float: left">Description&nbsp;</div>
+        <textarea 
+          class="in_descriptionText" 
+          placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
+        <form method="post" id="addResourceForm">
+          Previewing screenshot: <input type="file" name="file"><br/>
+          <input type="button" value="Add resource" class="add_submit" disabled >
         </form>
       </div>
     </div>
