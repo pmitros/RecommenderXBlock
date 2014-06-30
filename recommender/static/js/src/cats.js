@@ -19,21 +19,21 @@ var tooltipsCats = [
 ];
 
 var tooltipsCatsText = {
-	'.resource_add_button': 'Recommend a new helpful resource for this problem with a short description, hyperlink, and previewing screenshot to the new resource',
-    '.resource_edit_button': 'Edit the description, hypelink, and previewing screenshot of this resource',
-    '.recommender_vote_arrow_up': 'Upvote for a helpful resource',
-    '.recommender_vote_arrow_down': 'Downvote for an irrelevant resource',
-    '.recommender_vote_score': 'Votes',
-    '.recommender_blurb': 'The title of a helpful resource',
-    '.previewingImg': 'Previewing screenshot',
-    '.in_title': 'Type in the description of the resource',
-    '.in_url': 'Type in the hyperlink to the resource',
-    '.edit_title': 'Type in the description of the resource',
-    '.edit_url': 'Type in the hyperlink to the resource',
-    '.backToViewButton': 'Back to list of related resources',
-    '.flag_reason': 'Type in the reason why you flag the resource',
-    '.flagResource': 'Flag this resource as problematic and give the reason',
+	'.resource_add_button': 'Recommend a new resource which may be helpful to other students solving this problem',
+    '.resource_edit_button': 'Edit this resource',
+    '.recommender_vote_arrow_up': 'Upvote if the resource is helpful',
+    '.recommender_vote_arrow_down': 'Downvote if the resource is not helpful',
+    '.recommender_vote_score': 'Votes', // 
+    '.recommender_blurb': 'Resource title', // TODO: I would suggest making the description be the tooltip. 
+    '.previewingImg': 'Preview image (typically, a screenshot)',
+    '.in_title': 'Give a short (1-3 sentence) summary of the resource; ideally, this should be concise, but give enough detail to let students know whether this resources is useful to them',
+    '.in_url': 'Cut-and-paste the URL of the resource.',
+    '.edit_title': 'Give a short (1-3 sentence) summary of the resource; ideally, this should be concise, but give enough detail to let students know whether this resources is useful to them',
+    '.edit_url': 'Cut-and-paste the URL of the resource.', // TODO: Give instructions to go to element of learning sequence, or time in video
+    '.backToViewButton': 'Go back to the main list',
+    '.flag_reason': 'Give a meaningful reason for why this resource should be removed',
+    '.flagResource': 'Flag this resource as problematic',
     '.flagResource.problematic': 'Unflag this problematic resource or edit the reason for it',
-    '.recommender_row_top': 'Select for expanding resource list',
-    '.recommender_row_top.resource_list_expanded': 'Select to hide the list'
+    '.recommender_row_top': 'Show a list of student-recommented related resources',
+    '.recommender_row_top.resource_list_expanded': 'Hide the recommendations list'
 };
