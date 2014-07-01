@@ -164,7 +164,7 @@
 
 .resource_add_button { text-align: right; font-weight: bold; }
 .resource_edit_button { float: left; }
-.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle {
+.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle, .staffEditionBlockTitle {
   margin-bottom: 1em;
 }
 
@@ -194,10 +194,20 @@
   margin-left: 0.5em;
   width:100%;
 }
-.in_url, .edit_url, .flag_reason {
+.in_url, .edit_url, .flag_reason, .aws_access_key, .aws_secret_key, .bucketName, .uploadedFileUrl,.uploadedFileDir {
   height: 25px;
   margin-left: 0.5em;
   width:100%;
+}
+
+.submit_s3_info { margin-top: 0.5em; margin-bottom: 0.5em; } 
+
+.division_line {
+	margin-top: 1em; 
+	margin-bottom: 1em;
+	border-bottom-width: thin;
+	border-bottom-style: inset;
+	border-bottom-color: gray;
 }
 
 .resource_hovered { background-color:#F2F7FA }

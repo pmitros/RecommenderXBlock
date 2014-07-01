@@ -1,5 +1,5 @@
 var tooltipsCats = [
-	'.resource_add_button',
+    '.resource_add_button',
     '.resource_edit_button',
     '.recommender_vote_arrow_up',
     '.recommender_vote_arrow_down',
@@ -19,7 +19,7 @@ var tooltipsCats = [
 ];
 
 var tooltipsCatsText = {
-	'.resource_add_button': 'Recommend a new resource which may be helpful to other students solving this problem',
+    '.resource_add_button': 'Recommend a new resource which may be helpful to other students solving this problem',
     '.resource_edit_button': 'Edit this resource',
     '.recommender_vote_arrow_up': 'Upvote if the resource is helpful',
     '.recommender_vote_arrow_down': 'Downvote if the resource is not helpful',
@@ -35,5 +35,40 @@ var tooltipsCatsText = {
     '.flagResource': 'Flag this resource as problematic',
     '.flagResource.problematic': 'Unflag this problematic resource or edit the reason for it',
     '.recommender_row_top': 'Show a list of student-recommented related resources',
-    '.recommender_row_top.resource_list_expanded': 'Hide the recommendations list'
+    '.recommender_row_top.resource_list_expanded': 'Hide the recommendations list'      
 };
+
+var staff_edit_buttons = [
+	"submit_s3_info",
+	'delete_resource'/*,
+	"endorse_resource",
+	"deendorse_resource"*/
+]
+
+var staff_edit_buttons_text = {
+	'delete_resource': "Delete resource",
+	"endorse_resource": "Endorse resource",
+	"deendorse_resource": "De-endorse resource",
+	"submit_s3_info": "Submit information for Amazon Web Services S3"
+}
+
+var staff_edit_textareas = [
+	'aws_access_key',
+	'aws_secret_key',
+	'bucketName',
+	'uploadedFileDir'
+]
+
+var staff_edit_textareas_text = {
+	'aws_access_key': 'Amazon Web Services access key',
+	'aws_secret_key': 'Amazon Web Services secret key',
+	'bucketName': 'Bucket name of your Amazon Web Services',
+	'uploadedFileDir': 'Directory for your upload files'
+}
+
+var staff_edit_textareas_placeholder = {
+	'aws_access_key': '',
+	'aws_secret_key': '',
+	'bucketName': 'danielswli',
+	'uploadedFileDir': 'uploads/'
+}
