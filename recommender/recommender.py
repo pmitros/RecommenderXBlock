@@ -406,6 +406,7 @@ class RecommenderXBlock(XBlock):
         Returns:
                 is_user_staff: indicator for whether the user is staff 
         """
+        tracker.emit('is_user_staff', {'is_user_staff': self.xmodule_runtime.user_is_staff})
         return {'is_user_staff': self.xmodule_runtime.user_is_staff}
 
     @XBlock.json_handler
@@ -422,7 +423,6 @@ class RecommenderXBlock(XBlock):
         Returns:
                 result['Success']: the boolean indicator for whether the setting is complete
         """
-        print 
         self.s3_configuration['aws_access_key'] = data['aws_access_key']
         self.s3_configuration['aws_secret_key'] = data['aws_secret_key']
         self.s3_configuration['bucketName'] = data['bucketName']
@@ -430,6 +430,7 @@ class RecommenderXBlock(XBlock):
             self.s3_configuration['uploadedFileDir'] = data['uploadedFileDir']
         else:
             self.s3_configuration['uploadedFileDir'] = data['uploadedFileDir'] + '/'
+        tracker.emit('set_s3_info', self.s3_configuration)
         return {'Success': True}
 
     def student_view(self, context=None):
@@ -456,7 +457,9 @@ class RecommenderXBlock(XBlock):
         frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources, upvotedIds = self.upvotedIds, downvotedIds = self.downvotedIds, flaggedIds = self.flaggedIds, flaggedReasons = self.flaggedReasons))
         frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
+        frag.add_css(self.resource_string("static/css/tooltipster.css"))
         frag.add_css(self.resource_string("static/css/recommender.css"))
+        frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
         frag.initialize_js('RecommenderXBlock')
