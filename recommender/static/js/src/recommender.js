@@ -20,6 +20,7 @@ function RecommenderXBlock(runtime, element) {
 	var currentPage = 1;
 	var entriesPerPage = 5;
 	var pageSpan = 2;
+	var is_user_staff = false;
 
 	/* Show or hide resource list */
 	$(".hide-show").click(function () {
@@ -253,7 +254,7 @@ function RecommenderXBlock(runtime, element) {
 						$('.noResourceIntro').addClass('hidden');
 						$('.descriptionText').show();
 						currentPage = 1;
-						var newDiv = $('.recommender_resourceTemplate').clone(true, true).removeClass('hidden').removeClass('recommender_resourceTemplate').addClass('recommender_resource');
+						var newDiv = $('.recommender_resourceTemplate').clone().removeClass('hidden').removeClass('recommender_resourceTemplate').addClass('recommender_resource');
 					}
 					else {
 						if (pos == -1) {
@@ -264,7 +265,7 @@ function RecommenderXBlock(runtime, element) {
 							var toDiv = $('.recommender_resource:eq(' + pos.toString() + ')');
 							currentPage = Math.ceil((pos + 1)/entriesPerPage); 
 						}
-						var newDiv = $(toDiv).clone(true, true);
+						var newDiv = $(toDiv).clone();
 					}
 					/* Generate the div for the new resource */
 					$(newDiv).find('.recommender_vote_arrow_up,.recommender_vote_score,.recommender_vote_arrow_down')
@@ -277,17 +278,17 @@ function RecommenderXBlock(runtime, element) {
 					$(newDiv).find('.recommender_entryId').text(result['id']);
 					$(newDiv).find('.recommender_problematicReason').text('');
 					$(newDiv).find('.flagResource').removeClass('problematic');
+					bindEvent(newDiv);
+					if (is_user_staff) { addFunctionsForStaffPerResource(newDiv); }
 
 					if ($('.recommender_resource').length == 0) {
 						$('.recommender_resourceTemplate').before(newDiv);
-						unbindEvent();
-						bindEvent();
 					}
 					else {
 						if (pos == -1) { $(toDiv).after(newDiv); }
 						else { $(toDiv).before(newDiv); }
 					}
-
+					addTooltipPerResource(newDiv);
 					addResourceReset();
 					paginationRow();
 					pagination();
@@ -306,12 +307,12 @@ function RecommenderXBlock(runtime, element) {
 	 * 4. Editing
 	 * 5. Flagging
 	 */
-	function unbindEvent() {
-		$('.recommender_vote_arrow_up').unbind();
-		$('.recommender_vote_arrow_down').unbind();
-		$('.recommender_resource').unbind();
-		$('.resource_edit_button').unbind();
-		$('.flagResource').unbind();
+	function unbindEvent(ele) {
+		$(ele).find('.recommender_vote_arrow_up').unbind();
+		$(ele).find('.recommender_vote_arrow_down').unbind();
+		$(ele).unbind();
+		$(ele).find('.resource_edit_button').unbind();
+		$(ele).find('.flagResource').unbind();
 	}
 
 	/**
@@ -321,10 +322,12 @@ function RecommenderXBlock(runtime, element) {
 	 * 3. Hovering
 	 * 4. Editing
 	 * 5. Flagging
+	 * Arg:
+	 * 		ele: recommender_resource element
 	 */
-	function bindEvent() {
+	function bindEvent(ele) {
 		/* Upvoting event */
-		$('.recommender_vote_arrow_up').click(function() {
+		$(ele).find('.recommender_vote_arrow_up').click(function() {
 			var data = {};
 			data['id'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
 			if (data['id'] == -1) { return; }
@@ -355,7 +358,7 @@ function RecommenderXBlock(runtime, element) {
 		});
 
 		/* Downvoting event */
-		$('.recommender_vote_arrow_down').click(function() {
+		$(ele).find('.recommender_vote_arrow_down').click(function() {
 			var data = {};
 			data['id'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
 			if (data['id'] == -1) { return; }
@@ -386,7 +389,7 @@ function RecommenderXBlock(runtime, element) {
 		});
 
 		/* Show preview and description for a resource when hovering over it */
-		$('.recommender_resource').hover(
+		$(ele).hover(
 			function() {
 				$('.recommender_resource').removeClass('resource_hovered');
 				$('.descriptionText').hide();
@@ -407,7 +410,7 @@ function RecommenderXBlock(runtime, element) {
 		);
 
 		/* Edit existing resource */
-		$('.resource_edit_button').click(function() {
+		$(ele).find('.resource_edit_button').click(function() {
 			$('.editSourceBlock').show();
 			$('.recommender_content').hide();
 			$('.recommender_modify').show();
@@ -528,7 +531,7 @@ function RecommenderXBlock(runtime, element) {
 		});
 
 		/* Flag problematic resource and give the reason why users think it is problematic */
-		$('.flagResource').click(function() {
+		$(ele).find('.flagResource').click(function() {
 			$('.flagSourceBlock').show();
 			$('.recommender_content').hide();
 			$('.recommender_modify').show();
@@ -570,7 +573,7 @@ function RecommenderXBlock(runtime, element) {
 						$(flaggedResourceDiv).find('.recommender_problematicReason').text(result['reason']);
 						if (result['isProblematic']) { $(flagDiv).addClass('problematic'); }
 						else { $(flagDiv).removeClass('problematic'); }
-						addTooltip();
+						addTooltipPerResource(flaggedResourceDiv);
 						backToView();
 					}
 				});
@@ -596,20 +599,55 @@ function RecommenderXBlock(runtime, element) {
 						$(flaggedResourceDiv).find('.recommender_problematicReason').text(result['reason']);
 						if (result['isProblematic']) { $(flagDiv).addClass('problematic'); }
 						else { $(flagDiv).removeClass('problematic'); }
-						addTooltip();
+						addTooltipPerResource(flaggedResourceDiv);
 						backToView();
 					}
 				});
 			});
 		});
-
-		addTooltip();
 	}
 
-    /* Add tooltips to each component */
+    /* Add tooltips to each global component */
 	function addTooltip() {
-		tooltipsCats.forEach(function(ele, ind) {
-			$(ele).attr('title', tooltipsCatsText[ele]);
+		tooltipsCats.forEach(function(cats, ind) {
+			var classes = cats.split(".");
+			try {
+				$("." + classes[1]).tooltipster('destroy');
+			}
+			catch (e) {  }
+		});
+		tooltipsCats.forEach(function(cats, ind) {
+			var classes = cats.split(".");
+			try {
+				if (classes.length == 3 && (! $("." + classes[1]).hasClass(classes[2]) )) {
+					$("." + classes[1]).tooltipster({
+						content: $('<span>' + tooltipsCatsText["." + classes[1]] + '</span>'),
+						theme: '.my-custom-theme',
+						maxWidth: '300'
+					});
+					return;
+				} 
+				$(cats).tooltipster({
+					content: $('<span>' + tooltipsCatsText[cats] + '</span>'),
+					theme: '.my-custom-theme',
+					maxWidth: '300'
+				}); 
+			}
+			catch (e) {  }
+		});
+ 	}
+
+	/* Add tooltips to each component in each resource */
+	function addTooltipPerResource(ele) {
+		tooltipsCatsPerResource.forEach(function(cats, ind) {
+			try { 
+				$(ele).find(cats).tooltipster({
+					content: $('<span>' + tooltipsCatsText[cats] + '</span>'),
+					theme: '.my-custom-theme',
+					maxWidth: '300'
+				}); 
+			}
+			catch (e) { }
 		});
  	}
 
@@ -624,116 +662,135 @@ function RecommenderXBlock(runtime, element) {
 		});
 		return index;
 	}
-
-    /**
-     * Delete, endorse or de-endorse a resource
-     * These manipulations are restricted to course staff
-     * TODO: endorsement and de-endorsement  
-     */
-    function addFunctionsForStaff() {
-	    /* Check whether user is staff, if yes, bind the events for delete, endorsement and de-endorsement  */
+	
+	/* Check whether user is staff and add staff-specific functions */
+	function initializeStaffVersion() {
 		$.ajax({
 			type: "POST",
 			url: isUserStaffUrl,
 			data: JSON.stringify({}),
 			success: function(result) {
 				if (result['is_user_staff']) {
-					/* Add the button for entering staff-edit mode */
-					$('.recommender_edit').append('<span class="ui-icon ui-icon-gear staffEdition"></span>');
-					/* Add buttons in the staff-edit mode */
-					staff_edit_textareas.forEach(function(ele, ind) {
-						$('.staffEditionBlock').append('<div>' + staff_edit_textareas_text[ele] + '</div>')
-							.append('<input type="text" class="' + ele + '" placeholder="' + staff_edit_textareas_placeholder[ele] + '"/><br/>');
-					});
-					staff_edit_buttons.forEach(function(ele, ind) {
-						$('.staffEditionBlock').append('<input type="button" value="' + staff_edit_buttons_text[ele] + '" class="' + ele + '">');
-						if (ind == 0) {
-							$('.' + ele).attr('disabled', true);
-							$('.staffEditionBlock').append('<div class="division_line"></div>');
-						}
-					});
-					
-					/* Check whether enough information is provided for S3, if yes, enable summission button */
-					function enableS3Submit(divPtr) {
-						var emptyFlag = false;
-						staff_edit_textareas.forEach(function(ele, ind) {
-							if ($('.' + ele).val() == '') {
-								$('.submit_s3_info').attr('disabled', true);
-								emptyFlag = true;
-								return;
-							}
-						});
-						if (!emptyFlag) { $('.submit_s3_info').attr('disabled', false); }
-					}
-					/* If the input (text) area is changed, check whether staff provides enough information for S3 */
-					staff_edit_textareas.forEach(function(ele, ind) {
-						$('.' + ele).bind('input propertychange', function() { enableS3Submit(); });
-					});
-					
-					/* Submit the information for S3; this action is independent of selected resource */
-					$('.submit_s3_info').click(function() {
-						var data = {};
-						staff_edit_textareas.forEach(function(ele, ind) {
-							data[ele] = $('.' + ele).val();
-						});
- 						$.ajax({
-							type: "POST",
-							url: setS3InfoUrl,
-							data: JSON.stringify(data),
-							success: function(result) {
-								if (result['Success']) { backToView(); }
-								else { alert('Submission of S3 information is failed'); }
-							}
-						});
-					});
-					
-					/* Enter staff-edit mode */
-					$('.staffEdition').click(function() {
-						$('.staffEditionBlock').show();
-						$('.recommender_content').hide();
-						$('.recommender_modify').show();
-						$('.recommender_modify_title').text('Staff manipulation');
-						$('.staffEditionBlock').find('input[type="text"]').val('');
-						var data = {};
-						data['id'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
-						
-						$('.delete_resource').unbind();
-						/* Delete a selected resource */
-						$('.delete_resource').click(function() {
-							$.ajax({
-								type: "POST",
-								url: deleteResourceUrl,
-								data: JSON.stringify(data),
-								success: function(result) {
-									if (result['Success']) {
-										var deletedResourceIdx = findResourceDiv(result['id']);
-										$('.recommender_resource:eq(' + deletedResourceIdx.toString() + ')').remove();
-										/* Delete last resource */
-										if ($('.recommender_resource').length == deletedResourceIdx) { deletedResourceIdx--; }
-										currentPage = Math.ceil((deletedResourceIdx + 1)/entriesPerPage); 
-										paginationRow();
-										pagination();
-										backToView();
-									}
-									else { alert(result['error']); }
-								}
-							});
-						});
-					});
+					is_user_staff = true;
+					addFunctionsForStaff();
+					$('.recommender_resource').each(function(index, ele) { addFunctionsForStaffPerResource(ele); });
 				}
 			}
 		});
+	}
+
+	/**
+	 * Prepare the page for staff edition and S3 configuration setup 
+	 * Called once per session
+	 */
+	function addFunctionsForStaff() { 
+		/* Add textarea and buttons in the staff-edit mode */
+		staff_edit_textareas.forEach(function(ele, ind) {
+			$('.staffEditionBlock').append('<div>' + staff_edit_textareas_text[ele] + '</div>')
+				.append('<input type="text" class="' + ele + '" placeholder="' + staff_edit_textareas_placeholder[ele] + '"/><br/>');
+		});
+		staff_edit_buttons.forEach(function(ele, ind) {
+			$('.staffEditionBlock').append('<input type="button" value="' + staff_edit_buttons_text[ele] + '" class="' + ele + '">');
+			if (ind == 0) {
+				$('.' + ele).attr('disabled', true);
+				$('.staffEditionBlock').append('<div class="division_line"></div>');
+			}
+		});
+		
+		/* Check whether enough information is provided for S3, if yes, enable summission button */
+		function enableS3Submit(divPtr) {
+			var emptyFlag = false;
+			staff_edit_textareas.forEach(function(ele, ind) {
+				if ($('.' + ele).val() == '') {
+					$('.submit_s3_info').attr('disabled', true);
+					emptyFlag = true;
+					return;
+				}
+			});
+			if (!emptyFlag) { $('.submit_s3_info').attr('disabled', false); }
+		}
+		
+		/* If the input (text) area is changed, check whether staff provides enough information for S3 */
+		staff_edit_textareas.forEach(function(ele, ind) {
+			$('.' + ele).bind('input propertychange', function() { enableS3Submit(); });
+		});
+		
+		/* Submit the information for S3; this action is independent of selected resource */
+		$('.submit_s3_info').click(function() {
+			var data = {};
+			staff_edit_textareas.forEach(function(ele, ind) {
+				data[ele] = $('.' + ele).val();
+			});
+			$.ajax({
+				type: "POST",
+				url: setS3InfoUrl,
+				data: JSON.stringify(data),
+				success: function(result) {
+					if (result['Success']) { backToView(); }
+					else { alert('Submission of S3 information is failed'); }
+				}
+			});
+		});
+	}
+
+    /**
+     * Delete, endorse or de-endorse a resource
+     * Called once per resource
+     * These manipulations are restricted to course staff
+     * TODO: endorsement and de-endorsement  
+     */
+    function addFunctionsForStaffPerResource(ele) {
+		/* Add the button for entering staff-edit mode */
+		if ($(ele).find('.staffEdition').length == 0) {
+			$(ele).find('.recommender_edit').append('<span class="ui-icon ui-icon-gear staffEdition"></span>');
+		}
+					
+		/* Enter staff-edit mode */
+		$(ele).find('.staffEdition').click(function() {
+			$('.staffEditionBlock').show();
+			$('.recommender_content').hide();
+			$('.recommender_modify').show();
+			$('.recommender_modify_title').text('Staff manipulation');
+			$('.staffEditionBlock').find('input[type="text"]').val('');
+			var data = {};
+			data['id'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
+			
+			$('.delete_resource').unbind();
+			/* Delete a selected resource */
+			$('.delete_resource').click(function() {
+				$.ajax({
+					type: "POST",
+					url: deleteResourceUrl,
+					data: JSON.stringify(data),
+					success: function(result) {
+						if (result['Success']) {
+							var deletedResourceIdx = findResourceDiv(result['id']);
+							$('.recommender_resource:eq(' + deletedResourceIdx.toString() + ')').remove();
+							/* Delete last resource */
+							if ($('.recommender_resource').length == deletedResourceIdx) { deletedResourceIdx--; }
+							currentPage = Math.ceil((deletedResourceIdx + 1)/entriesPerPage); 
+							paginationRow();
+							pagination();
+							backToView();
+						}
+						else { alert(result['error']); }
+					}
+				});
+			});
+		});		
 	}
 
     /* Initialize the interface */
 	function initial() {
 		backToView();
 		$(".hide-show").click();
-		addFunctionsForStaff();
+		initializeStaffVersion();
+		
 		paginationRow();
 		pagination();
 		addResourceReset();
-		bindEvent();
+		$('.recommender_resource').each(function(index, ele) { bindEvent(ele); addTooltipPerResource(ele); });
+		addTooltip();
 	
 		if ($('.recommender_resource').length == 0) {
 			$('.noResourceIntro').removeClass('hidden');
