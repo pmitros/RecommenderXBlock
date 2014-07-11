@@ -39,7 +39,7 @@
 .recommender_title {
   flex-grow : 1;
   max-height: 65px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .question {
