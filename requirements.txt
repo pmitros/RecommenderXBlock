@@ -1,0 +1,4 @@
+webob
+fs
+mako
+boto
