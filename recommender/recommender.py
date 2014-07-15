@@ -1,5 +1,3 @@
-"""TO-DO: Write a description of what this XBlock is."""
-
 import json, string, random, re
 
 import pkg_resources
@@ -24,27 +22,58 @@ from webob.response import Response
 
 class RecommenderXBlock(XBlock):
     """
-    This XBlock will show a set of recommended resources provided by students.
+    This XBlock will show a set of recommended resources which may be helpful to students solving a given problem.
+    The resources are provided and edited by students; they can also vote for useful resources and flag problematic ones. 
     """
-    # Scope-wide. List of JSON objects corresponding to recommendations combine XML and user. 
-    default_recommendations = List(help="List of help resources", default=[], scope=Scope.content)
-    # Block-wide. List of JSON objects corresponding to recommendations as defined in XML. 
+
+    default_recommendations = List(help="List of default help resources", default=[], scope=Scope.content)
+	# A list of default recommenations, it is a JSON object across all users, all runs of a course, for this xblock.
+    # Usage: default_recommendations[index] = {
+    #                   "id": (Integer) id of a resource, 
+    #                   "title": (String) title of a resource; a 1-3 sentence summary of a resource 
+    #                   "upvotes" : (Integer) number of upvotes,
+    #                   "downvotes" : (Integer) number of downvotes, 
+    #                   "url" : (String) the url of a resource, 
+    #                   "description" : (String) the url of a resource's screenshot, 
+    #                   "descriptionText" : (String) a paragraph of description/summary of a resource }
+   
     recommendations = List(help="List of help resources", default=[], scope=Scope.user_state_summary)
-    # Block-wide. Dict of JSON objects corresponding to configurations of amazon web service for file uploading. 
-    s3_configuration = Dict(help="List of help resources", default={}, scope=Scope.user_state_summary)
-    # List of deleted recommendation ID.
-    deletedRecommendationIds = List(help="List of help resources", default=[], scope=Scope.user_state_summary)
-    # Ids of upvoted resources for this particular user
-    upvotedIds = List(help="List of items user gave upvote to", default=[], scope=Scope.user_state)
-    # Ids of downvoted resources for this particular user
-    downvotedIds = List(help="List of items user gave downvote to", default=[], scope=Scope.user_state)
-    # Ids of flagged resource (problematic resource) for this particular user
-    flaggedIds = List(help="List of items user flagged to", default=[], scope=Scope.user_state)
-    # Reasons of flagged resource (problematic resource) for this particular user
-    flaggedReasons = List(help="List of reasons of items user flagged to", default=[], scope=Scope.user_state)
+    # A list of recommenations provided by students, it is a JSON object aggregated across many users of a single block.
+    # Usage: the same as default_recommendations
+
+    s3_configuration = Dict(help="Dictionary of Amazon S3 information", default={}, scope=Scope.user_state_summary)
+    # A dictionary of Amazon S3 information for file uploading, it is a JSON object aggregated across many users of a single block.
+    # Usage: s3_configuration = {
+	#                   "aws_access_key": (String) access key of Amazon S3 account
+    #                   "aws_secret_key": (String) secret key of Amazon S3 account
+    #                   "bucketName": (String) Bucket name of Amazon S3 account
+    #                   "uploadedFileDir": (String) The path (relative to root directory) of the directory for storing uploaded files }
     
+    deletedRecommendationIds = List(help="List of deleted resources' ID", default=[], scope=Scope.user_state_summary)
+    # A list of deleted recommendations' ids, it is a JSON object aggregated across many users of a single block.
+    # Usage: deletedRecommendationIds[index] = (Integer) id of a deleted resource
+
+    upvotedIds = List(help="List of resources' ids which user upvoted to", default=[], scope=Scope.user_state)
+    # A list of recommendations' ids which user upvoted to; it is a JSON object for one user, for one block, and for one run of a course.
+    # Usage: upvotedIds[index] = (Integer) id of a resource which was upvoted by the current user
+
+    downvotedIds = List(help="List of resources' ids which user downvoted to", default=[], scope=Scope.user_state)
+    # A list of recommendations' ids which user downvoted to; it is a JSON object for one user, for one block, and for one run of a course.
+    # Usage: downvotedIds[index] = (Integer) id of a resource which was downvoted by the current user
+
+    flaggedIds = List(help="List of problematic resources' ids which user flagged to", default=[], scope=Scope.user_state)
+    # A list of problematic recommendations' ids which user flagged to; it is a JSON object for one user, for one block, and for one run of a course.
+    # Usage: flaggedIds[index] = (Integer) id of a problematic resource which was flagged by the current user
+
+    # Reasons of flagged resource (problematic resource) for this particular user
+    flaggedReasons = List(help="List of reasons why the corresponding resources were flagged by user as problematic", default=[], scope=Scope.user_state)
+    # A list of reasons why the corresponding resources were flagged by user as problematic; it is a JSON object for one user, for one block, and for one run of a course.
+    # Usage: flaggedReasons[index] = (String) reason why the corresponding resource was flagged by the current user as problematic
+
     template_lookup = None
+
     resource_content_fields = ['url', 'title', 'description', 'descriptionText']
+    # the dictionary keys for storing the content of a recommendation
 
     def resource_string(self, path):
         """Handy helper for getting static file resources from our Python package."""
@@ -75,6 +104,12 @@ class RecommenderXBlock(XBlock):
             if entryList[idx]['id'] == entryId:
                 return idx
         return -1
+
+    def checkRedundancy(self, url1, url2):
+        """
+        Check redundant resource by comparing the url.
+        """
+        return url1.split('#')[0].split('%23')[0] == url2.split('#')[0].split('%23')[0]
 
     @XBlock.json_handler
     def delete_resource(self, data, suffix=''):
@@ -292,7 +327,7 @@ class RecommenderXBlock(XBlock):
 
         # check url for redundancy
         for recommendation in self.recommendations:
-            if recommendation['url'] == data['url']:
+            if self.checkRedundancy(recommendation['url'], data['url']):
                 result['error'] = 'redundant resource'
                 tracker.emit('add_resource', result)
                 result['Success'] = False
@@ -337,9 +372,9 @@ class RecommenderXBlock(XBlock):
             result['old_' + field] = self.recommendations[idx][field]
             result[field] = data[field]
         # check url for redundancy
-        if self.recommendations[idx]['url'] != data['url']:
+        if not( self.checkRedundancy(self.recommendations[idx]['url'], data['url']) ):
             for recommendation in self.recommendations:
-                if recommendation['url'] == data['url']:
+                if self.checkRedundancy(recommendation['url'], data['url']):
                     result['error'] = 'existing url'
                     for field in self.resource_content_fields:
                         result['dup_' + field] = self.recommendations[self.recommendations.index(recommendation)][field]
@@ -465,8 +500,6 @@ class RecommenderXBlock(XBlock):
         frag.initialize_js('RecommenderXBlock')
         return frag
 
-    # TO-DO: change this to create the scenarios you'd like to see in the
-    # workbench while developing your XBlock.
     @staticmethod
     def workbench_scenarios():
         """A canned scenario for display in the workbench."""
