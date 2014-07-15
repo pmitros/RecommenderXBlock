@@ -89,6 +89,7 @@
         <input type="button" value="Flag resource" class="flag_reason_submit">
       </div>
       <div class="editSourceBlock">
+        <div class="editSourceBlockTitle">Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.</div>
         <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
         <textarea 
           class="edit_title" 
@@ -102,12 +103,12 @@
           class="edit_descriptionText" 
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" id="editResourceForm">
-          Previewing screenshot: <input type="file" name="file"><br/>
+          Preview screenshot: <input type="file" name="file" class='editResourceScreenshot'><br/>
           <input type="button" value="Save change" class="edit_submit" disabled >
         </form>
       </div>
       <div class="recommender_add">
-        <div class="addSourceBlockTitle">Suggest a resource which can help other students with this problem.</div>
+        <div class="addSourceBlockTitle">Suggest a resource which can help other students with this problem. Please do not give the answer directly.</div>
         <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
         <textarea 
           class="in_title" 
@@ -121,7 +122,7 @@
           class="in_descriptionText" 
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" id="addResourceForm">
-          Previewing screenshot: <input type="file" name="file"><br/>
+          Preview screenshot: <input type="file" name="file" class='addResourceScreenshot'><br/>
           <input type="button" value="Add resource" class="add_submit" disabled >
         </form>
       </div>

@@ -449,6 +449,9 @@ function RecommenderXBlock(runtime, element) {
 			$('#editResourceForm').find("input[name='file']").change(function() {
 				if ($(this).val() != '') { enableEditSubmit(); }
 			});
+			
+			/* Add tooltips for editting page */
+			addTooltipPerCats(tooltipsEditCats);
 
 			/* Upload the screen shot, submit the edited resource, save the resource in the database, and update the current view of resource */
 			$('.edit_submit').unbind();
@@ -626,9 +629,30 @@ function RecommenderXBlock(runtime, element) {
 						maxWidth: '300'
 					});
 					return;
-				} 
+				}
+				if ($(cats).hasClass('tooltipstered')) { return; }
 				$(cats).tooltipster({
 					content: $('<span>' + tooltipsCatsText[cats] + '</span>'),
+					theme: '.my-custom-theme',
+					maxWidth: '300'
+				}); 
+			}
+			catch (e) {  }
+		});
+ 	}
+
+    /* Add tooltips to each cat in cats */
+	function addTooltipPerCats(cats) {
+		cats.forEach(function(cat, ind) {
+			try {
+				$(cat).tooltipster('destroy');
+			}
+			catch (e) {  }
+		});
+		cats.forEach(function(cat, ind) {
+			try {
+				$(cat).tooltipster({
+					content: $('<span>' + tooltipsCatsText[cat] + '</span>'),
 					theme: '.my-custom-theme',
 					maxWidth: '300'
 				}); 
@@ -673,7 +697,7 @@ function RecommenderXBlock(runtime, element) {
 				if (result['is_user_staff']) {
 					is_user_staff = true;
 					addFunctionsForStaff();
-					$('.recommender_resource').each(function(index, ele) { addFunctionsForStaffPerResource(ele); });
+					$('.recommender_resource').each(function(index, ele) { addFunctionsForStaffPerResource(ele); addTooltipPerResource(ele); });
 				}
 			}
 		});
