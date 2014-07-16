@@ -175,8 +175,10 @@ function RecommenderXBlock(runtime, element) {
 	}
 
 	/* If the input (text) area is changed, check whether user provides enough information to submit the resource */
-	$('.in_title').bind('input propertychange', function() { enableAddSubmit(); });
-	$('.in_url').bind('input propertychange', function() { enableAddSubmit(); });
+	$('.in_title,.in_url,.in_descriptionText').bind('input propertychange', function() { enableAddSubmit(); });
+	$('#addResourceForm').find("input[name='file']").change(function() {
+		if ($(this).val() != '') { enableAddSubmit(); }
+	});
 
 	/* Upload the screenshot, submit the new resource, save the resource in the database, and update the current view of resource */
 	$('.add_submit').click(function() {
@@ -219,7 +221,7 @@ function RecommenderXBlock(runtime, element) {
 						if (result.responseText.indexOf(uploadFileError[key]) == 0) {
 							alert(uploadFileErrorText[uploadFileError[key]]);
 							$(formDiv).find("input[name='file']").val('');
-							$('.add_submit').attr('disabled', true);
+							enableAddSubmit();
 							return;
 						}
 					}
@@ -499,7 +501,7 @@ function RecommenderXBlock(runtime, element) {
 								if (result.responseText.indexOf(uploadFileError[key]) == 0) {
 									alert(uploadFileErrorText[uploadFileError[key]]);
 									$(formDiv).find("input[name='file']").val('');
-									$('.edit_submit').attr('disabled', true);
+									enableEditSubmit();
 									return;
 								}
 							}
