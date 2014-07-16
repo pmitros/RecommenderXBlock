@@ -210,20 +210,22 @@ function RecommenderXBlock(runtime, element) {
 				async: false,
 				/* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATES ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
 				complete: function(result) {
-					/* Case when wrong file type is provided; accept files only in jpg, png, and gif */
-					if (result.responseText == 'FILETYPEERROR') {
-						alert('Please upload an image');
-						$(formDiv).find("input[name='file']").val('');
+					/* File uploading error:
+					   1. Wrong file type is provided; accept files only in jpg, png, and gif
+					   2. The configuration of Amazon S3 is not properly set
+					   3. Size of uploaded file exceeds threshold
+					*/
+					for (var key in uploadFileError) {
+						if (result.responseText.indexOf(uploadFileError[key]) == 0) {
+							alert(uploadFileErrorText[uploadFileError[key]]);
+							$(formDiv).find("input[name='file']").val('');
+							$('.edit_submit').attr('disabled', true);
+							return;
+						}
 					}
-					else if (result.responseText == 'IMPROPER_S3_SETUP'){
-						alert('The configuration of Amazon Web Services is not properly set');
-						$(formDiv).find("input[name='file']").val('');
-					}
-					else {
-						/* Submit the new resource */
-						data['description'] = result.responseText;
-						addResource(data);
-					}
+					/* Submit the edited resource */
+					data['description'] = result.responseText;
+					editResource(data);
 				},
 			});
 		}
@@ -488,20 +490,22 @@ function RecommenderXBlock(runtime, element) {
 						async: false,
 						/* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATES ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
 						complete: function(result) {
-							/* Case when wrong file type is provided; accept files only in jpg, png, and gif */
-							if (result.responseText == 'FILETYPEERROR') {
-								alert('Please upload an image');
-								$(formDiv).find("input[name='file']").val('');
+							/* File uploading error:
+							   1. Wrong file type is provided; accept files only in jpg, png, and gif
+							   2. The configuration of Amazon S3 is not properly set
+							   3. Size of uploaded file exceeds threshold
+							*/
+							for (var key in uploadFileError) {
+								if (result.responseText.indexOf(uploadFileError[key]) == 0) {
+									alert(uploadFileErrorText[uploadFileError[key]]);
+									$(formDiv).find("input[name='file']").val('');
+									$('.edit_submit').attr('disabled', true);
+									return;
+								}
 							}
-							else if (result.responseText == 'IMPROPER_S3_SETUP'){
-								alert('The configuration of Amazon Web Services is not properly set');
-								$(formDiv).find("input[name='file']").val('');
-							}
-							else {
-								/* Submit the edited resource */
-								data['description'] = result.responseText;
-								editResource(data);
-							}
+							/* Submit the edited resource */
+							data['description'] = result.responseText;
+							editResource(data);
 						},
 					});
 				}

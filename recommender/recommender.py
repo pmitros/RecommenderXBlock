@@ -27,7 +27,7 @@ class RecommenderXBlock(XBlock):
     """
 
     default_recommendations = List(help="List of default help resources", default=[], scope=Scope.content)
-	# A list of default recommenations, it is a JSON object across all users, all runs of a course, for this xblock.
+    # A list of default recommenations, it is a JSON object across all users, all runs of a course, for this xblock.
     # Usage: default_recommendations[index] = {
     #                   "id": (Integer) id of a resource, 
     #                   "title": (String) title of a resource; a 1-3 sentence summary of a resource 
@@ -42,9 +42,10 @@ class RecommenderXBlock(XBlock):
     # Usage: the same as default_recommendations
 
     s3_configuration = Dict(help="Dictionary of Amazon S3 information", default={}, scope=Scope.user_state_summary)
+
     # A dictionary of Amazon S3 information for file uploading, it is a JSON object aggregated across many users of a single block.
     # Usage: s3_configuration = {
-	#                   "aws_access_key": (String) access key of Amazon S3 account
+    #                   "aws_access_key": (String) access key of Amazon S3 account
     #                   "aws_secret_key": (String) secret key of Amazon S3 account
     #                   "bucketName": (String) Bucket name of Amazon S3 account
     #                   "uploadedFileDir": (String) The path (relative to root directory) of the directory for storing uploaded files }
@@ -263,17 +264,52 @@ class RecommenderXBlock(XBlock):
         chars=string.ascii_uppercase + string.digits
         fileNameLength=11
 
+        # Check invalid file types
         fileType = ''
         allowedTypes = ['.png', '.jpg', '.gif']
+        allowedMimeTypes = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png']
+        fileTypeError = False
         for allowedType in allowedTypes:
             if str(request.POST['file'].file).endswith(allowedType):
                 fileType = allowedType
-        if fileType == '':
-            tracker.emit('upload_screenshot', {'uploadedFileName': 'FILETYPEERROR'})
+
+        if request.POST['file'].file.content_type not in allowedMimeTypes or fileType == '':
+            fileTypeError = True
+
+        # Check magic number for a png file
+        pngHeader = "89504e470d0a1a0a" # (first 8 bytes)
+        if fileType == '.png':
+            if request.POST['file'].file.read(8).encode('hex') != pngHeader:
+                fileTypeError = True
+        request.POST['file'].file.seek(0)
+
+        # Check magic number for a gif file
+        gifHeader = ["474946383961", "474946383761"] # (first 6 bytes)
+        if fileType == '.gif':
+            if request.POST['file'].file.read(6).encode('hex') not in gifHeader:
+                fileTypeError = True
+        request.POST['file'].file.seek(0)
+
+        # Check magic number for a jpg file
+        jpgHeader = "ffd8" # (first 2 bytes)
+        jpgTail = "ffd9" # (last 2 bytes)
+        if fileType == '.jpg':
+            head = request.POST['file'].file.read(2).encode('hex')
+            request.POST['file'].file.seek(-2, 2)
+            tail = request.POST['file'].file.read(2).encode('hex')
+            if head != jpgHeader or tail != jpgTail:
+                fileTypeError = True            
+        request.POST['file'].file.seek(0)
+
+        if fileTypeError:
+            tracker.emit('upload_screenshot', {'uploadedFileName': 'FILE_TYPE_ERROR'})
             response = Response()
-            response.body = 'FILETYPEERROR'
+            response.body = 'FILE_TYPE_ERROR'
             response.headers['Content-Type'] = 'text/plain'
             return response
+
+        # Check whether file size exceeds threshold (4MB)
+        # already done in request submission, handled in client side
 
         try:
             fileId = ''
