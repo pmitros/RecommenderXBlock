@@ -61,37 +61,49 @@ var tooltipsCatsText = {
     '.recommender_row_top.resource_list_expanded': 'Hide the recommendations list'      
 };
 
+var uploadFileError = [
+    'FILE_TYPE_ERROR',
+    'IMPROPER_S3_SETUP',
+    '{"success": "Submission aborted!'
+];
+
+var uploadFileErrorText = {
+    'FILE_TYPE_ERROR': 'Please upload an image in GIF/JPG/PNG',
+    'IMPROPER_S3_SETUP': 'The configuration of Amazon S3 is not properly set',
+    '{"success": "Submission aborted!': 'Size of uploaded file exceeds threshold'
+};
+
 var staff_edit_buttons = [
 	"submit_s3_info",
 	'delete_resource'/*,
 	"endorse_resource",
 	"deendorse_resource"*/
-]
+];
 
 var staff_edit_buttons_text = {
 	'delete_resource': "Delete resource",
 	"endorse_resource": "Endorse resource",
 	"deendorse_resource": "De-endorse resource",
 	"submit_s3_info": "Add Amazon S3 information for file uploading"
-}
+};
 
 var staff_edit_textareas = [
 	'aws_access_key',
 	'aws_secret_key',
 	'bucketName',
 	'uploadedFileDir'
-]
+];
 
 var staff_edit_textareas_text = {
 	'aws_access_key': 'Amazon S3 access key',
 	'aws_secret_key': 'Amazon S3 secret key',
 	'bucketName': 'Bucket name of your Amazon S3',
 	'uploadedFileDir': 'Directory for your uploaded files'
-}
+};
 
 var staff_edit_textareas_placeholder = {
 	'aws_access_key': '',
 	'aws_secret_key': '',
 	'bucketName': 'danielswli',
 	'uploadedFileDir': 'uploads/'
-}
+};
