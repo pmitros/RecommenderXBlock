@@ -219,7 +219,7 @@ function RecommenderXBlock(runtime, element) {
 						if (result.responseText.indexOf(uploadFileError[key]) == 0) {
 							alert(uploadFileErrorText[uploadFileError[key]]);
 							$(formDiv).find("input[name='file']").val('');
-							$('.edit_submit').attr('disabled', true);
+							$('.add_submit').attr('disabled', true);
 							return;
 						}
 					}
