@@ -225,7 +225,7 @@ function RecommenderXBlock(runtime, element) {
 					}
 					/* Submit the edited resource */
 					data['description'] = result.responseText;
-					editResource(data);
+					addResource(data);
 				},
 			});
 		}
