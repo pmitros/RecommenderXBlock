@@ -397,13 +397,13 @@ function RecommenderXBlock(runtime, element) {
 			function() {
 				$('.recommender_resource').removeClass('resource_hovered');
 				$('.descriptionText').hide();
-                $('.previewingImg').addClass('hidden');
+                $('.previewingImg').removeClass('hidden');
 				$(this).addClass('resource_hovered');
 				$('.previewingImg').attr('src', $(this).find('.recommender_descriptionImg').text());
 				$('.descriptionText').text($(this).find('.recommender_descriptionText').text());
 				
 				if ($('.descriptionText').text() != '') { $('.descriptionText').show(); }
-                $(".previewingImg").load(function() { $('.previewingImg').removeClass('hidden'); });
+                $(".previewingImg").error(function() { $('.previewingImg').addClass('hidden'); });
 
 				Logger.log('resource.hover.event', {
 					'status': 'Hovering resource',
