@@ -1,5 +1,5 @@
 /* CSS for RecommenderXBlock */
-.clearFix {clear: both; height: 0;}
+.clearFix {clear: both; height: 0.5em;}
 
 .recommender_block .count {
     font-weight: bold;
@@ -9,7 +9,7 @@
     cursor: pointer;
 }
 
-.hidden { display: none;}
+.hidden { display: none; }
 
 .recommender_block {
   width : 100%;
@@ -24,7 +24,7 @@
   font-size: 14px;
   padding-top: 0.5em;
   padding-left: 0.5em;
-  background-color: #f5efef;
+  background-color: rgba(0,0,0,0.05);
   height: 28px;
   color: #948f8f;
 }
@@ -80,14 +80,16 @@
 }
 
 .descriptionImg {
-  max-height: 600px;
+  max-height: 800px;
   max-width: 700px;
   margin-top: 2em;
 }
 
-.descriptionText { 
+.descriptionText {
+  max-height: 200px;
+  overflow: auto;
   padding: 0.5em;
-  background-color: #f5efef;
+  background-color: rgba(0,0,0,0.05);
   color: #948f8f;
 }
 
@@ -128,10 +130,12 @@
 .recommender_blurb {
   display:inline-block;
   vertical-align: middle;
-  width:585px;
+  width:570px;
   overflow:hidden;
   word-wrap: break-word;
 }
+
+.recommender_endorse { width:15px; display: inline-block; }
 
 .recommender_entryId, .recommender_descriptionImg, .recommender_problematicReason, .recommender_descriptionText {
   display:none;
@@ -154,12 +158,14 @@
   color: red;
 }
 
-.recommender_vote_arrow_down, .recommender_vote_arrow_up, .recommender_title, .resource_edit_button, .flagResource, .staffEdition, .resource_add_button, .hide-show, .paginationCell, .backToViewButton { cursor: pointer; }
+.recommender_vote_arrow_down, .recommender_vote_arrow_up, .resource_edit_button, .flagResource, .s3info_add_button, .staffEdition, .resource_add_button, .hide-show, .paginationCell, .backToViewButton, .checkIcon { cursor: pointer; }
 
-.resource_add_button { float: right; font-weight: bold; }
+
+.s3info_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
+.resource_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
 .resource_edit_button { float: left; }
-.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle, .staffEditionBlockTitle {
-  margin-bottom: 1em;
+.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle, .s3InfoBlockTitle, .staffEditionBlockTitle {
+    margin-bottom: 1em;
 }
 
 .editSourceBlock, .recommender_add, .flagSourceBlock {
@@ -196,14 +202,6 @@
 
 .submit_s3_info { margin-top: 0.5em; margin-bottom: 0.5em; } 
 
-.division_line {
-	margin-top: 1em; 
-	margin-bottom: 1em;
-	border-bottom-width: thin;
-	border-bottom-style: inset;
-	border-bottom-color: gray;
-}
-
 .resource_hovered { background-color:#F2F7FA }
 
 .recommender_modify_title { float: right; padding-right: 2em; overflow: auto; }
@@ -215,7 +213,9 @@
 .recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: red; }
 .recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #948f8f; }
 
-
+.checkIcon:not(.endorsed) { color: #948f8f; display: none; }
+.checkIcon.endorsed { color: rgb(69, 194, 10); }
+.checkIcon:before { content: '✔'; }
 .downArrowIcon:before { content: '▼'; }
 .upArrowIcon:before { content: '▲'; }
 .plusIcon:before { content: '+'; }

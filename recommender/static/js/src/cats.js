@@ -73,37 +73,39 @@ var uploadFileErrorText = {
     '{"success": "Submission aborted!': 'Size of uploaded file exceeds threshold'
 };
 
-var staff_edit_buttons = [
-	"submit_s3_info",
-	'delete_resource'/*,
-	"endorse_resource",
-	"deendorse_resource"*/
+var s3_info_buttons = [
+    "submit_s3_info"
 ];
 
-var staff_edit_buttons_text = {
-	'delete_resource': "Delete resource",
-	"endorse_resource": "Endorse resource",
-	"deendorse_resource": "De-endorse resource",
-	"submit_s3_info": "Add Amazon S3 information for file uploading"
+var s3_info_buttons_text = {
+  	"submit_s3_info": "Add Amazon S3 information for file uploading"
 };
 
-var staff_edit_textareas = [
+var s3_info_textareas = [
 	'aws_access_key',
 	'aws_secret_key',
 	'bucketName',
 	'uploadedFileDir'
 ];
 
-var staff_edit_textareas_text = {
+var s3_info_textareas_text = {
 	'aws_access_key': 'Amazon S3 access key',
 	'aws_secret_key': 'Amazon S3 secret key',
 	'bucketName': 'Bucket name of your Amazon S3',
 	'uploadedFileDir': 'Directory for your uploaded files'
 };
 
-var staff_edit_textareas_placeholder = {
+var s3_info_textareas_placeholder = {
 	'aws_access_key': '',
 	'aws_secret_key': '',
 	'bucketName': 'danielswli',
 	'uploadedFileDir': 'uploads/'
+};
+
+var staff_edit_buttons = [
+	'delete_resource',
+];
+
+var staff_edit_buttons_text = {
+	'delete_resource': "Delete resource",
 };

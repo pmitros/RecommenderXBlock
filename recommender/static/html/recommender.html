@@ -16,6 +16,11 @@
           </div>
           % for elem in resources:
             <%
+              if elem['id'] in endorsed_recommendation_ids:
+                endorseMode = 'endorsed'
+              else:
+                endorseMode = ''
+               
               if elem['id'] in downvoted_ids:
                 voteMode = "downvoting"
               elif elem['id'] in upvoted_ids:
@@ -30,7 +35,7 @@
                 flagMode = ''
                 reason = ''
             %>
-            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode" />
+            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode,endorseMode=endorseMode" />
           % endfor
           <div class="recommender_resourceTemplate hidden">
 			<div class="recommender_vote_box">
@@ -45,11 +50,14 @@
 			  <div class="recommender_entryId"></div>
 			  <div class="recommender_problematicReason"></div>
 		    </div>
+            <div class="recommender_endorse"><div class="checkIcon"></div></div>
 			<div class="recommender_edit"> <span class="ui-icon ui-icon-pencil resource_edit_button"></span> <span class="ui-icon ui-icon-flag flagResource "></span></div>
 		  </div>
         </div>
         <div class="resource_add_button">Add new resource &gt;&gt;</div>
 		<div class="clearFix"></div>
+        <div class="s3info_add_button">Set S3 information</div>
+        <div class="clearFix"></div>
         <div class='pagination'>
           <div class="paginationRowTemplate hidden">
 		    <div class="paginationCell leftArrowIcon"></div>
@@ -77,8 +85,11 @@
     </div>
     <div class='recommender_modify'>
       <div class='recommender_modify_title_container'><div class='backToViewButton'>&lt; Related resources</div><div class='recommender_modify_title'></div></div>
+      <div class="s3InfoBlock">
+        <div class="s3InfoBlockTitle">Provide your s3 information for file uploading.</div>
+      </div>    
       <div class="staffEditionBlock">
-        <div class="staffEditionBlockTitle">Provide your s3 information for file uploading; delete, endorse or de-endorse a resource.</div>
+        <div class="staffEditionBlockTitle">Delete a resource.</div>
       </div>
       <div class="flagSourceBlock">
         <div class="flagSourceBlockTitle">Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently. </div>
@@ -102,7 +113,7 @@
         <textarea 
           class="edit_descriptionText" 
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
-        <form method="post" id="editResourceForm">
+        <form method="post" class="editResourceForm">
           Preview screenshot: <input type="file" name="file" class='editResourceScreenshot'><br/>
           <input type="button" value="Save change" class="edit_submit" disabled >
         </form>
@@ -121,7 +132,7 @@
         <textarea 
           class="in_descriptionText" 
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
-        <form method="post" id="addResourceForm">
+        <form method="post" class="addResourceForm">
           Preview screenshot: <input type="file" name="file" class='addResourceScreenshot'><br/>
           <input type="button" value="Add resource" class="add_submit" disabled >
         </form>
