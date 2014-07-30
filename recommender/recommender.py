@@ -6,6 +6,9 @@ import json
 import hashlib
 import pkg_resources
 
+"""
+TODO: Should be updated once XBlocks and tracking logs have finalized APIs and documentation.
+"""
 try:
     from eventtracking import tracker
 except ImportError:
@@ -35,7 +38,6 @@ class RecommenderXBlock(XBlock):
     This XBlock will show a set of recommended resources which may be helpful to students solving a given problem.
     The resources are provided and edited by students; they can also vote for useful resources and flag problematic ones.
     """
-
     default_recommendations = List(help="List of default help resources",
                                    default=[], scope=Scope.content)
     # A list of default recommenations, it is a JSON object across all users,
