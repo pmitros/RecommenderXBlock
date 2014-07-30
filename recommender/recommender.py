@@ -6,9 +6,8 @@ import json
 import hashlib
 import pkg_resources
 
-"""
-TODO: Should be updated once XBlocks and tracking logs have finalized APIs and documentation.
-"""
+
+# TODO: Should be updated once XBlocks and tracking logs have finalized APIs and documentation.
 try:
     from eventtracking import tracker
 except ImportError:
