@@ -1,122 +1,177 @@
-import json, string, random, re
-
+"""
+This XBlock will show a set of recommended resources which may be helpful to
+students solving a given problem.
+"""
+import json
+import hashlib
 import pkg_resources
 
 try:
     from eventtracking import tracker
-except:
+except ImportError:
     class tracker:
-        @staticmethod
-        def emit(a,b):
+        """ Define tracker if eventtracking cannot be imported """
+        def __init__(self):
+            """ Do nothing """
             pass
 
-from mako.template import Template
+        @staticmethod
+        def emit(param1, param2):
+            """ Define emit method if eventtracking cannot be imported """
+            pass
+
 from mako.lookup import TemplateLookup
 
 from xblock.core import XBlock
-from xblock.fields import Scope, Integer, String, BlockScope, List, Dict
+from xblock.fields import Scope, List, Dict
 from xblock.fragment import Fragment
 
 from fs.s3fs import S3FS
 from webob.response import Response
 
+
 class RecommenderXBlock(XBlock):
     """
     This XBlock will show a set of recommended resources which may be helpful to students solving a given problem.
-    The resources are provided and edited by students; they can also vote for useful resources and flag problematic ones. 
+    The resources are provided and edited by students; they can also vote for useful resources and flag problematic ones.
     """
 
-    default_recommendations = List(help="List of default help resources", default=[], scope=Scope.content)
-    # A list of default recommenations, it is a JSON object across all users, all runs of a course, for this xblock.
+    default_recommendations = List(help="List of default help resources",
+                                   default=[], scope=Scope.content)
+    # A list of default recommenations, it is a JSON object across all users,
+    #    all runs of a course, for this xblock.
     # Usage: default_recommendations[index] = {
-    #                   "id": (Integer) id of a resource, 
-    #                   "title": (String) title of a resource; a 1-3 sentence summary of a resource 
-    #                   "upvotes" : (Integer) number of upvotes,
-    #                   "downvotes" : (Integer) number of downvotes, 
-    #                   "url" : (String) the url of a resource, 
-    #                   "description" : (String) the url of a resource's screenshot, 
-    #                   "descriptionText" : (String) a paragraph of description/summary of a resource }
-   
-    recommendations = List(help="List of help resources", default=[], scope=Scope.user_state_summary)
-    # A list of recommenations provided by students, it is a JSON object aggregated across many users of a single block.
+    #    "id": (Integer) id of a resource,
+    #    "title": (String) title of a resource; a 1-3 sentence summary
+    #            of a resource
+    #    "upvotes" : (Integer) number of upvotes,
+    #    "downvotes" : (Integer) number of downvotes,
+    #    "url" : (String) the url of a resource,
+    #    "description" : (String) the url of a resource's screenshot,
+    #    "descriptionText" : (String) a paragraph of
+    #            description/summary of a resource }
+
+    recommendations = List(help="List of help resources", default=[],
+                           scope=Scope.user_state_summary)
+    # A list of recommenations provided by students, it is a JSON object
+    #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations
 
-    s3_configuration = Dict(help="Dictionary of Amazon S3 information", default={}, scope=Scope.user_state_summary)
+    s3_configuration = Dict(help="Dictionary of Amazon S3 information",
+                            default={}, scope=Scope.user_state_summary)
 
-    # A dictionary of Amazon S3 information for file uploading, it is a JSON object aggregated across many users of a single block.
+    # A dictionary of Amazon S3 information for file uploading, it is a JSON
+    #    object aggregated across many users of a single block.
     # Usage: s3_configuration = {
-    #                   "aws_access_key": (String) access key of Amazon S3 account
-    #                   "aws_secret_key": (String) secret key of Amazon S3 account
-    #                   "bucketName": (String) Bucket name of Amazon S3 account
-    #                   "uploadedFileDir": (String) The path (relative to root directory) of the directory for storing uploaded files }
-    
-    deletedRecommendationIds = List(help="List of deleted resources' ID", default=[], scope=Scope.user_state_summary)
-    # A list of deleted recommendations' ids, it is a JSON object aggregated across many users of a single block.
-    # Usage: deletedRecommendationIds[index] = (Integer) id of a deleted resource
+    #    "aws_access_key": (String) access key of Amazon S3 account
+    #    "aws_secret_key": (String) secret key of Amazon S3 account
+    #    "bucketName": (String) Bucket name of Amazon S3 account
+    #    "uploadedFileDir": (String) The path (relative to root directory) of
+    #            the directory for storing uploaded files }
 
-    upvotedIds = List(help="List of resources' ids which user upvoted to", default=[], scope=Scope.user_state)
-    # A list of recommendations' ids which user upvoted to; it is a JSON object for one user, for one block, and for one run of a course.
-    # Usage: upvotedIds[index] = (Integer) id of a resource which was upvoted by the current user
+    deleted_recommendation_ids = List(help="List of deleted resources' ID",
+                                      default=[],
+                                      scope=Scope.user_state_summary)
+    # A list of deleted recommendations' ids, it is a JSON object aggregated
+    #    across many users of a single block.
+    # Usage: deleted_recommendation_ids[index] = (Integer) id of a deleted
+    #    resource
 
-    downvotedIds = List(help="List of resources' ids which user downvoted to", default=[], scope=Scope.user_state)
-    # A list of recommendations' ids which user downvoted to; it is a JSON object for one user, for one block, and for one run of a course.
-    # Usage: downvotedIds[index] = (Integer) id of a resource which was downvoted by the current user
+    upvoted_ids = List(help="List of resources' ids which user upvoted to",
+                       default=[], scope=Scope.user_state)
+    # A list of recommendations' ids which user upvoted to; it is a JSON
+    #    object for one user, for one block, and for one run of a course.
+    # Usage: upvoted_ids[index] = (Integer) id of a resource which was
+    #    upvoted by the current user
 
-    flaggedIds = List(help="List of problematic resources' ids which user flagged to", default=[], scope=Scope.user_state)
-    # A list of problematic recommendations' ids which user flagged to; it is a JSON object for one user, for one block, and for one run of a course.
-    # Usage: flaggedIds[index] = (Integer) id of a problematic resource which was flagged by the current user
+    downvoted_ids = List(help="List of resources' ids which user downvoted to",
+                         default=[], scope=Scope.user_state)
+    # A list of recommendations' ids which user downvoted to; it is a JSON
+    #    object for one user, for one block, and for one run of a course.
+    # Usage: downvoted_ids[index] = (Integer) id of a resource which was
+    #    downvoted by the current user
 
-    # Reasons of flagged resource (problematic resource) for this particular user
-    flaggedReasons = List(help="List of reasons why the corresponding resources were flagged by user as problematic", default=[], scope=Scope.user_state)
-    # A list of reasons why the corresponding resources were flagged by user as problematic; it is a JSON object for one user, for one block, and for one run of a course.
-    # Usage: flaggedReasons[index] = (String) reason why the corresponding resource was flagged by the current user as problematic
+    flagged_ids = List(help="List of problematic resources' ids which user" +
+                       "flagged to", default=[], scope=Scope.user_state)
+    # A list of problematic recommendations' ids which user flagged to; it is
+    #    a JSON object for one user, for one block, and for one run of a
+    #    course.
+    # Usage: flagged_ids[index] = (Integer) id of a problematic resource which
+    #    was flagged by the current user
+
+    flagged_reasons = List(help="List of reasons why the corresponding" +
+                           "resources were flagged by user as problematic",
+                           default=[], scope=Scope.user_state)
+    # A list of reasons why the corresponding resources were flagged by user as
+    #    problematic; it is a JSON object for one user, for one block, and for
+    #    one run of a course.
+    # Usage: flagged_reasons[index] = (String) reason why the corresponding
+    #    resource was flagged by the current user as problematic
 
     template_lookup = None
 
-    resource_content_fields = ['url', 'title', 'description', 'descriptionText']
+    resource_content_fields = ['url', 'title', 'description',
+                               'descriptionText']
     # the dictionary keys for storing the content of a recommendation
 
     def resource_string(self, path):
-        """Handy helper for getting static file resources from our Python package."""
+        """
+        Handy helper for getting static file resources from our Python package.
+        """
         data = pkg_resources.resource_string(__name__, path)
         return data.decode("utf8")
 
-    def getResourceNewId(self):
+    def get_resource_new_id(self):
         """
         Generate a unique Id for each resource.
+        Return first unused counting number for new ID
         """
         recommendations = self.recommendations
         if not recommendations:
             recommendations = self.default_recommendations
-        resourceId = -1
+        resource_id = -1
         for recommendation in recommendations:
-            if recommendation['id'] > resourceId:
-                resourceId = recommendation['id']
-        for deletedRecommendationId in self.deletedRecommendationIds:
-            if deletedRecommendationId > resourceId:
-                resourceId = deletedRecommendationId
-        return resourceId + 1
+            if recommendation['id'] > resource_id:
+                resource_id = recommendation['id']
+        for deleted_recommendation_id in self.deleted_recommendation_ids:
+            if deleted_recommendation_id > resource_id:
+                resource_id = deleted_recommendation_id
+        return resource_id + 1
 
-    def getEntryIndex(self, entryId, entryList):
+    def get_entry_index(self, entry_id, entry_list):
         """
         Get the element index in a list based on its ID.
         """
-        for idx in range(0, len(entryList)):
-            if entryList[idx]['id'] == entryId:
+        for idx in range(0, len(entry_list)):
+            if entry_list[idx]['id'] == entry_id:
                 return idx
         return -1
 
-    def checkRedundancy(self, url1, url2):
+    def check_redundancy(self, url1, url2):
         """
         Check redundant resource by comparing the url.
+        This is not designed for security, just to check common errors/use-cases
         """
-        return url1.split('#')[0].split('%23')[0] == url2.split('#')[0].split('%23')[0]
+        return (url1.split('#')[0].split('%23')[0] ==
+                url2.split('#')[0].split('%23')[0])
+
+    def md5_check_sum(self, data):
+        """
+        Generate the MD5 hash of file
+        Args:
+                data: the content of the file (e.g., open(filePath, 'rb').read())
+        Returns:
+                The MD5 hash
+        """
+        md5 = hashlib.md5()
+        md5.update(data)
+        return md5.hexdigest()
 
     @XBlock.json_handler
-    def delete_resource(self, data, suffix=''):
+    def delete_resource(self, data, _suffix=''):
         """
         Delete an entry of resource.
-        
+
         Args:
                 data: dict in JSON format
                 data['id']: the ID of the resouce to be deleted
@@ -126,31 +181,31 @@ class RecommenderXBlock(XBlock):
                 result['error']: the error message generated when the deletion fails
                 result[resource_content_field]: the content of the deleted resource
         """
-        resourceId = data['id']
+        resource_id = data['id']
         result = {}
-        result['id'] = resourceId
-        idx = self.getEntryIndex(resourceId, self.recommendations)
+        result['id'] = resource_id
+        idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id';
+            result['error'] = 'bad id'
             tracker.emit('delete_resource', result)
             result['Success'] = False
             return result
-        
+
         result['upvotes'] = self.recommendations[idx]['upvotes']
         result['downvotes'] = self.recommendations[idx]['downvotes']
         for field in self.resource_content_fields:
             result[field] = self.recommendations[idx][field]
         tracker.emit('delete_resource', result)
-        self.deletedRecommendationIds.append(resourceId)
+        self.deleted_recommendation_ids.append(resource_id)
         del self.recommendations[idx]
         result['Success'] = True
         return result
 
     @XBlock.json_handler
-    def handle_upvote(self, data, suffix=''):
+    def handle_upvote(self, data, _suffix=''):
         """
         Add one vote to an entry of resource.
-        
+
         Args:
                 data: dict in JSON format
                 data['id']: the ID of the resouce which was upvoted
@@ -162,41 +217,44 @@ class RecommenderXBlock(XBlock):
                 result['newVotes']: the votes after this action
                 result['toggle']: the boolean indicator for whether the resource was switched from downvoted to upvoted
         """
-        resourceId = data['id']
-        idx = self.getEntryIndex(resourceId, self.recommendations)
+        resource_id = data['id']
+        idx = self.get_entry_index(resource_id, self.recommendations)
         result = {}
-        result['id'] = resourceId
+        result['id'] = resource_id
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id';
+            result['error'] = 'bad id'
             tracker.emit('recommender_upvote', result)
             result['Success'] = False
             return result
 
-        result['oldVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
-        if resourceId in self.upvotedIds:
-            del self.upvotedIds[self.upvotedIds.index(resourceId)]
+        result['oldVotes'] = (self.recommendations[idx]['upvotes'] -
+                              self.recommendations[idx]['downvotes'])
+        if resource_id in self.upvoted_ids:
+            del self.upvoted_ids[self.upvoted_ids.index(resource_id)]
             self.recommendations[idx]['upvotes'] -= 1
-            result['newVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+            result['newVotes'] = (self.recommendations[idx]['upvotes'] -
+                                  self.recommendations[idx]['downvotes'])
             tracker.emit('recommender_upvote', result)
             result['Success'] = True
             return result
-    
-        if resourceId in self.downvotedIds:
-            del self.downvotedIds[self.downvotedIds.index(resourceId)]
+
+        if resource_id in self.downvoted_ids:
+            del self.downvoted_ids[self.downvoted_ids.index(resource_id)]
             self.recommendations[idx]['downvotes'] -= 1
             result['toggle'] = True
-        self.upvotedIds.append(resourceId)
+        self.upvoted_ids.append(resource_id)
         self.recommendations[idx]['upvotes'] += 1
-        result['newVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+        result['newVotes'] = (self.recommendations[idx]['upvotes'] -
+                              self.recommendations[idx]['downvotes'])
         tracker.emit('recommender_upvote', result)
         result['Success'] = True
         return result
 
     @XBlock.json_handler
-    def handle_downvote(self, data, suffix=''):
+    def handle_downvote(self, data, _suffix=''):
         """
         Subtract one vote from an entry of resource.
-        
+
         Args:
                 data: dict in JSON format
                 data['id']: the ID of the resouce which was downvoted
@@ -208,41 +266,44 @@ class RecommenderXBlock(XBlock):
                 result['newVotes']: the votes after this action
                 result['toggle']: the boolean indicator for whether the resource was switched from upvoted to downvoted
         """
-        resourceId = data['id']
-        idx = self.getEntryIndex(resourceId, self.recommendations)
+        resource_id = data['id']
+        idx = self.get_entry_index(resource_id, self.recommendations)
         result = {}
-        result['id'] = resourceId
+        result['id'] = resource_id
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id';
+            result['error'] = 'bad id'
             tracker.emit('recommender_downvote', result)
             result['Success'] = False
             return result
 
-        result['oldVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
-        if resourceId in self.downvotedIds:
-            del self.downvotedIds[self.downvotedIds.index(resourceId)]
+        result['oldVotes'] = (self.recommendations[idx]['upvotes'] -
+                              self.recommendations[idx]['downvotes'])
+        if resource_id in self.downvoted_ids:
+            del self.downvoted_ids[self.downvoted_ids.index(resource_id)]
             self.recommendations[idx]['downvotes'] -= 1
-            result['newVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+            result['newVotes'] = (self.recommendations[idx]['upvotes'] -
+                                  self.recommendations[idx]['downvotes'])
             tracker.emit('recommender_downvote', result)
             result['Success'] = True
             return result
-    
-        if resourceId in self.upvotedIds:
-            del self.upvotedIds[self.upvotedIds.index(resourceId)]
+
+        if resource_id in self.upvoted_ids:
+            del self.upvoted_ids[self.upvoted_ids.index(resource_id)]
             self.recommendations[idx]['upvotes'] -= 1
             result['toggle'] = True
-        self.downvotedIds.append(resourceId)
+        self.downvoted_ids.append(resource_id)
         self.recommendations[idx]['downvotes'] += 1
-        result['newVotes'] = self.recommendations[idx]['upvotes'] - self.recommendations[idx]['downvotes']
+        result['newVotes'] = (self.recommendations[idx]['upvotes'] -
+                              self.recommendations[idx]['downvotes'])
         tracker.emit('recommender_downvote', result)
         result['Success'] = True
         return result
 
     @XBlock.handler
-    def upload_screenshot(self, request, suffix=''):
+    def upload_screenshot(self, request, _suffix=''):
         """
         Upload a screenshot for an entry of resource as a preview, to S3.
-        
+
         Args:
                 request: HTTP POST request
                 request.POST['file'].file: the file to be uploaded
@@ -255,54 +316,54 @@ class RecommenderXBlock(XBlock):
                 bucket: name of the s3 bucket
         """
         if self.s3_configuration == {}:
-            tracker.emit('upload_screenshot', {'uploadedFileName': 'IMPROPER_S3_SETUP'})
+            tracker.emit('upload_screenshot',
+                         {'uploadedFileName': 'IMPROPER_S3_SETUP'})
             response = Response()
             response.body = 'IMPROPER_S3_SETUP'
             response.headers['Content-Type'] = 'text/plain'
             return response
 
-        chars=string.ascii_uppercase + string.digits
-        fileNameLength=11
-
         # Check invalid file types
-        fileType = ''
-        allowedTypes = ['.png', '.jpg', '.gif']
-        allowedMimeTypes = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png']
-        fileTypeError = False
-        for allowedType in allowedTypes:
-            if str(request.POST['file'].file).endswith(allowedType):
-                fileType = allowedType
+        image_types = {
+            'jpeg': {
+                'extension': [".jpeg", ".jpg"],
+                'mimetypes': ['image/jpeg', 'image/pjpeg'],
+                'magic': ["ffd8"]
+            },
+            'png': {
+                'extension': [".png"],
+                'mimetypes': ['image/png'],
+                'magic': ["89504e470d0a1a0a"]
+            },
+            'gif': {
+                'extension': [".gif"],
+                'mimetypes': ['image/gif'],
+                'magic': ["474946383961", "474946383761"]
+            }
+        }
+        file_type_error = False
+        file_type = [ft for ft in image_types
+                     if any(str(request.POST['file'].file).lower().endswith(ext)
+                            for ext in image_types[ft]['extension'])]
 
-        if request.POST['file'].file.content_type not in allowedMimeTypes or fileType == '':
-            fileTypeError = True
+        # Check extension
+        if not file_type:
+            file_type_error = True
+        else:
+            file_type = file_type[0]
+            # Check mimetypes
+            if request.POST['file'].file.content_type not in image_types[file_type]['mimetypes']:
+                file_type_error = True
+            else:
+                # Check magic number
+                headers = image_types[file_type]['magic']
+                if request.POST['file'].file.read(len(headers[0]) / 2).encode('hex') not in headers:
+                    file_type_error = True
+                request.POST['file'].file.seek(0)
 
-        # Check magic number for a png file
-        pngHeader = "89504e470d0a1a0a" # (first 8 bytes)
-        if fileType == '.png':
-            if request.POST['file'].file.read(8).encode('hex') != pngHeader:
-                fileTypeError = True
-        request.POST['file'].file.seek(0)
-
-        # Check magic number for a gif file
-        gifHeader = ["474946383961", "474946383761"] # (first 6 bytes)
-        if fileType == '.gif':
-            if request.POST['file'].file.read(6).encode('hex') not in gifHeader:
-                fileTypeError = True
-        request.POST['file'].file.seek(0)
-
-        # Check magic number for a jpg file
-        jpgHeader = "ffd8" # (first 2 bytes)
-        jpgTail = "ffd9" # (last 2 bytes)
-        if fileType == '.jpg':
-            head = request.POST['file'].file.read(2).encode('hex')
-            request.POST['file'].file.seek(-2, 2)
-            tail = request.POST['file'].file.read(2).encode('hex')
-            if head != jpgHeader or tail != jpgTail:
-                fileTypeError = True            
-        request.POST['file'].file.seek(0)
-
-        if fileTypeError:
-            tracker.emit('upload_screenshot', {'uploadedFileName': 'FILE_TYPE_ERROR'})
+        if file_type_error:
+            tracker.emit('upload_screenshot',
+                         {'uploadedFileName': 'FILE_TYPE_ERROR'})
             response = Response()
             response.body = 'FILE_TYPE_ERROR'
             response.headers['Content-Type'] = 'text/plain'
@@ -312,41 +373,46 @@ class RecommenderXBlock(XBlock):
         # already done in request submission, handled in client side
 
         try:
-            fileId = ''
-            fileName = ''
-            S3FS_handler = S3FS(self.s3_configuration['bucketName'], aws_access_key=self.s3_configuration['aws_access_key'], aws_secret_key=self.s3_configuration['aws_secret_key'])
-            while True:
-                fileId = ''.join(random.choice(chars) for _ in range(fileNameLength))
-                fileName = str(self.s3_configuration['uploadedFileDir']) + fileId + fileType
-                if not S3FS_handler.exists(fileName):
-                    break
-            dirUrl = S3FS_handler.getpathurl("/")
+            s3fs_handler = S3FS(
+                self.s3_configuration['bucketName'],
+                aws_access_key=self.s3_configuration['aws_access_key'],
+                aws_secret_key=self.s3_configuration['aws_secret_key'])
+
+            dir_url = s3fs_handler.getpathurl("/")
             content = request.POST['file'].file.read()
-            fhwrite = S3FS_handler.open(fileName, 'wb')
+            file_id = self.md5_check_sum(content)
+            file_name = (str(self.s3_configuration['uploadedFileDir']) +
+                         file_id + file_type)
+
+            fhwrite = s3fs_handler.open(file_name, 'wb')
             fhwrite.write(content)
             fhwrite.close()
-            S3FS_handler.makepublic(fileName)
-        except:
-            tracker.emit('upload_screenshot', {'uploadedFileName': 'IMPROPER_S3_SETUP'})
+            s3fs_handler.makepublic(file_name)
+        except BaseException:
+            tracker.emit('upload_screenshot',
+                         {'uploadedFileName': 'IMPROPER_S3_SETUP'})
             response = Response()
             response.body = 'IMPROPER_S3_SETUP'
             response.headers['Content-Type'] = 'text/plain'
             return response
-       
+
         response = Response()
         if self.s3_configuration['uploadedFileDir'] == "/":
-            response.body = str(dirUrl + fileId + fileType)
+            response.body = str(dir_url + file_id + file_type)
         else:
-            response.body = str(dirUrl + self.s3_configuration['uploadedFileDir'] + fileId + fileType)
+            response.body = str(dir_url +
+                                self.s3_configuration['uploadedFileDir'] +
+                                file_id + file_type)
         response.headers['Content-Type'] = 'text/plain'
-        tracker.emit('upload_screenshot', {'uploadedFileName': fileName})
+        tracker.emit('upload_screenshot',
+                     {'uploadedFileName': file_name})
         return response
 
     @XBlock.json_handler
-    def add_resource(self, data, suffix=''):
+    def add_resource(self, data, _suffix=''):
         """
         Add an entry of new resource.
-        
+
         Args:
                 data: dict in JSON format
                 data[resource_content_field]: the content of the resource to be added
@@ -363,13 +429,13 @@ class RecommenderXBlock(XBlock):
 
         # check url for redundancy
         for recommendation in self.recommendations:
-            if self.checkRedundancy(recommendation['url'], data['url']):
+            if self.check_redundancy(recommendation['url'], data['url']):
                 result['error'] = 'redundant resource'
                 tracker.emit('add_resource', result)
                 result['Success'] = False
                 return result
 
-        result['id'] = self.getResourceNewId()
+        result['id'] = self.get_resource_new_id()
         tracker.emit('add_resource', result)
 
         result['upvotes'] = 0
@@ -379,10 +445,10 @@ class RecommenderXBlock(XBlock):
         return result
 
     @XBlock.json_handler
-    def edit_resource(self, data, suffix=''):
+    def edit_resource(self, data, _suffix=''):
         """
         Edit an entry of existing resource.
-        
+
         Args:
                 data: dict in JSON format
                 data['id']: the ID of the edited resouce
@@ -394,27 +460,33 @@ class RecommenderXBlock(XBlock):
                 result[old_resource_content_field]: the content of the resource before edited
                 result[resource_content_field]: the content of the resource after edited
         """
-        resourceId = data['id']
+        resource_id = data['id']
         result = {}
-        result['id'] = resourceId
-        idx = self.getEntryIndex(resourceId, self.recommendations)
+        result['id'] = resource_id
+        idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id';
+            result['error'] = 'bad id'
             tracker.emit('edit_resource', result)
             result['Success'] = False
             return result
 
         for field in self.resource_content_fields:
             result['old_' + field] = self.recommendations[idx][field]
-            result[field] = data[field]
+            if data[field] == "":
+                result[field] = self.recommendations[idx][field]
+            else:
+                result[field] = data[field]
         # check url for redundancy
-        if not( self.checkRedundancy(self.recommendations[idx]['url'], data['url']) ):
+        if not(self.check_redundancy(self.recommendations[idx]['url'],
+                                     data['url'])):
             for recommendation in self.recommendations:
-                if self.checkRedundancy(recommendation['url'], data['url']):
+                if self.check_redundancy(recommendation['url'], data['url']):
                     result['error'] = 'existing url'
                     for field in self.resource_content_fields:
-                        result['dup_' + field] = self.recommendations[self.recommendations.index(recommendation)][field]
-                    result['dup_id'] = self.recommendations[self.recommendations.index(recommendation)]['id']
+                        result['dup_' + field] = self.recommendations[
+                            self.recommendations.index(recommendation)][field]
+                    result['dup_id'] = self.recommendations[
+                        self.recommendations.index(recommendation)]['id']
                     tracker.emit('edit_resource', result)
                     result['Success'] = False
                     return result
@@ -430,10 +502,10 @@ class RecommenderXBlock(XBlock):
         return result
 
     @XBlock.json_handler
-    def flag_resource(self, data, suffix=''):
+    def flag_resource(self, data, _suffix=''):
         """
         Flag (or unflag) an entry of problematic resource and give the reason.
-        
+
         Args:
                 data: dict in JSON format
                 data['id']: the ID of the problematic resouce
@@ -451,37 +523,41 @@ class RecommenderXBlock(XBlock):
         result['id'] = data['id']
         result['isProblematic'] = data['isProblematic']
         result['reason'] = data['reason']
-        if data['isProblematic'] == True:
-            if data['id'] in self.flaggedIds:
-                result['oldReason'] = self.flaggedReasons[self.flaggedIds.index(data['id'])]
-                self.flaggedReasons[self.flaggedIds.index(data['id'])] = data['reason']
+        if data['isProblematic']:
+            if data['id'] in self.flagged_ids:
+                result['oldReason'] = self.flagged_reasons[
+                    self.flagged_ids.index(data['id'])]
+                self.flagged_reasons[
+                    self.flagged_ids.index(data['id'])] = data['reason']
             else:
-                self.flaggedIds.append(data['id'])
-                self.flaggedReasons.append(data['reason'])
+                self.flagged_ids.append(data['id'])
+                self.flagged_reasons.append(data['reason'])
         else:
-            if data['id'] in self.flaggedIds:
-                result['oldReason'] = self.flaggedReasons[self.flaggedIds.index(data['id'])]
+            if data['id'] in self.flagged_ids:
+                result['oldReason'] = self.flagged_reasons[
+                    self.flagged_ids.index(data['id'])]
                 result['reason'] = ''
-                idx = self.flaggedIds.index(data['id'])
-                del self.flaggedIds[idx]
-                del self.flaggedReasons[idx]
+                idx = self.flagged_ids.index(data['id'])
+                del self.flagged_ids[idx]
+                del self.flagged_reasons[idx]
         tracker.emit('flag_resource', result)
         result['Success'] = True
         return result
 
     @XBlock.json_handler
-    def is_user_staff(self, data, suffix=''):
+    def is_user_staff(self, _data, _suffix=''):
         """
         Return whether the user is staff.
-        
+
         Returns:
-                is_user_staff: indicator for whether the user is staff 
+                is_user_staff: indicator for whether the user is staff
         """
-        tracker.emit('is_user_staff', {'is_user_staff': self.xmodule_runtime.user_is_staff})
+        tracker.emit('is_user_staff',
+                     {'is_user_staff': self.xmodule_runtime.user_is_staff})
         return {'is_user_staff': self.xmodule_runtime.user_is_staff}
 
     @XBlock.json_handler
-    def set_s3_info(self, data, suffix=''):
+    def set_s3_info(self, data, _suffix=''):
         """
         Set required information of amazon web service for file uploading.
 
@@ -497,14 +573,15 @@ class RecommenderXBlock(XBlock):
         self.s3_configuration['aws_access_key'] = data['aws_access_key']
         self.s3_configuration['aws_secret_key'] = data['aws_secret_key']
         self.s3_configuration['bucketName'] = data['bucketName']
-        if data['uploadedFileDir'][len(data['uploadedFileDir'])-1] == '/':
+        if data['uploadedFileDir'][len(data['uploadedFileDir']) - 1] == '/':
             self.s3_configuration['uploadedFileDir'] = data['uploadedFileDir']
         else:
-            self.s3_configuration['uploadedFileDir'] = data['uploadedFileDir'] + '/'
+            self.s3_configuration['uploadedFileDir'] = (data['uploadedFileDir']
+                                                        + '/')
         tracker.emit('set_s3_info', self.s3_configuration)
         return {'Success': True}
 
-    def student_view(self, context=None):
+    def student_view(self, _context=None):
         """
         The primary view of the RecommenderXBlock, shown to students
         when viewing courses.
@@ -516,47 +593,72 @@ class RecommenderXBlock(XBlock):
             self.recommendations = []
 
         if not self.template_lookup:
-            self.template_lookup = TemplateLookup() 
-            self.template_lookup.put_string("recommender.html", self.resource_string("static/html/recommender.html"))
-            self.template_lookup.put_string("resourcebox.html", self.resource_string("static/html/resourcebox.html"))
+            self.template_lookup = TemplateLookup()
+            self.template_lookup.put_string(
+                "recommender.html",
+                self.resource_string("static/html/recommender.html"))
+            self.template_lookup.put_string(
+                "resourcebox.html",
+                self.resource_string("static/html/resourcebox.html"))
 
-        # Ideally, we'd estimate score based on votes, such that items with 1 vote have a sensible ranking (rather than a perfect rating)
-        # 
-        resources = [{'id' : r['id'], 'title' : r['title'], "votes" : r['upvotes'] - r['downvotes'], 'url' : r['url'], 'description' : r['description'], 'descriptionText' : r['descriptionText']} for r in self.recommendations]
-        resources = sorted(resources, key = lambda r: r['votes'], reverse=True)
+        # Ideally, we'd estimate score based on votes, such that items with
+        # 1 vote have a sensible ranking (rather than a perfect rating)
 
-        frag = Fragment(self.template_lookup.get_template("recommender.html").render(resources = resources, upvotedIds = self.upvotedIds, downvotedIds = self.downvotedIds, flaggedIds = self.flaggedIds, flaggedReasons = self.flaggedReasons))
-        frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
-        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
+        resources = [{'id': r['id'],
+                      'title': r['title'],
+                      "votes": r['upvotes'] - r['downvotes'],
+                      'url': r['url'],
+                      'description': r['description'],
+                      'descriptionText': r['descriptionText']}
+                     for r in self.recommendations]
+        resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
+
+        frag = Fragment(self.template_lookup.get_template("recommender.html")
+                        .render(resources=resources,
+                                upvoted_ids=self.upvoted_ids,
+                                downvoted_ids=self.downvoted_ids,
+                                flagged_ids=self.flagged_ids,
+                                flagged_reasons=self.flagged_reasons))
+        frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/" +
+                         "themes/smoothness/jquery-ui.css")
+        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/" +
+                                "1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/tooltipster.css"))
         frag.add_css(self.resource_string("static/css/recommender.css"))
-        frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
+        frag.add_javascript(self.resource_string("static/js/src/" +
+                                                 "jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
-        frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
+        frag.add_javascript(self.resource_string("static/js/src/" +
+                                                 "recommender.js"))
         frag.initialize_js('RecommenderXBlock')
         return frag
 
     @staticmethod
     def workbench_scenarios():
-        """A canned scenario for display in the workbench."""
+        """
+        A canned scenario for display in the workbench.
+        """
         return [
-            ("RecommenderXBlock",
-             """<vertical_demo>
-               <html_demo><img class="question" src="http://people.csail.mit.edu/swli/edx/recommendation/img/pset.png"></img></html_demo> 
-               <recommender> 
-                     {"id": 1, "title": "Covalent bonding and periodic trends", "upvotes" : 15, "downvotes" : 5, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Periodic_Trends_and_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage1.png", "descriptionText" : "short description for Covalent bonding and periodic trends"}
-                     {"id": 2, "title": "Polar covalent bonds and electronegativity", "upvotes" : 10, "downvotes" : 7, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Covalent_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage2.png", "descriptionText" : "short description for Polar covalent bonds and electronegativity"}
-                     {"id": 3, "title": "Longest wavelength able to to break a C-C bond ...", "upvotes" : 1230, "downvotes" : 7, "url" : "https://answers.yahoo.com/question/index?qid=20081112142253AA1kQN1", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage1.png", "descriptionText" : "short description for Longest wavelength able to to break a C-C bond ..."}
-                     {"id": 4, "title": "Calculate the maximum wavelength of light for ...", "upvotes" : 10, "downvotes" : 3457, "url" : "https://answers.yahoo.com/question/index?qid=20100110115715AA6toHw", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage2.png", "descriptionText" : "short description for Calculate the maximum wavelength of light for ..."}
-                     {"id": 5, "title": "Covalent bond - wave mechanical concept", "upvotes" : 10, "downvotes" : 7, "url" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage1.png", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage1.png", "descriptionText" : "short description for Covalent bond - wave mechanical concept"}
-                     {"id": 6, "title": "Covalent bond - Energetics of covalent bond", "upvotes" : 10, "downvotes" : 7, "url" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "descriptionText" : "short description for Covalent bond - Energetics of covalent bond"}
-                  </recommender>
+            (
+                "RecommenderXBlock",
+                """
+                <vertical_demo>
+                    <html_demo><img class="question" src="http://people.csail.mit.edu/swli/edx/recommendation/img/pset.png"></img></html_demo>
+                    <recommender>
+                        {"id": 1, "title": "Covalent bonding and periodic trends", "upvotes" : 15, "downvotes" : 5, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Periodic_Trends_and_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage1.png", "descriptionText" : "short description for Covalent bonding and periodic trends"}
+                        {"id": 2, "title": "Polar covalent bonds and electronegativity", "upvotes" : 10, "downvotes" : 7, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Covalent_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage2.png", "descriptionText" : "short description for Polar covalent bonds and electronegativity"}
+                        {"id": 3, "title": "Longest wavelength able to to break a C-C bond ...", "upvotes" : 1230, "downvotes" : 7, "url" : "https://answers.yahoo.com/question/index?qid=20081112142253AA1kQN1", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage1.png", "descriptionText" : "short description for Longest wavelength able to to break a C-C bond ..."}
+                        {"id": 4, "title": "Calculate the maximum wavelength of light for ...", "upvotes" : 10, "downvotes" : 3457, "url" : "https://answers.yahoo.com/question/index?qid=20100110115715AA6toHw", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/dispage2.png", "descriptionText" : "short description for Calculate the maximum wavelength of light for ..."}
+                        {"id": 5, "title": "Covalent bond - wave mechanical concept", "upvotes" : 10, "downvotes" : 7, "url" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage1.png", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage1.png", "descriptionText" : "short description for Covalent bond - wave mechanical concept"}
+                        {"id": 6, "title": "Covalent bond - Energetics of covalent bond", "upvotes" : 10, "downvotes" : 7, "url" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "descriptionText" : "short description for Covalent bond - Energetics of covalent bond"}
+                    </recommender>
                 </vertical_demo>
-             """),
+                """
+            ),
         ]
 
     @classmethod
-    def parse_xml(cls, node, runtime, keys, id_generator):
+    def parse_xml(cls, node, runtime, keys, _id_generator):
         """
         Parse the XML for an HTML block.
 
@@ -570,6 +672,6 @@ class RecommenderXBlock(XBlock):
             line = line.strip()
             if len(line) > 2:
                 lines.append(json.loads(line))
-    
+
         block.default_recommendations = lines
         return block

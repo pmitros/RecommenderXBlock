@@ -16,16 +16,16 @@
           </div>
           % for elem in resources:
             <%
-              if elem['id'] in downvotedIds:
+              if elem['id'] in downvoted_ids:
                 voteMode = "downvoting"
-              elif elem['id'] in upvotedIds:
+              elif elem['id'] in upvoted_ids:
                 voteMode = 'upvoting'
               else:
 	            voteMode = ''
         
-              if elem['id'] in flaggedIds:
+              if elem['id'] in flagged_ids:
                 flagMode = 'problematic'
-                reason = flaggedReasons[flaggedIds.index(elem['id'])]
+                reason = flagged_reasons[flagged_ids.index(elem['id'])]
               else:
                 flagMode = ''
                 reason = ''

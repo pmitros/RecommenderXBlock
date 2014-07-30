@@ -413,6 +413,14 @@ function RecommenderXBlock(runtime, element) {
 			}
 		);
 
+        /* Emit log for student clicking a resource */
+        $(ele).find('a').click(function() {
+            Logger.log('resource.click.event', {
+				'status': 'A resource was clicked',
+				'id': $(ele).find('.recommender_entryId').text()
+			});
+        });
+        
 		/* Edit existing resource */
 		$(ele).find('.resource_edit_button').click(function() {
 			$('.editSourceBlock').show();
