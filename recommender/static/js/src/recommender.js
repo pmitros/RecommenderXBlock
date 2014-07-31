@@ -682,7 +682,7 @@ function RecommenderXBlock(runtime, element) {
 
 	/* Add tooltips to each component in each resource */
 	function addTooltipPerResource(ele) {
-		tooltipsCatsPerResource.forEach(function(cats, ind) {
+		/*tooltipsCatsPerResource.forEach(function(cats, ind) {
 			try { 
 				$(ele).find(cats).tooltipster({
 					content: $('<span>' + tooltipsCatsText[cats] + '</span>'),
@@ -691,6 +691,36 @@ function RecommenderXBlock(runtime, element) {
 				}); 
 			}
 			catch (e) { }
+		});
+        */
+        tooltipsCatsPerResource.forEach(function(cats, ind) {
+			var classes = cats.split(".");
+            if (classes.length == 3) {
+                try {
+                    $(ele, element).find("." + classes[1]).tooltipster('destroy');
+                }
+                catch (e) {  }
+            }
+        });
+		tooltipsCatsPerResource.forEach(function(cats, ind) {            
+			var classes = cats.split(".");
+			try {
+				if (classes.length == 3 && (! $(ele, element).find("." + classes[1]).hasClass(classes[2]) )) {
+					$(ele, element).find("." + classes[1]).tooltipster({
+						content: $('<span>' + tooltipsCatsText["." + classes[1]] + '</span>'),
+						theme: '.my-custom-theme',
+						maxWidth: '300'
+					});
+					return;
+				}
+				//if ($(ele, element).find(cats).hasClass('tooltipstered')) { return; }
+				$(ele, element).find(cats).tooltipster({
+					content: $('<span>' + tooltipsCatsText[cats] + '</span>'),
+					theme: '.my-custom-theme',
+					maxWidth: '300'
+				}); 
+			}
+			catch (e) {  }
 		});
  	}
 
@@ -809,7 +839,9 @@ function RecommenderXBlock(runtime, element) {
                 success: function(result) {
                     if (result['Success']) {
                         var endorsedResourceIdx = findResourceDiv(result['id']);
-                        $('.recommender_resource:eq(' + endorsedResourceIdx.toString() + ')', element).find('.checkIcon').toggleClass('endorsed').show();
+                        var endorsedDiv = $('.recommender_resource:eq(' + endorsedResourceIdx.toString() + ')', element);
+                        endorsedDiv.find('.checkIcon').toggleClass('endorsed').show();
+                        addTooltipPerResource(endorsedDiv);
                     }
                     else { alert(result['error']); }
                 }

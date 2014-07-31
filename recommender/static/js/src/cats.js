@@ -5,7 +5,8 @@ var tooltipsCatsPerResource = [
     '.recommender_vote_score',
     'a',
     '.flagResource',
-    '.staffEdition'
+    '.staffEdition',
+    '.checkIcon.endorsed'
 ];
 
 var tooltipsCats = [
@@ -58,7 +59,9 @@ var tooltipsCatsText = {
     '.uploadedFileDir': 'Give the path (relative to root directory) of the directory for storing uploaded files',
     '.delete_resource': 'Delete this resource',
     '.recommender_row_top': 'Show a list of student-recommented related resources',
-    '.recommender_row_top.resource_list_expanded': 'Hide the recommendations list'      
+    '.recommender_row_top.resource_list_expanded': 'Hide the recommendations list',
+    '.checkIcon': 'Check the icon to endorse this resource',
+    '.checkIcon.endorsed': 'This resource is endorsed by staff'
 };
 
 var uploadFileError = [

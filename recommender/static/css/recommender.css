@@ -213,7 +213,7 @@
 .recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: red; }
 .recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #948f8f; }
 
-.checkIcon:not(.endorsed) { color: #948f8f; display: none; }
+.checkIcon:not(.endorsed) { color: #DFD3D3; display: none; }
 .checkIcon.endorsed { color: rgb(69, 194, 10); }
 .checkIcon:before { content: '✔'; }
 .downArrowIcon:before { content: '▼'; }
