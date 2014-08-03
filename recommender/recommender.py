@@ -5,6 +5,7 @@ students solving a given problem.
 import json
 import hashlib
 import pkg_resources
+from copy import deepcopy
 
 
 # TODO: Should be updated once XBlocks and tracking logs have finalized APIs
@@ -71,13 +72,14 @@ class RecommenderXBlock(XBlock):
     #    "uploadedFileDir": (String) The path (relative to root directory) of
     #            the directory for storing uploaded files }
 
-    deleted_recommendation_ids = List(help="List of deleted resources' ID",
+    deendorsed_recommendations = List(help="List of deendorsed resources",
                                       default=[],
                                       scope=Scope.user_state_summary)
-    # A list of deleted recommendations' ids, it is a JSON object aggregated
-    #    across many users of a single block.
-    # Usage: deleted_recommendation_ids[index] = (Integer) id of a deleted
-    #    resource
+    # A list of recommendations deendorsed by course staff, it is a JSON object
+    #    aggregated across many users of a single block.
+    # Usage: the same as default_recommendations plus 
+    #    deendorsed_recommendations[index]['reason'] = (String) the reason why
+    #            course staff deendorse this resource
 
     endorsed_recommendation_ids = List(help="List of endorsed resources' ID",
                                        default=[],
@@ -87,26 +89,14 @@ class RecommenderXBlock(XBlock):
     # Usage: endorsed_recommendation_ids[index] = (Integer) id of a
     #    endorsed resource
 
-    flagged_accum_ids = List(help="List of problematic resources' ids which " +
-                             "at least one user flagged to", default=[],
-                             scope=Scope.user_state_summary)
-    # TODO: For instructor interface
-    # A list of problematic recommendations' ids which at least one user
-    #    flagged to; it is a JSON object aggregated across many users of
-    #    a single block.
-    # Usage: flagged_accum_ids[index] = (Integer) id of a problematic
-    #    resource which was flagged by at least one user
-
-    flagged_accum_reasons = List(help="List of reasons why the corresponding" +
-                                 " resources were flagged by user as " +
-                                 "problematic", default=[],
-                                 scope=Scope.user_state_summary)
-    # TODO: For instructor interface
-    # A list of reasons why the corresponding resources were flagged by user
-    #    as problematic; it is a JSON object aggregated across many users of
-    #    a single block.
-    # Usage: flagged_accum_reasons[index] = (String) list of reasons why the
-    #    resource 'flagged_accum_ids[index]' was flagged by user as problematic
+    flagged_accum_resources = Dict(help="Dict of problematic resources which" +
+                                   " are flagged by users",
+                                   default={}, scope=Scope.user_state_summary)
+    # A dict of problematic recommendations which are flagged by users;
+    #    it is a JSON object aggregated across many users of a single block.
+    # Usage: flagged_accum_resources[userId] = {
+    #    "problematic resource id": (String) reason why the resource is
+    #            flagged as problematic by that user }
 
     upvoted_ids = List(help="List of resources' ids which user upvoted to",
                        default=[], scope=Scope.user_state)
@@ -148,8 +138,16 @@ class RecommenderXBlock(XBlock):
     def get_user_is_staff(self):
         """
         Return self.xmodule_runtime.user_is_staff
+        TODO: Should be proper handled in future
         """
         return self.xmodule_runtime.user_is_staff
+    
+    def get_user_id(self):
+        """
+        Return the user id.
+        TODO: Should be proper handled in future
+        """
+        return self.xmodule_runtime.anonymous_student_id
 
     def resource_string(self, path):
         """
@@ -170,9 +168,9 @@ class RecommenderXBlock(XBlock):
         for recommendation in recommendations:
             if recommendation['id'] > resource_id:
                 resource_id = recommendation['id']
-        for deleted_recommendation_id in self.deleted_recommendation_ids:
-            if deleted_recommendation_id > resource_id:
-                resource_id = deleted_recommendation_id
+        for deendorsed_recommendation in self.deendorsed_recommendations:
+            if deendorsed_recommendation['id'] > resource_id:
+                resource_id = deendorsed_recommendation['id']
         return resource_id + 1
 
     def get_entry_index(self, entry_id, entry_list):
@@ -532,6 +530,9 @@ class RecommenderXBlock(XBlock):
         result['id'] = data['id']
         result['isProblematic'] = data['isProblematic']
         result['reason'] = data['reason']
+        
+        user_id = self.get_user_id()
+        
         if data['isProblematic']:
             if data['id'] in self.flagged_ids:
                 result['oldReason'] = self.flagged_reasons[
@@ -541,6 +542,11 @@ class RecommenderXBlock(XBlock):
             else:
                 self.flagged_ids.append(data['id'])
                 self.flagged_reasons.append(data['reason'])
+                
+                if user_id not in self.flagged_accum_resources:
+                    self.flagged_accum_resources[user_id] = {}
+            # I don't know why the reason won't be saved if I only use data['id'] as the key
+            self.flagged_accum_resources[user_id][str(data['id'])] = data['reason']
         else:
             if data['id'] in self.flagged_ids:
                 result['oldReason'] = self.flagged_reasons[
@@ -549,6 +555,8 @@ class RecommenderXBlock(XBlock):
                 idx = self.flagged_ids.index(data['id'])
                 del self.flagged_ids[idx]
                 del self.flagged_reasons[idx]
+
+                del self.flagged_accum_resources[user_id][str(data['id'])]
         result['Success'] = True
         tracker.emit('flag_resource', result)
         return result
@@ -644,25 +652,32 @@ class RecommenderXBlock(XBlock):
         return result
 
     @XBlock.json_handler
-    def delete_resource(self, data, _suffix=''):
+    def deendorse_resource(self, data, _suffix=''):
         """
-        Delete an entry of resource.
+        Deendorse an entry of resource.
 
         Args:
                 data: dict in JSON format
-                data['id']: the ID of the resouce to be deleted
+                data['id']: the ID of the resouce to be deendorsed
+                data['reason']: the reason why the resouce was deendorsed
         Returns:
                 result: dict in JSON format
-                result['Success']: the boolean indicator for whether the deletion is complete
-                result['error']: the error message generated when the deletion fails
-                result[resource_content_field]: the content of the deleted resource
+                result['Success']: the boolean indicator for whether the deendorsement is complete
+                result['error']: the error message generated when the deendorsement fails
+                result['recommendation']: (Dict) the deendorsed resource
+                result['recommendation']['reason']: the reason why the resouce was deendorsed
         """
+        # TODO: this function was named delete_resource previously, which should be changed in test_recommender
+        # TODO: since now we can remove resources, we should check whether resource exists in upvote/downvote/etc.
+        #       to make this xblock more robust, instead of assume the client side always pass a id from an existing
+        #       resource (currently the sever side might be fine and the client side might display some funny things
+        #       which can be solved by just refresh the page)
         if not self.get_user_is_staff():
             result = {
-                'error': 'Delete resource without permission',
+                'error': 'Deendorse resource without permission',
                 'Success': False
             }
-            tracker.emit('delete_resource', result)
+            tracker.emit('deendorse_resource', result)
             return result
         resource_id = data['id']
         result = {}
@@ -671,17 +686,47 @@ class RecommenderXBlock(XBlock):
         if idx not in range(0, len(self.recommendations)):
             result['error'] = 'bad id'
             result['Success'] = False
-            tracker.emit('delete_resource', result)
+            tracker.emit('deendorse_resource', result)
             return result
 
-        result['upvotes'] = self.recommendations[idx]['upvotes']
-        result['downvotes'] = self.recommendations[idx]['downvotes']
-        for field in self.resource_content_fields:
-            result[field] = self.recommendations[idx][field]
-        self.deleted_recommendation_ids.append(resource_id)
+        deendorsed_resource = deepcopy(self.recommendations[idx])
         del self.recommendations[idx]
+
+        deendorsed_resource['reason'] = data['reason']
+        self.deendorsed_recommendations.append(deendorsed_resource)
+        print self.deendorsed_recommendations[len(self.deendorsed_recommendations)-1]
         result['Success'] = True
-        tracker.emit('delete_resource', result)
+        result['recommendation'] = deendorsed_resource
+        tracker.emit('deendorse_resource', result)
+        return result
+
+    @XBlock.json_handler
+    def get_accum_flagged_resource(self, _data, _suffix=''):
+        if not self.get_user_is_staff():
+            result = {
+                'error': 'Get accumulated flagged resource without permission',
+                'Success': False
+            }
+            tracker.emit('get_accum_flagged_resource', result)
+            return result
+        result = {
+            'Success': True,
+            'flagged_resources': {}
+        }
+        for user_id in self.flagged_accum_resources:
+            for resource_id in self.flagged_accum_resources[user_id]:
+                # Weird: key of self.flagged_accum_resources[user_id] will be transform to u'$key' even if key is int
+                # TODO: since now we can remove resources, we should check whether resource exists in upvote/downvote/etc.
+                #       to make this xblock more robust, instead of assume the client side always pass a id from an existing
+                #       resource (currently the sever side might be fine and the client side might display some funny things
+                #       which can be solved by just refresh the page)
+                if self.get_entry_index(int(resource_id), self.deendorsed_recommendations) != -1:
+                    continue
+                if resource_id not in result['flagged_resources']:
+                    result['flagged_resources'][resource_id] = []
+                if self.flagged_accum_resources[user_id][resource_id] != '':
+                    result['flagged_resources'][resource_id].append(self.flagged_accum_resources[user_id][resource_id])
+        tracker.emit('get_accum_flagged_resource', result)
         return result
 
     def student_view(self, _context=None):

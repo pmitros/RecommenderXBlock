@@ -5,7 +5,7 @@ var tooltipsCatsPerResource = [
     '.recommender_vote_score',
     'a',
     '.flagResource',
-    '.staffEdition',
+    '.deendorse',
     '.checkIcon.endorsed'
 ];
 
@@ -18,12 +18,14 @@ var tooltipsCats = [
     '.addResourceScreenshot',
     '.backToViewButton',
     '.flag_reason',
+    '.s3info_add_button',
     '.aws_access_key',
     '.aws_secret_key',
     '.bucketName',
     '.uploadedFileDir',
     '.delete_resource',
-    '.recommender_row_top.resource_list_expanded'
+    '.recommender_row_top.resource_list_expanded',
+    '.resource_ranking_for_deendorsement_button.deendorsement_mode'
 ];
 
 var tooltipsEditCats = [
@@ -40,7 +42,7 @@ var tooltipsCatsText = {
     '.recommender_vote_arrow_down': 'Downvote if the resource is not helpful',
     '.recommender_vote_score': 'Votes', // 
     'a': 'Resource title', // TODO: I would suggest making the description be the tooltip.
-    '.staffEdition': 'Add Amazon S3 information for file uploading or delete this resource; these functions are restricted to course staff',
+    '.deendorse': 'Deendorse this resource and give the reason why you do that',
     '.previewingImg': 'Preview image (typically, a screenshot)',
     '.in_title': 'Give a short (1-3 sentence) summary of the resource; ideally, this should be concise, but give enough detail to let students know whether this resources is useful to them',
     '.in_url': 'Cut-and-paste the URL of the resource.',
@@ -53,6 +55,7 @@ var tooltipsCatsText = {
     '.backToViewButton': 'Go back to the main list',
     '.flag_reason': 'Give a meaningful reason for why this resource should be removed',
     '.flagResource': 'Flag this resource as problematic and give your reason',
+    '.s3info_add_button': 'Add Amazon S3 information for file uploading',
     '.aws_access_key': 'Give the access key of your Amazon s3 account',
     '.aws_secret_key': 'Give the secret key of your Amazon s3 account',
     '.bucketName': 'Give the bucket name of your Amazon s3 account',
@@ -61,7 +64,9 @@ var tooltipsCatsText = {
     '.recommender_row_top': 'Show a list of student-recommented related resources',
     '.recommender_row_top.resource_list_expanded': 'Hide the recommendations list',
     '.checkIcon': 'Check the icon to endorse this resource',
-    '.checkIcon.endorsed': 'This resource is endorsed by staff'
+    '.checkIcon.endorsed': 'This resource is endorsed by staff',
+    '.resource_ranking_for_deendorsement_button': 'Click to view resources for de-endorsement',
+    '.resource_ranking_for_deendorsement_button.deendorsement_mode': 'Click to view resources in ordinary decreasing-vote order'
 };
 
 var uploadFileError = [
@@ -105,10 +110,6 @@ var s3_info_textareas_placeholder = {
 	'uploadedFileDir': 'uploads/'
 };
 
-var staff_edit_buttons = [
-	'delete_resource',
-];
+var problematic_ressons_prefix = '<br/>Here is a list of reasons why students think this resource problematic: <br/>&nbsp;&nbsp;&nbsp;&nbsp;'
 
-var staff_edit_buttons_text = {
-	'delete_resource': "Delete resource",
-};
+var reason_separator = '<br/>&nbsp;&nbsp;&nbsp;&nbsp;'

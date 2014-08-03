@@ -56,7 +56,9 @@
         </div>
         <div class="resource_add_button">Add new resource &gt;&gt;</div>
 		<div class="clearFix"></div>
-        <div class="s3info_add_button">Set S3 information</div>
+        <div class="s3info_add_button hidden">Set S3 information</div>
+        <div class="clearFix"></div>
+        <div class="resource_ranking_for_deendorsement_button hidden">mode</div>
         <div class="clearFix"></div>
         <div class='pagination'>
           <div class="paginationRowTemplate hidden">
@@ -69,6 +71,8 @@
         </div>
         <div class="recommender_description">
           <div class="descriptionImg">
+            <div class='problematic_reasons hidden'></div>
+            <div class="clearFix"></div>
             <div class='descriptionText'> This is a list of resources your fellow students
             thought might be helpful. If you find another useful
             resource, either on edx.org or elsewhere, please add
@@ -88,8 +92,13 @@
       <div class="s3InfoBlock">
         <div class="s3InfoBlockTitle">Provide your s3 information for file uploading.</div>
       </div>    
-      <div class="staffEditionBlock">
-        <div class="staffEditionBlockTitle">Delete a resource.</div>
+      <div class="deendorseBlock">
+        <div class="deendorseBlockTitle">Deendorse this resource and give the reason why you do that.</div>
+        <input type="text" 
+          class="deendorse_reason" 
+          name="deendorse_rationale"
+          placeholder="Reason for why this resource should be removed"/><br/>
+        <input type="button" value="Deendorse resource" class="deendorse_resource"/>
       </div>
       <div class="flagSourceBlock">
         <div class="flagSourceBlockTitle">Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently. </div>
@@ -97,7 +106,7 @@
           class="flag_reason" 
           name="flag_rationale"
           placeholder="Reason for why this resource should be removed"/><br/>
-        <input type="button" value="Flag resource" class="flag_reason_submit">
+        <input type="button" value="Flag resource" class="flag_reason_submit"/>
       </div>
       <div class="editSourceBlock">
         <div class="editSourceBlockTitle">Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.</div>
@@ -114,8 +123,8 @@
           class="edit_descriptionText" 
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" class="editResourceForm">
-          Preview screenshot: <input type="file" name="file" class='editResourceScreenshot'><br/>
-          <input type="button" value="Save change" class="edit_submit" disabled >
+          Preview screenshot: <input type="file" name="file" class='editResourceScreenshot'/><br/>
+          <input type="button" value="Save change" class="edit_submit" disabled/>
         </form>
       </div>
       <div class="recommender_add">
@@ -133,8 +142,8 @@
           class="in_descriptionText" 
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" class="addResourceForm">
-          Preview screenshot: <input type="file" name="file" class='addResourceScreenshot'><br/>
-          <input type="button" value="Add resource" class="add_submit" disabled >
+          Preview screenshot: <input type="file" name="file" class='addResourceScreenshot'/><br/>
+          <input type="button" value="Add resource" class="add_submit" disabled/>
         </form>
       </div>
     </div>

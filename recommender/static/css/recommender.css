@@ -80,7 +80,7 @@
 }
 
 .descriptionImg {
-  max-height: 800px;
+  max-height: 820px;
   max-width: 700px;
   margin-top: 2em;
 }
@@ -92,6 +92,16 @@
   background-color: rgba(0,0,0,0.05);
   color: #948f8f;
 }
+
+.problematic_reasons {
+  max-height: 200px;
+  overflow: auto;
+  padding: 0.5em;
+  background-color: #B4053D;
+  color: white;
+}
+
+.problematic_reasons:before { content: 'This resource was flagged problematic by students'; }
 
 .previewingImg {
   margin-top: 1em;
@@ -158,13 +168,13 @@
   color: red;
 }
 
-.recommender_vote_arrow_down, .recommender_vote_arrow_up, .resource_edit_button, .flagResource, .s3info_add_button, .staffEdition, .resource_add_button, .hide-show, .paginationCell, .backToViewButton, .checkIcon { cursor: pointer; }
+.recommender_vote_arrow_down, .recommender_vote_arrow_up, .resource_edit_button, .flagResource, .s3info_add_button, .deendorse, .resource_add_button, .hide-show, .paginationCell, .backToViewButton, .checkIcon, .resource_ranking_for_deendorsement_button { cursor: pointer; }
 
 
 .s3info_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
 .resource_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
 .resource_edit_button { float: left; }
-.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle, .s3InfoBlockTitle, .staffEditionBlockTitle {
+.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle, .s3InfoBlockTitle, .deendorseBlockTitle {
     margin-bottom: 1em;
 }
 
@@ -181,7 +191,7 @@
 
 .backToViewButton { color: #1d9dd9; float: left; }
 
-.flag_reason_submit, .edit_submit, .add_submit { margin-top: 0.5em; }
+.flag_reason_submit, .edit_submit, .add_submit, .deendorse_resource { margin-top: 0.5em; }
 
 .delete_resource, .endorse_resource, .deendorse_resource { margin-top: 0.5em; float:left; }
 
@@ -194,7 +204,7 @@
   margin-left: 0.5em;
   width:100%;
 }
-.in_url, .edit_url, .flag_reason, .aws_access_key, .aws_secret_key, .bucketName, .uploadedFileUrl,.uploadedFileDir {
+.in_url, .edit_url, .flag_reason, .deendorse_reason, .aws_access_key, .aws_secret_key, .bucketName, .uploadedFileUrl,.uploadedFileDir {
   height: 25px;
   margin-left: 0.5em;
   width:100%;
@@ -212,6 +222,21 @@
 .recommender_vote_score.upvoting, .recommender_vote_arrow_up.upvoting { color: rgb(69, 194, 10); }
 .recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: red; }
 .recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #948f8f; }
+
+.resource_ranking_for_deendorsement_button:not(.deendorsement_mode) {
+  float: right;
+  background-color: rgba(0,0,0,0.05);
+  padding: 0.3em 1em 0.3em 1em;
+  color: black;
+}
+.resource_ranking_for_deendorsement_button.deendorsement_mode {
+  float: right;
+  background-color: #B4053D;
+  padding: 0.3em 1em 0.3em 1em;
+  color: white;
+}
+.resource_ranking_for_deendorsement_button:not(deendorsement_mode):before { content: 'Ordinary '; }
+.resource_ranking_for_deendorsement_button.deendorsement_mode:before { content: 'De-endorsement '; }
 
 .checkIcon:not(.endorsed) { color: #DFD3D3; display: none; }
 .checkIcon.endorsed { color: rgb(69, 194, 10); }
