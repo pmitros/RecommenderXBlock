@@ -713,8 +713,8 @@ class RecommenderXBlock(XBlock):
             'Success': True,
             'flagged_resources': {}
         }
-        for user_id in self.flagged_accum_resources:
-            for resource_id in self.flagged_accum_resources[user_id]:
+        for _, flagged_accum_resource_map in self.flagged_accum_resources.iteritems():
+            for resource_id in flagged_accum_resource_map:
                 # Weird: key of self.flagged_accum_resources[user_id] will be transform to u'$key' even if key is int
                 # TODO: since now we can remove resources, we should check whether resource exists in upvote/downvote/etc.
                 #       to make this xblock more robust, instead of assume the client side always pass a id from an existing
@@ -724,8 +724,9 @@ class RecommenderXBlock(XBlock):
                     continue
                 if resource_id not in result['flagged_resources']:
                     result['flagged_resources'][resource_id] = []
-                if self.flagged_accum_resources[user_id][resource_id] != '':
-                    result['flagged_resources'][resource_id].append(self.flagged_accum_resources[user_id][resource_id])
+                if flagged_accum_resource_map[resource_id] != '':
+                    result['flagged_resources'][resource_id].append(flagged_accum_resource_map[resource_id])
+                print result
         tracker.emit('get_accum_flagged_resource', result)
         return result
 
