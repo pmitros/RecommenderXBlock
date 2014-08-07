@@ -128,6 +128,7 @@ function RecommenderXBlock(runtime, element) {
 		$('.editSourceBlock', element).hide();
 		$('.recommender_add', element).hide();
 		$('.deendorseBlock', element).hide();
+        $('.endorseBlock', element).hide();
         $('.s3InfoBlock', element).hide();
 		
 		if ($('.recommender_resource', element).length == 0) {
@@ -287,7 +288,7 @@ function RecommenderXBlock(runtime, element) {
 					$(newDiv).find('.recommender_entryId').text(result['id']);
 					$(newDiv).find('.recommender_problematicReason').text('');
 					$(newDiv).find('.flagResource').removeClass('problematic');
-                    $(newDiv).find('.checkIcon').removeClass('endorsed');
+                    $(newDiv).find('.endorse').removeClass('endorsed');
 					bindEvent(newDiv);
 					if (is_user_staff) { addFunctionsForStaffPerResource(newDiv); }
 
@@ -914,12 +915,37 @@ function RecommenderXBlock(runtime, element) {
      */
     function addFunctionsForStaffPerResource(ele) {
         /* Add event for endorsement */
-        $(ele).find('.checkIcon').show();
-        $(ele).find('.checkIcon').click(function() {
+        $(ele).find('.endorse').show();
+        $(ele).find('.endorse').click(function() {
             var data = {};
 			data['id'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
             
-			/* Endorse a selected resource (or undo it) */
+            if ($(ele).hasClass('endorsed')) {
+                $('.endorseBlock', element).show();
+                $('.recommender_content', element).hide();
+                $('.recommender_modify', element).show();
+                $('.recommender_modify_title', element).text('Endorse Resource');
+                $('.endorseBlock', element).find('input[type="text"]').val('');
+                $('.endorse_resource', element).unbind();
+                /* Endorse a selected resource */
+                $('.endorse_resource', element).click(function() {
+                    data['reason'] = $('.endorse_reason', element).val();
+                    /* Endorse a selected resource */
+                    endorse(data);
+                }
+            }
+            else {
+                /* Undo the endorsement of a selected resource */
+                endorse(data)
+            }
+        });
+        
+        /* Handle the student view and ajax calling for endorsement, given the provided data */
+        function endorse(data) {
+            event_log = data;
+            if ('reason' in event_log) { event_log['status'] = 'Endorse resource'; }
+            else { event_log['status'] = 'Un-endorse resource'; }
+            Logger.log('endorseResource.click.event', event_log);
             $.ajax({
                 type: "POST",
                 url: endorseResourceUrl,
@@ -928,13 +954,18 @@ function RecommenderXBlock(runtime, element) {
                     if (result['Success']) {
                         var endorsedResourceIdx = findResourceDiv(result['id']);
                         var endorsedDiv = $('.recommender_resource:eq(' + endorsedResourceIdx.toString() + ')', element);
-                        endorsedDiv.find('.checkIcon').toggleClass('endorsed').show();
+                        endorsedDiv.find('.endorse').toggleClass('endorsed').show();
                         addTooltipPerResource(endorsedDiv);
+                        if ('reason' in result) {
+                            $(endorsedDiv).find('.recommender_endorse_reason').text(result['reason']);
+                            backToView();
+                        }
+                        else { $(endorsedDiv).find('.recommender_endorse_reason').text(''); }
                     }
                     else { alert(result['error']); }
                 }
-			});
-        });
+            });
+        }
         
 		/* Add the button for entering deendorse mode */
 		if ($(ele).find('.deendorse').length == 0) {
