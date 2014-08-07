@@ -304,7 +304,9 @@ function RecommenderXBlock(runtime, element) {
 					pagination();
 					backToView();
 				}
-				else { alert('add redundant resource'); }
+				else {
+                    alert(result['error']);
+                }
 			}
 		});
 	}
@@ -363,6 +365,9 @@ function RecommenderXBlock(runtime, element) {
 						}
 						$(divArrowUp).find('.recommender_vote_score').html(result['newVotes'].toString());
 					}
+                    else {
+                        alert(result['error']);
+                    }
 				}
 			});
 		});
@@ -394,6 +399,9 @@ function RecommenderXBlock(runtime, element) {
 						}
 						$(divArrowDown).find('.recommender_vote_score').html(result['newVotes'].toString());
 					}
+                    else {
+                        alert(result['error']);
+                    }
 				}
 			});
 		});
@@ -560,7 +568,7 @@ function RecommenderXBlock(runtime, element) {
 								if (data["descriptionText"] != "") { resourceDiv.find('.recommender_descriptionText').text(result['descriptionText']); }
 								backToView();
 							}
-							else { alert('The url you entered has been already provided by your fellows'); }
+                            else { alert(result['error']); }
 						}
 					});
 				}
@@ -792,6 +800,7 @@ function RecommenderXBlock(runtime, element) {
                             paginationRow();
                             pagination();
                         }
+                        else { alert(result['error']); }
                     }
                 });
             }
@@ -891,7 +900,7 @@ function RecommenderXBlock(runtime, element) {
 				data: JSON.stringify(data),
 				success: function(result) {
 					if (result['Success']) { backToView(); }
-					else { alert('Submission of S3 information is failed'); }
+					else { alert(result['error']); }
 				}
 			});
 		});

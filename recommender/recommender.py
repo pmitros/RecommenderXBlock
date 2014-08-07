@@ -201,6 +201,16 @@ class RecommenderXBlock(XBlock):
         md5 = hashlib.md5()
         md5.update(data)
         return md5.hexdigest()
+    
+    def error_handler(self, error_msg, event, resource_id=None):
+        """
+        Generate returned dictionary and log when error comes out
+        """
+        result = {'error': error_msg, 'Success': False}
+        if resource_id is not None:
+            result['id'] = resource_id
+        tracker.emit(event, result)
+        return result
 
     @XBlock.json_handler
     def handle_upvote(self, data, _suffix=''):
@@ -220,14 +230,12 @@ class RecommenderXBlock(XBlock):
         """
         resource_id = data['id']
         idx = self.get_entry_index(resource_id, self.recommendations)
+        if idx not in range(0, len(self.recommendations)):
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'recommender_upvote', resource_id)
+
         result = {}
         result['id'] = resource_id
-        if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('recommender_upvote', result)
-            return result
-
         result['oldVotes'] = (self.recommendations[idx]['upvotes'] -
                               self.recommendations[idx]['downvotes'])
         if resource_id in self.upvoted_ids:
@@ -269,14 +277,12 @@ class RecommenderXBlock(XBlock):
         """
         resource_id = data['id']
         idx = self.get_entry_index(resource_id, self.recommendations)
+        if idx not in range(0, len(self.recommendations)):
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'recommender_downvote', resource_id)
+
         result = {}
         result['id'] = resource_id
-        if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('recommender_downvote', result)
-            return result
-
         result['oldVotes'] = (self.recommendations[idx]['upvotes'] -
                               self.recommendations[idx]['downvotes'])
         if resource_id in self.downvoted_ids:
@@ -432,12 +438,24 @@ class RecommenderXBlock(XBlock):
         # check url for redundancy
         for recommendation in self.recommendations:
             if self.check_redundancy(recommendation['url'], data['url']):
-                result['error'] = 'redundant resource'
+                result['error'] = ('The resource you are attempting to ' +
+                                   'provide has already existed')
                 for field in self.resource_content_fields:
-                    result['dup_' + field] = self.recommendations[
-                        self.recommendations.index(recommendation)][field]
-                result['dup_id'] = self.recommendations[
-                    self.recommendations.index(recommendation)]['id']
+                    result['dup_' + field] = recommendation[field]
+                result['dup_id'] = recommendation['id']
+                result['Success'] = False
+                tracker.emit('add_resource', result)
+                return result
+            
+        # check url for de-endorsed resources
+        for deendorsed_resource in self.deendorsed_recommendations:
+            if self.check_redundancy(deendorsed_resource['url'], data['url']):
+                result['error'] = ('The resource you are attempting to ' +
+                                   'provide has been de-endorsed by staff, ' +
+                                   'because: ' + deendorsed_resource['reason'])
+                for field in self.resource_content_fields:
+                    result['dup_' + field] = recommendation[field]
+                result['dup_id'] = recommendation['id']
                 result['Success'] = False
                 tracker.emit('add_resource', result)
                 return result
@@ -468,32 +486,44 @@ class RecommenderXBlock(XBlock):
                 result[resource_content_field]: the content of the resource after edited
         """
         resource_id = data['id']
-        result = {}
-        result['id'] = resource_id
         idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('edit_resource', result)
-            return result
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'edit_resource', resource_id)
 
+        result = {}
+        result['id'] = resource_id
         for field in self.resource_content_fields:
             result['old_' + field] = self.recommendations[idx][field]
             if data[field] == "":
                 result[field] = self.recommendations[idx][field]
             else:
                 result[field] = data[field]
-        # check url for redundancy
+
         if not(self.check_redundancy(self.recommendations[idx]['url'],
                                      data['url'])):
+            # check url for redundancy
             for recommendation in self.recommendations:
                 if self.check_redundancy(recommendation['url'], data['url']):
-                    result['error'] = 'existing url'
+                    result['error'] = ('The resource you are attempting to ' +
+                                       'provide has already existed')
                     for field in self.resource_content_fields:
-                        result['dup_' + field] = self.recommendations[
-                            self.recommendations.index(recommendation)][field]
-                    result['dup_id'] = self.recommendations[
-                        self.recommendations.index(recommendation)]['id']
+                        result['dup_' + field] = recommendation[field]
+                    result['dup_id'] = recommendation['id']
+                    result['Success'] = False
+                    tracker.emit('edit_resource', result)
+                    return result
+                
+            # check url for de-endorsed resources
+            for deendorsed_resource in self.deendorsed_recommendations:
+                if self.check_redundancy(deendorsed_resource['url'], data['url']):
+                    result['error'] = ('The resource you are attempting to ' +
+                                       'provide has been de-endorsed by ' +
+                                       'staff, because: ' +
+                                       deendorsed_resource['reason'])
+                    for field in self.resource_content_fields:
+                        result['dup_' + field] = recommendation[field]
+                    result['dup_id'] = recommendation['id']
                     result['Success'] = False
                     tracker.emit('edit_resource', result)
                     return result
@@ -588,12 +618,9 @@ class RecommenderXBlock(XBlock):
                 result['Success']: the boolean indicator for whether the setting is complete
         """
         if not self.get_user_is_staff():
-            result = {
-                'error': 'Set S3 information without permission',
-                'Success': False
-            }
-            tracker.emit('set_s3_info', result)
-            return result
+            msg = 'Set S3 information without permission'
+            return self.error_handler(msg, 'set_s3_info')
+
         self.s3_configuration['aws_access_key'] = data['aws_access_key']
         self.s3_configuration['aws_secret_key'] = data['aws_secret_key']
         self.s3_configuration['bucketName'] = data['bucketName']
@@ -623,22 +650,16 @@ class RecommenderXBlock(XBlock):
                 result['status']: endorse the resource or undo it
         """
         if not self.get_user_is_staff():
-            result = {
-                'error': 'Endorse resource without permission',
-                'Success': False
-            }
-            tracker.emit('endorse_resource', result)
-            return result
+            msg = 'Endorse resource without permission'
+            return self.error_handler(msg, 'endorse_resource')
         resource_id = data['id']
-        result = {}
-        result['id'] = resource_id
         idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('endorse_resource', result)
-            return result
-
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'endorse_resource', resource_id)
+        
+        result = {}
+        result['id'] = resource_id
         if resource_id in self.endorsed_recommendation_ids:
             result['status'] = 'undo endorsement'
             del self.endorsed_recommendation_ids[
@@ -673,28 +694,21 @@ class RecommenderXBlock(XBlock):
         #       resource (currently the sever side might be fine and the client side might display some funny things
         #       which can be solved by just refresh the page)
         if not self.get_user_is_staff():
-            result = {
-                'error': 'Deendorse resource without permission',
-                'Success': False
-            }
-            tracker.emit('deendorse_resource', result)
-            return result
+            msg = 'Deendorse resource without permission'
+            return self.error_handler(msg, 'deendorse_resource')
         resource_id = data['id']
-        result = {}
-        result['id'] = resource_id
         idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('deendorse_resource', result)
-            return result
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'deendorse_resource', resource_id)
 
+        result = {}
+        result['id'] = resource_id
         deendorsed_resource = deepcopy(self.recommendations[idx])
         del self.recommendations[idx]
 
         deendorsed_resource['reason'] = data['reason']
         self.deendorsed_recommendations.append(deendorsed_resource)
-        print self.deendorsed_recommendations[len(self.deendorsed_recommendations)-1]
         result['Success'] = True
         result['recommendation'] = deendorsed_resource
         tracker.emit('deendorse_resource', result)
@@ -703,12 +717,8 @@ class RecommenderXBlock(XBlock):
     @XBlock.json_handler
     def get_accum_flagged_resource(self, _data, _suffix=''):
         if not self.get_user_is_staff():
-            result = {
-                'error': 'Get accumulated flagged resource without permission',
-                'Success': False
-            }
-            tracker.emit('get_accum_flagged_resource', result)
-            return result
+            msg = 'Get accumulated flagged resource without permission'
+            return self.error_handler(msg, 'get_accum_flagged_resource')
         result = {
             'Success': True,
             'flagged_resources': {}
