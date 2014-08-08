@@ -137,7 +137,8 @@ function RecommenderXBlock(runtime, element) {
 		$('.recommender_resource', element).removeClass('resource_hovered');
 		$('.previewingImg', element).addClass('hidden');
 		$('.descriptionText', element).hide();
-        $('.problematic_reasons', element).addClass('hidden');
+        $('.show_problematic_reasons', element).addClass('hidden');
+        $('.show_endorsed_reasons', element).addClass('hidden');
 		
 		$('.recommender_content', element).show();
 	}
@@ -287,6 +288,7 @@ function RecommenderXBlock(runtime, element) {
 					$(newDiv).find('.recommender_descriptionText').text(result['descriptionText']);
 					$(newDiv).find('.recommender_entryId').text(result['id']);
 					$(newDiv).find('.recommender_problematicReason').text('');
+                    $(newDiv).find('.recommender_endorse_reason').text('');
 					$(newDiv).find('.flagResource').removeClass('problematic');
                     $(newDiv).find('.endorse').removeClass('endorsed');
 					bindEvent(newDiv);
@@ -422,16 +424,24 @@ function RecommenderXBlock(runtime, element) {
                 $(".previewingImg", element).error(function() { $('.previewingImg', element).addClass('hidden'); });
                 if ($('.previewingImg', element).attr('src') == '') { $('.previewingImg', element).addClass('hidden'); }
                 
-                $('.problematic_reasons', element).addClass('hidden');
+                $('.show_problematic_reasons', element).addClass('hidden');
                 if (!$.isEmptyObject(flagged_resource_reasons)) {
                     var resource_id = parseInt($(this).find('.recommender_entryId').text());
                     var reasons = '';
                     if (resource_id in flagged_resource_reasons) {
-                        $('.problematic_reasons', element).removeClass('hidden');
+                        $('.show_problematic_reasons', element).removeClass('hidden');
                         reasons = flagged_resource_reasons[resource_id].join(reason_separator);
                     }
-                    if (reasons != '') { $('.problematic_reasons', element).html(problematic_ressons_prefix + reasons); }
-                    else { $('.problematic_reasons', element).html(''); }
+                    if (reasons != '') { $('.show_problematic_reasons', element).html(problematic_ressons_prefix + reasons); }
+                    else { $('.show_problematic_reasons', element).html(''); }
+                }
+                
+                $('.show_endorsed_reasons', element).addClass('hidden');
+                if ($(this).find('.endorse').hasClass('endorsed')) {
+                    var reasons = $(this).find('.recommender_endorse_reason').text();
+                    if (reasons != '') { $('.show_endorsed_reasons', element).html(endorsed_ressons_prefix + reasons); }
+                    else { $('.show_endorsed_reasons', element).html(''); }
+                    $('.show_endorsed_reasons', element).removeClass('hidden');
                 }
 
 				Logger.log('resource.hover.event', {
@@ -809,7 +819,7 @@ function RecommenderXBlock(runtime, element) {
                 sortResource('decreasing', 0);
                 paginationRow();
                 pagination();
-                $('.problematic_reasons', element).addClass('hidden');
+                $('.show_problematic_reasons', element).addClass('hidden');
                 flagged_resource_reasons = {};
             }
         });
@@ -920,7 +930,11 @@ function RecommenderXBlock(runtime, element) {
             var data = {};
 			data['id'] = parseInt($(this).parent().parent().find('.recommender_entryId').text());
             
-            if ($(ele).hasClass('endorsed')) {
+            if ($(this).hasClass('endorsed')) {
+                /* Undo the endorsement of a selected resource */
+                endorse(data)
+            }
+            else {
                 $('.endorseBlock', element).show();
                 $('.recommender_content', element).hide();
                 $('.recommender_modify', element).show();
@@ -932,11 +946,7 @@ function RecommenderXBlock(runtime, element) {
                     data['reason'] = $('.endorse_reason', element).val();
                     /* Endorse a selected resource */
                     endorse(data);
-                }
-            }
-            else {
-                /* Undo the endorsement of a selected resource */
-                endorse(data)
+                });
             }
         });
         

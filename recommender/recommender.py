@@ -36,11 +36,14 @@ from webob.response import Response
 
 class RecommenderXBlock(XBlock):
     """
-    This XBlock will show a set of recommended resources which may be helpful to students solving a given problem.
-    The resources are provided and edited by students; they can also vote for useful resources and flag problematic ones.
+    This XBlock will show a set of recommended resources which may be helpful
+    to students solving a given problem. The resources are provided and edited
+    by students; they can also vote for useful resources and flag problematic
+    ones.
     """
-    default_recommendations = List(help="List of default help resources",
-                                   default=[], scope=Scope.content)
+    default_recommendations = List(
+        help="List of default help resources", default=[], scope=Scope.content
+    )
     # A list of default recommenations, it is a JSON object across all users,
     #    all runs of a course, for this xblock.
     # Usage: default_recommendations[index] = {
@@ -54,14 +57,16 @@ class RecommenderXBlock(XBlock):
     #    "descriptionText" : (String) a paragraph of
     #            description/summary of a resource }
 
-    recommendations = List(help="List of help resources", default=[],
-                           scope=Scope.user_state_summary)
+    recommendations = List(
+        help="List of help resources", default=[], scope=Scope.user_state_summary
+    )
     # A list of recommenations provided by students, it is a JSON object
     #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations
 
-    s3_configuration = Dict(help="Dictionary of Amazon S3 information",
-                            default={}, scope=Scope.user_state_summary)
+    s3_configuration = Dict(
+        help="Dictionary of Amazon S3 information", default={}, scope=Scope.user_state_summary
+    )
     # TODO: Switch to a Filesystem field once folded into edx-platform
     # A dictionary of Amazon S3 information for file uploading, it is a JSON
     #    object aggregated across many users of a single block.
@@ -72,41 +77,51 @@ class RecommenderXBlock(XBlock):
     #    "uploadedFileDir": (String) The path (relative to root directory) of
     #            the directory for storing uploaded files }
 
-    deendorsed_recommendations = List(help="List of deendorsed resources",
-                                      default=[],
-                                      scope=Scope.user_state_summary)
+    deendorsed_recommendations = List(
+        help="List of deendorsed resources", default=[], scope=Scope.user_state_summary
+    )
     # A list of recommendations deendorsed by course staff, it is a JSON object
     #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations plus 
     #    deendorsed_recommendations[index]['reason'] = (String) the reason why
     #            course staff deendorse this resource
 
-    endorsed_recommendation_ids = List(help="List of endorsed resources' ID",
-                                       default=[],
-                                       scope=Scope.user_state_summary)
+    endorsed_recommendation_ids = List(
+        help="List of endorsed resources' ID", default=[], scope=Scope.user_state_summary
+    )
     # A list of endorsed recommendations' ids, it is a JSON object aggregated
     #    across many users of a single block.
     # Usage: endorsed_recommendation_ids[index] = (Integer) id of a
     #    endorsed resource
+    
+    endorsed_recommendation_reasons = List(
+        help="List of reasons why the resources are endorsed", default=[], scope=Scope.user_state_summary
+    )
+    # A list of reasons why the resources are endorsed, it is a JSON object
+    #    aggregated across many users of a single block.
+    # Usage: endorsed_recommendation_reasons[index] = (String) the reason
+    #    why the resource (id = endorsed_recommendation_ids[index]) is endorsed
 
-    flagged_accum_resources = Dict(help="Dict of problematic resources which" +
-                                   " are flagged by users",
-                                   default={}, scope=Scope.user_state_summary)
+    flagged_accum_resources = Dict(
+        help="Dict of problematic resources which are flagged by users", default={}, scope=Scope.user_state_summary
+    )
     # A dict of problematic recommendations which are flagged by users;
     #    it is a JSON object aggregated across many users of a single block.
     # Usage: flagged_accum_resources[userId] = {
     #    "problematic resource id": (String) reason why the resource is
     #            flagged as problematic by that user }
 
-    upvoted_ids = List(help="List of resources' ids which user upvoted to",
-                       default=[], scope=Scope.user_state)
+    upvoted_ids = List(
+        help="List of resources' ids which user upvoted to", default=[], scope=Scope.user_state
+    )
     # A list of recommendations' ids which user upvoted to; it is a JSON
     #    object for one user, for one block, and for one run of a course.
     # Usage: upvoted_ids[index] = (Integer) id of a resource which was
     #    upvoted by the current user
 
-    downvoted_ids = List(help="List of resources' ids which user downvoted to",
-                         default=[], scope=Scope.user_state)
+    downvoted_ids = List(
+        help="List of resources' ids which user downvoted to", default=[], scope=Scope.user_state
+    )
     # A list of recommendations' ids which user downvoted to; it is a JSON
     #    object for one user, for one block, and for one run of a course.
     # Usage: downvoted_ids[index] = (Integer) id of a resource which was
@@ -120,9 +135,11 @@ class RecommenderXBlock(XBlock):
     # Usage: flagged_ids[index] = (Integer) id of a problematic resource which
     #    was flagged by the current user
 
-    flagged_reasons = List(help="List of reasons why the corresponding " +
-                           "resources were flagged by user as problematic",
-                           default=[], scope=Scope.user_state)
+    flagged_reasons = List(
+        help="List of reasons why the corresponding resources were flagged by user as problematic",
+        default=[],
+        scope=Scope.user_state
+    )
     # A list of reasons why the corresponding resources were flagged by user as
     #    problematic; it is a JSON object for one user, for one block, and for
     #    one run of a course.
@@ -131,8 +148,9 @@ class RecommenderXBlock(XBlock):
 
     template_lookup = None
 
-    resource_content_fields = ['url', 'title', 'description',
-                               'descriptionText']
+    resource_content_fields = [
+        'url', 'title', 'description', 'descriptionText'
+    ]
     # the dictionary keys for storing the content of a recommendation
 
     def get_user_is_staff(self):
@@ -662,11 +680,14 @@ class RecommenderXBlock(XBlock):
         result['id'] = resource_id
         if resource_id in self.endorsed_recommendation_ids:
             result['status'] = 'undo endorsement'
-            del self.endorsed_recommendation_ids[
-                self.endorsed_recommendation_ids.index(resource_id)]
+            endorsed_index = self.endorsed_recommendation_ids.index(resource_id)
+            del self.endorsed_recommendation_ids[endorsed_index]
+            del self.endorsed_recommendation_reasons[endorsed_index]
         else:
+            result['reason'] = data['reason']
             result['status'] = 'endorsement'
             self.endorsed_recommendation_ids.append(resource_id)
+            self.endorsed_recommendation_reasons.append(data['reason'])
 
         result['Success'] = True
         tracker.emit('endorse_resource', result)
@@ -772,24 +793,24 @@ class RecommenderXBlock(XBlock):
                      for r in self.recommendations]
         resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
 
-        frag = Fragment(self.template_lookup.get_template("recommender.html")
-                        .render(resources=resources,
-                                upvoted_ids=self.upvoted_ids,
-                                downvoted_ids=self.downvoted_ids,
-                                endorsed_recommendation_ids=self.endorsed_recommendation_ids,
-                                flagged_ids=self.flagged_ids,
-                                flagged_reasons=self.flagged_reasons))
-        frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/" +
-                         "themes/smoothness/jquery-ui.css")
-        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/" +
-                                "1.10.4/jquery-ui.min.js")
+        frag = Fragment(
+            self.template_lookup.get_template("recommender.html").render(
+                resources=resources,
+                upvoted_ids=self.upvoted_ids,
+                downvoted_ids=self.downvoted_ids,
+                endorsed_recommendation_ids=self.endorsed_recommendation_ids,
+                endorsed_recommendation_reasons=self.endorsed_recommendation_reasons,
+                flagged_ids=self.flagged_ids,
+                flagged_reasons=self.flagged_reasons
+            )
+        )
+        frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
+        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/tooltipster.css"))
         frag.add_css(self.resource_string("static/css/recommender.css"))
-        frag.add_javascript(self.resource_string("static/js/src/" +
-                                                 "jquery.tooltipster.min.js"))
+        frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
-        frag.add_javascript(self.resource_string("static/js/src/" +
-                                                 "recommender.js"))
+        frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
         frag.initialize_js('RecommenderXBlock')
         return frag
 

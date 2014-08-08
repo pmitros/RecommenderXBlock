@@ -18,8 +18,11 @@
             <%
               if elem['id'] in endorsed_recommendation_ids:
                 endorseMode = 'endorsed'
+                endorsed_index = endorsed_recommendation_ids.index(elem['id'])
+                endorsed_reason = endorsed_recommendation_reasons[endorsed_index]
               else:
                 endorseMode = ''
+                endorsed_reason = ''
                
               if elem['id'] in downvoted_ids:
                 voteMode = "downvoting"
@@ -35,7 +38,7 @@
                 flagMode = ''
                 reason = ''
             %>
-            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode,endorseMode=endorseMode" />
+            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode,endorseMode=endorseMode,endorsedReason=endorsed_reason" />
           % endfor
           <div class="recommender_resourceTemplate hidden">
 			<div class="recommender_vote_box">
@@ -49,6 +52,7 @@
 			  <div class="recommender_descriptionImg"></div>
 			  <div class="recommender_entryId"></div>
 			  <div class="recommender_problematicReason"></div>
+              <div class="recommender_endorse_reason"></div>
 		    </div>
             <div class="recommender_endorse"><div class="endorse"></div></div>
 			<div class="recommender_edit"> <span class="ui-icon ui-icon-pencil resource_edit_button"></span> <span class="ui-icon ui-icon-flag flagResource "></span></div>
@@ -71,7 +75,9 @@
         </div>
         <div class="recommender_description">
           <div class="descriptionImg">
-            <div class='problematic_reasons hidden'></div>
+            <div class='show_endorsed_reasons hidden'></div>
+            <div class="clearFix"></div>
+            <div class='show_problematic_reasons hidden'></div>
             <div class="clearFix"></div>
             <div class='descriptionText'> This is a list of resources your fellow students
             thought might be helpful. If you find another useful

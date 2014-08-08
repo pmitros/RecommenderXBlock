@@ -80,7 +80,7 @@
 }
 
 .descriptionImg {
-  max-height: 820px;
+  max-height: 1020px;
   max-width: 700px;
   margin-top: 2em;
 }
@@ -93,7 +93,7 @@
   color: #948f8f;
 }
 
-.problematic_reasons {
+.show_problematic_reasons {
   max-height: 200px;
   overflow: auto;
   padding: 0.5em;
@@ -101,7 +101,16 @@
   color: white;
 }
 
-.problematic_reasons:before { content: 'This resource was flagged problematic by students'; }
+.show_endorsed_reasons {
+  max-height: 200px;
+  overflow: auto;
+  padding: 0.5em;
+  background-color: rgb(69, 194, 10);
+  color: white;
+}
+
+.show_problematic_reasons:before { content: 'This resource was flagged problematic by students.'; }
+.show_endorsed_reasons:before { content: 'This resource was endorsed by course staff.'; }
 
 .previewingImg {
   margin-top: 1em;
@@ -147,7 +156,7 @@
 
 .recommender_endorse { width:15px; display: inline-block; }
 
-.recommender_entryId, .recommender_descriptionImg, .recommender_problematicReason, .recommender_descriptionText {
+.recommender_entryId, .recommender_descriptionImg, .recommender_problematicReason, .recommender_descriptionText, .recommender_endorse_reason {
   display:none;
 }
 

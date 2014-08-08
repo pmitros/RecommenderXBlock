@@ -111,5 +111,5 @@ var s3_info_textareas_placeholder = {
 };
 
 var problematic_ressons_prefix = '<br/>Here is a list of reasons why students think this resource problematic: <br/>&nbsp;&nbsp;&nbsp;&nbsp;'
-
+var endorsed_ressons_prefix = '<br/>The reason why it is endorsed is: <br/>&nbsp;&nbsp;&nbsp;&nbsp;'
 var reason_separator = '<br/>&nbsp;&nbsp;&nbsp;&nbsp;'
