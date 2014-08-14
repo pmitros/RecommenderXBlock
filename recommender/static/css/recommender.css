@@ -183,11 +183,11 @@
 .s3info_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
 .resource_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
 .resource_edit_button { float: left; }
-.addSourceBlockTitle, .editSourceBlockTitle, .flagSourceBlockTitle, .s3InfoBlockTitle, .deendorseBlockTitle, .endorseBlockTitle {
+.addResourceBlockTitle, .editResourceBlockTitle, .flagResourceBlockTitle, .s3InfoBlockTitle, .deendorseBlockTitle, .endorseBlockTitle {
     margin-bottom: 1em;
 }
 
-.editSourceBlock, .recommender_add, .flagSourceBlock {
+.editResourceBlock, .addResourceBlock, .flagResourceBlock {
   padding-left: 1em;
 }
 
@@ -201,6 +201,11 @@
 .backToViewButton { color: #1d9dd9; float: left; }
 
 .flag_reason_submit, .edit_submit, .add_submit, .deendorse_resource, .endorse_resource { margin-top: 0.5em; }
+
+input[type="button"]:not([DISABLED]){
+  background-image: linear-gradient(#1d9dd9,#1d9dd9);
+  color: white;
+}
 
 .endorse_resource, .deendorse_resource { margin-top: 0.5em; float:left; }
 
