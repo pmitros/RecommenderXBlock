@@ -201,7 +201,7 @@ class RecommenderXBlock(XBlock):
         idx = self.recommenations.index(resource_id)
         result = {}
         result['id'] = resource_id
-        if idx not in range(0, len(self.recommendations)):
+        if idx > len(self.recommendations):
             result['error'] = 'bad id'
             result['Success'] = False
             tracker.emit('recommender_upvote', result)
@@ -250,7 +250,7 @@ class RecommenderXBlock(XBlock):
         idx = self.recommenations.index(resource_id)
         result = {}
         result['id'] = resource_id
-        if idx not in range(0, len(self.recommendations)):
+        if idx > len(self.recommendations):
             result['error'] = 'bad id'
             result['Success'] = False
             tracker.emit('recommender_downvote', result)
@@ -450,7 +450,7 @@ class RecommenderXBlock(XBlock):
         result = {}
         result['id'] = resource_id
         idx = self.recommenations.index(resource_id)
-        if idx not in range(0, len(self.recommendations)):
+        if idx > len(self.recommendations):
             result['error'] = 'bad id'
             result['Success'] = False
             tracker.emit('edit_resource', result)
@@ -602,7 +602,7 @@ class RecommenderXBlock(XBlock):
         result = {}
         result['id'] = resource_id
         idx = self.recommenations.index(resource_id)
-        if idx not in range(0, len(self.recommendations)):
+        if idx > len(self.recommendations):
             result['error'] = 'bad id'
             result['Success'] = False
             tracker.emit('endorse_resource', result)
@@ -645,7 +645,7 @@ class RecommenderXBlock(XBlock):
         result = {}
         result['id'] = resource_id
         idx = self.recommenations.index(resource_id)
-        if idx not in range(0, len(self.recommendations)):
+        if idx > len(self.recommendations):
             result['error'] = 'bad id'
             result['Success'] = False
             tracker.emit('delete_resource', result)
