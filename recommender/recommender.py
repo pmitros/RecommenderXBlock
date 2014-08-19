@@ -173,15 +173,6 @@ class RecommenderXBlock(XBlock):
             max_recommendation_id = -1
         return max_recommendation_id + 1
 
-    def get_entry_index(self, entry_id, entry_list):
-        """
-        Get the element index in a list based on its ID.
-        """
-        for idx in range(0, len(entry_list)):
-            if entry_list[idx]['id'] == entry_id:
-                return idx
-        return -1
-
     def check_redundancy(self, url1, url2):
         """
         Check redundant resource by comparing the url.
@@ -219,7 +210,7 @@ class RecommenderXBlock(XBlock):
                 result['toggle']: the boolean indicator for whether the resource was switched from downvoted to upvoted
         """
         resource_id = data['id']
-        idx = self.get_entry_index(resource_id, self.recommendations)
+        idx = self.recommenations.index(resource_id)
         result = {}
         result['id'] = resource_id
         if idx not in range(0, len(self.recommendations)):
@@ -268,7 +259,7 @@ class RecommenderXBlock(XBlock):
                 result['toggle']: the boolean indicator for whether the resource was switched from upvoted to downvoted
         """
         resource_id = data['id']
-        idx = self.get_entry_index(resource_id, self.recommendations)
+        idx = self.recommenations.index(resource_id)
         result = {}
         result['id'] = resource_id
         if idx not in range(0, len(self.recommendations)):
@@ -470,7 +461,7 @@ class RecommenderXBlock(XBlock):
         resource_id = data['id']
         result = {}
         result['id'] = resource_id
-        idx = self.get_entry_index(resource_id, self.recommendations)
+        idx = self.recommenations.index(resource_id)
         if idx not in range(0, len(self.recommendations)):
             result['error'] = 'bad id'
             result['Success'] = False
@@ -622,7 +613,7 @@ class RecommenderXBlock(XBlock):
         resource_id = data['id']
         result = {}
         result['id'] = resource_id
-        idx = self.get_entry_index(resource_id, self.recommendations)
+        idx = self.recommenations.index(resource_id)
         if idx not in range(0, len(self.recommendations)):
             result['error'] = 'bad id'
             result['Success'] = False
@@ -665,7 +656,7 @@ class RecommenderXBlock(XBlock):
         resource_id = data['id']
         result = {}
         result['id'] = resource_id
-        idx = self.get_entry_index(resource_id, self.recommendations)
+        idx = self.recommenations.index(resource_id)
         if idx not in range(0, len(self.recommendations)):
             result['error'] = 'bad id'
             result['Success'] = False
