@@ -18,7 +18,6 @@ var tooltipsCats = [
     '.addResourceScreenshot',
     '.backToViewButton',
     '.flag_reason',
-    '.s3info_add_button',
     '.aws_access_key',
     '.aws_secret_key',
     '.bucketName',
@@ -55,11 +54,6 @@ var tooltipsCatsText = {
     '.backToViewButton': 'Go back to the main list',
     '.flag_reason': 'Give a meaningful reason for why this resource should be removed',
     '.flagResource': 'Flag this resource as problematic and give your reason',
-    '.s3info_add_button': 'Add Amazon S3 information for file uploading',
-    '.aws_access_key': 'Give the access key of your Amazon s3 account',
-    '.aws_secret_key': 'Give the secret key of your Amazon s3 account',
-    '.bucketName': 'Give the bucket name of your Amazon s3 account',
-    '.uploadedFileDir': 'Give the path (relative to root directory) of the directory for storing uploaded files',
     '.delete_resource': 'Delete this resource',
     '.recommender_row_top': 'Show a list of student-recommented related resources',
     '.recommender_row_top.resource_list_expanded': 'Hide the recommendations list',
@@ -79,35 +73,6 @@ var uploadFileErrorText = {
     'FILE_TYPE_ERROR': 'Please upload an image in GIF/JPG/PNG',
     'IMPROPER_S3_SETUP': 'The configuration of Amazon S3 is not properly set',
     '{"success": "Submission aborted!': 'Size of uploaded file exceeds threshold'
-};
-
-var s3_info_buttons = [
-    "submit_s3_info"
-];
-
-var s3_info_buttons_text = {
-  	"submit_s3_info": "Add Amazon S3 information for file uploading"
-};
-
-var s3_info_textareas = [
-	'aws_access_key',
-	'aws_secret_key',
-	'bucketName',
-	'uploadedFileDir'
-];
-
-var s3_info_textareas_text = {
-	'aws_access_key': 'Amazon S3 access key',
-	'aws_secret_key': 'Amazon S3 secret key',
-	'bucketName': 'Bucket name of your Amazon S3',
-	'uploadedFileDir': 'Directory for your uploaded files'
-};
-
-var s3_info_textareas_placeholder = {
-	'aws_access_key': '',
-	'aws_secret_key': '',
-	'bucketName': 'danielswli',
-	'uploadedFileDir': 'uploads/'
 };
 
 var problematic_ressons_prefix = '<br/>Here is a list of reasons why students think this resource problematic: <br/>&nbsp;&nbsp;&nbsp;&nbsp;'

@@ -29,11 +29,11 @@ from mako.lookup import TemplateLookup
 from xblock.core import XBlock
 from xblock.fields import Scope, List, Dict
 from xblock.fragment import Fragment
+from xblock.reference.plugins import Filesystem
 
-from fs.s3fs import S3FS
 from webob.response import Response
 
-
+@XBlock.needs('fs')
 class RecommenderXBlock(XBlock):
     """
     This XBlock will show a set of recommended resources which may be helpful
@@ -63,19 +63,6 @@ class RecommenderXBlock(XBlock):
     # A list of recommenations provided by students, it is a JSON object
     #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations
-
-    s3_configuration = Dict(
-        help="Dictionary of Amazon S3 information", default={}, scope=Scope.user_state_summary
-    )
-    # TODO: Switch to a Filesystem field once folded into edx-platform
-    # A dictionary of Amazon S3 information for file uploading, it is a JSON
-    #    object aggregated across many users of a single block.
-    # Usage: s3_configuration = {
-    #    "aws_access_key": (String) access key of Amazon S3 account
-    #    "aws_secret_key": (String) secret key of Amazon S3 account
-    #    "bucketName": (String) Bucket name of Amazon S3 account
-    #    "uploadedFileDir": (String) The path (relative to root directory) of
-    #            the directory for storing uploaded files }
 
     deendorsed_recommendations = List(
         help="List of deendorsed resources", default=[], scope=Scope.user_state_summary
@@ -146,6 +133,9 @@ class RecommenderXBlock(XBlock):
     # Usage: flagged_reasons[index] = (String) reason why the resource
     #   'flagged_ids[index]' was flagged by the current user as problematic
 
+    fs = Filesystem(help="File system", scope=Scope.user_state_summary)
+    # The file system we used to store uploaded screenshot
+    
     template_lookup = None
 
     resource_content_fields = [
@@ -340,15 +330,6 @@ class RecommenderXBlock(XBlock):
                 aws_secret_key: s3 secret key
                 bucket: name of the s3 bucket
         """
-        # TODO: Switch to a Filesystem field once folded into edx-platform
-        if self.s3_configuration == {}:
-            response = Response()
-            response.body = 'IMPROPER_S3_SETUP'
-            response.headers['Content-Type'] = 'text/plain'
-            tracker.emit('upload_screenshot',
-                         {'uploadedFileName': response.body})
-            return response
-
         # Check invalid file types
         image_types = {
             'jpeg': {
@@ -399,21 +380,13 @@ class RecommenderXBlock(XBlock):
         # already done in request submission, handled in client side
 
         try:
-            s3fs_handler = S3FS(
-                self.s3_configuration['bucketName'],
-                aws_access_key=self.s3_configuration['aws_access_key'],
-                aws_secret_key=self.s3_configuration['aws_secret_key'])
-
-            dir_url = s3fs_handler.getpathurl("/")
             content = request.POST['file'].file.read()
             file_id = self.md5_check_sum(content)
-            file_name = (str(self.s3_configuration['uploadedFileDir']) +
-                         file_id + file_type)
+            file_name = (file_id + file_type)
 
-            fhwrite = s3fs_handler.open(file_name, 'wb')
+            fhwrite = self.fs.open(file_name, "wb")
             fhwrite.write(content)
             fhwrite.close()
-            s3fs_handler.makepublic(file_name)
         except BaseException:
             response = Response()
             response.body = 'IMPROPER_S3_SETUP'
@@ -423,12 +396,7 @@ class RecommenderXBlock(XBlock):
             return response
 
         response = Response()
-        if self.s3_configuration['uploadedFileDir'] == "/":
-            response.body = str(dir_url + file_id + file_type)
-        else:
-            response.body = str(dir_url +
-                                self.s3_configuration['uploadedFileDir'] +
-                                file_id + file_type)
+        response.body = self.fs.get_url(file_name)
         response.headers['Content-Type'] = 'text/plain'
         tracker.emit('upload_screenshot',
                      {'uploadedFileName': response.body})
@@ -619,37 +587,6 @@ class RecommenderXBlock(XBlock):
         """
         result = {'is_user_staff': self.get_user_is_staff()}
         tracker.emit('is_user_staff', result)
-        return result
-
-    @XBlock.json_handler
-    def set_s3_info(self, data, _suffix=''):
-        """
-        Set required information of amazon web service for file uploading.
-
-        Args:
-                data: dict in JSON format
-                data['aws_access_key']: Amazon Web Services access key
-                data['aws_secret_key']: Amazon Web Services secret key
-                data['bucketName']: Bucket name of your Amazon Web Services
-                data['uploadedFileDir']: Directory for your upload files
-        Returns:
-                result['Success']: the boolean indicator for whether the setting is complete
-        """
-        if not self.get_user_is_staff():
-            msg = 'Set S3 information without permission'
-            return self.error_handler(msg, 'set_s3_info')
-
-        self.s3_configuration['aws_access_key'] = data['aws_access_key']
-        self.s3_configuration['aws_secret_key'] = data['aws_secret_key']
-        self.s3_configuration['bucketName'] = data['bucketName']
-        if data['uploadedFileDir'][len(data['uploadedFileDir']) - 1] == '/':
-            self.s3_configuration['uploadedFileDir'] = data['uploadedFileDir']
-        else:
-            self.s3_configuration['uploadedFileDir'] = (data['uploadedFileDir']
-                                                        + '/')
-        result = self.s3_configuration.copy()
-        result['Success'] = True
-        tracker.emit('set_s3_info', result)
         return result
 
     @XBlock.json_handler
