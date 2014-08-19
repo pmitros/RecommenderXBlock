@@ -709,6 +709,12 @@ class RecommenderXBlock(XBlock):
         if not self.recommendations:
             self.recommendations = []
 
+        # Transition between two versions. In the previous version, there is
+        # no endorsed_recommendation_reasons. Thus, we add empty reasons to
+        # make the length of the two lists equal
+        while len(self.endorsed_recommendation_ids) > len(self.endorsed_recommendation_reasons):
+            self.endorsed_recommendation_reasons.append('')
+
         if not self.template_lookup:
             self.template_lookup = TemplateLookup()
             self.template_lookup.put_string(
@@ -729,12 +735,6 @@ class RecommenderXBlock(XBlock):
                       'descriptionText': r['descriptionText']}
                      for r in self.recommendations]
         resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
-
-        # Transition between two versions. In the previous version, there is
-        # no endorsed_recommendation_reasons. Thus, we add empty reasons to
-        # make the length of the two lists equal
-        while len(self.endorsed_recommendation_ids) > len(self.endorsed_recommendation_reasons):
-            self.endorsed_recommendation_reasons.append('')
 
         frag = Fragment(
             self.template_lookup.get_template("recommender.html").render(
