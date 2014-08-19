@@ -66,13 +66,15 @@ var tooltipsCatsText = {
 var uploadFileError = [
     'FILE_TYPE_ERROR',
     'IMPROPER_S3_SETUP',
-    '{"success": "Submission aborted!'
+    '{"success": "Submission aborted!',
+    'FILE_SIZE_ERROR'
 ];
 
 var uploadFileErrorText = {
     'FILE_TYPE_ERROR': 'Please upload an image in GIF/JPG/PNG',
     'IMPROPER_S3_SETUP': 'The configuration of Amazon S3 is not properly set',
-    '{"success": "Submission aborted!': 'Size of uploaded file exceeds threshold'
+    '{"success": "Submission aborted!': 'Size of uploaded file exceeds threshold',
+    'FILE_SIZE_ERROR': 'Size of uploaded file exceeds threshold'
 };
 
 var problematic_ressons_prefix = '<br/>Here is a list of reasons why students think this resource problematic: <br/>&nbsp;&nbsp;&nbsp;&nbsp;'

@@ -376,9 +376,15 @@ class RecommenderXBlock(XBlock):
                          {'uploadedFileName': response.body})
             return response
 
-        # Check whether file size exceeds threshold (4MB)
-        # already done in request submission, handled in client side
-
+        # Check whether file size exceeds threshold (30MB)
+        if request.POST['file'].file.size > 31457280
+            response = Response()
+            response.body = 'FILE_SIZE_ERROR'
+            response.headers['Content-Type'] = 'text/plain'
+            tracker.emit('upload_screenshot',
+                         {'uploadedFileName': response.body})
+            return response
+        
         try:
             content = request.POST['file'].file.read()
             file_id = self.md5_check_sum(content)
