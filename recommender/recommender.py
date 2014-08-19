@@ -5,6 +5,7 @@ students solving a given problem.
 import json
 import hashlib
 import pkg_resources
+import itertools
 
 
 # TODO: Should be updated once XBlocks and tracking logs have finalized APIs
@@ -163,17 +164,14 @@ class RecommenderXBlock(XBlock):
         Generate a unique Id for each resource.
         Return first unused counting number for new ID
         """
-        recommendations = self.recommendations
-        if not recommendations:
-            recommendations = self.default_recommendations
-        resource_id = -1
-        for recommendation in recommendations:
-            if recommendation['id'] > resource_id:
-                resource_id = recommendation['id']
-        for deleted_recommendation_id in self.deleted_recommendation_ids:
-            if deleted_recommendation_id > resource_id:
-                resource_id = deleted_recommendation_id
-        return resource_id + 1
+        recommendations = self.recommendations or self.default_recommendations
+        active_rec_ids = (rec["id"] for rec in recommendations)
+        rec_ids = itertools.chain(active_rec_ids, self.deleted_recommendation_ids)
+        try:
+            max_recommendation_id = max(rec_ids)
+        except ValueError:  # rec_ids is an empty generator
+            max_recommendation_id = -1
+        return max_recommendation_id + 1
 
     def get_entry_index(self, entry_id, entry_list):
         """
