@@ -425,7 +425,7 @@ class RecommenderXBlock(XBlock):
 
         result['upvotes'] = 0
         result['downvotes'] = 0
-        self.recommendations.append(dict(result))
+        self.recommendations.append(result)
         result['Success'] = True
         tracker.emit('add_resource', result)
         return result
