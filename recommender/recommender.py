@@ -181,18 +181,6 @@ class RecommenderXBlock(XBlock):
         return (url1.split('#')[0].split('%23')[0] ==
                 url2.split('#')[0].split('%23')[0])
 
-    def md5_check_sum(self, data):
-        """
-        Generate the MD5 hash of file
-        Args:
-                data: the content of the file (e.g., open(filePath, 'rb').read())
-        Returns:
-                The MD5 hash
-        """
-        md5 = hashlib.md5()
-        md5.update(data)
-        return md5.hexdigest()
-
     @XBlock.json_handler
     def handle_upvote(self, data, _suffix=''):
         """
@@ -373,7 +361,7 @@ class RecommenderXBlock(XBlock):
 
             dir_url = s3fs_handler.getpathurl("/")
             content = request.POST['file'].file.read()
-            file_id = self.md5_check_sum(content)
+            file_id = hashlib.md5(content).hexdigest()
             file_name = (str(self.s3_configuration['uploadedFileDir']) +
                          file_id + file_type)
 
