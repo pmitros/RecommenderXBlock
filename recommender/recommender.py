@@ -41,7 +41,7 @@ class RecommenderXBlock(XBlock):
     """
     default_recommendations = List(help="List of default help resources",
                                    default=[], scope=Scope.content)
-    # A list of default recommenations, it is a JSON object across all users,
+    # A list of default recommendations, it is a JSON object across all users,
     #    all runs of a course, for this xblock.
     # Usage: default_recommendations[index] = {
     #    "id": (Integer) id of a resource,
@@ -56,7 +56,7 @@ class RecommenderXBlock(XBlock):
 
     recommendations = List(help="List of help resources", default=[],
                            scope=Scope.user_state_summary)
-    # A list of recommenations provided by students, it is a JSON object
+    # A list of recommendations provided by students, it is a JSON object
     #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations
 
@@ -198,7 +198,7 @@ class RecommenderXBlock(XBlock):
                 result['toggle']: the boolean indicator for whether the resource was switched from downvoted to upvoted
         """
         resource_id = data['id']
-        idx = self.recommenations.index(resource_id)
+        idx = self.recommendations.index(resource_id)
         result = {}
         result['id'] = resource_id
         if idx > len(self.recommendations):
@@ -247,7 +247,7 @@ class RecommenderXBlock(XBlock):
                 result['toggle']: the boolean indicator for whether the resource was switched from upvoted to downvoted
         """
         resource_id = data['id']
-        idx = self.recommenations.index(resource_id)
+        idx = self.recommendations.index(resource_id)
         result = {}
         result['id'] = resource_id
         if idx > len(self.recommendations):
@@ -449,7 +449,7 @@ class RecommenderXBlock(XBlock):
         resource_id = data['id']
         result = {}
         result['id'] = resource_id
-        idx = self.recommenations.index(resource_id)
+        idx = self.recommendations.index(resource_id)
         if idx > len(self.recommendations):
             result['error'] = 'bad id'
             result['Success'] = False
@@ -601,7 +601,7 @@ class RecommenderXBlock(XBlock):
         resource_id = data['id']
         result = {}
         result['id'] = resource_id
-        idx = self.recommenations.index(resource_id)
+        idx = self.recommendations.index(resource_id)
         if idx > len(self.recommendations):
             result['error'] = 'bad id'
             result['Success'] = False
@@ -644,7 +644,7 @@ class RecommenderXBlock(XBlock):
         resource_id = data['id']
         result = {}
         result['id'] = resource_id
-        idx = self.recommenations.index(resource_id)
+        idx = self.recommendations.index(resource_id)
         if idx > len(self.recommendations):
             result['error'] = 'bad id'
             result['Success'] = False
