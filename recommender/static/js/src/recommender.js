@@ -838,7 +838,6 @@ function RecommenderXBlock(runtime, element) {
                             flagged_resource_reasons = result['flagged_resources'];
                             var startEntryIndex = 0;
                             for (var key in flagged_resource_reasons) {
-                                //alert(key)
                                 var resource_pos = findResourceDiv(key);
                                 if (startEntryIndex != resource_pos) {
                                     $('.recommender_resource:eq(' + startEntryIndex + ')', element).before($('.recommender_resource:eq(' + resource_pos + ')', element));
