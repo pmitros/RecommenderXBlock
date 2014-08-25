@@ -146,6 +146,8 @@ class RecommenderXBlock(XBlock):
     def get_user_is_staff(self):
         """
         Return self.xmodule_runtime.user_is_staff
+        This is not a supported part of the XBlocks API. User data is still
+        being defined. However, It's the only way to get the data right now.
         TODO: Should be proper handled in future
         """
         return self.xmodule_runtime.user_is_staff
@@ -153,6 +155,8 @@ class RecommenderXBlock(XBlock):
     def get_user_id(self):
         """
         Return the user id.
+        This is not a supported part of the XBlocks API. User data is still
+        being defined. However, It's the only way to get the data right now.
         TODO: Should be proper handled in future
         """
         return self.xmodule_runtime.anonymous_student_id
@@ -653,10 +657,6 @@ class RecommenderXBlock(XBlock):
                 result['recommendation']['reason']: the reason why the resouce was deendorsed
         """
         # TODO: this function was named delete_resource previously, which should be changed in test_recommender
-        # TODO: since now we can remove resources, we should check whether resource exists in upvote/downvote/etc.
-        #       to make this xblock more robust, instead of assume the client side always pass a id from an existing
-        #       resource (currently the sever side might be fine and the client side might display some funny things
-        #       which can be solved by just refresh the page)
         if not self.get_user_is_staff():
             msg = 'Deendorse resource without permission'
             return self.error_handler(msg, 'deendorse_resource')
@@ -689,11 +689,6 @@ class RecommenderXBlock(XBlock):
         }
         for _, flagged_accum_resource_map in self.flagged_accum_resources.iteritems():
             for resource_id in flagged_accum_resource_map:
-                # Weird: key of self.flagged_accum_resources[user_id] will be transform to u'$key' even if key is int
-                # TODO: since now we can remove resources, we should check whether resource exists in upvote/downvote/etc.
-                #       to make this xblock more robust, instead of assume the client side always pass a id from an existing
-                #       resource (currently the sever side might be fine and the client side might display some funny things
-                #       which can be solved by just refresh the page)
                 if self.get_entry_index(int(resource_id), self.deendorsed_recommendations) != -1:
                     continue
                 if resource_id not in result['flagged_resources']:
