@@ -381,7 +381,7 @@ class RecommenderXBlock(XBlock):
             return response
 
         # Check whether file size exceeds threshold (30MB)
-        if request.POST['file'].file.size > 31457280
+        if request.POST['file'].file.size > 31457280:
             response = Response()
             response.body = 'FILE_SIZE_ERROR'
             response.headers['Content-Type'] = 'text/plain'
