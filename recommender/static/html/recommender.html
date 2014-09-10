@@ -18,8 +18,11 @@
             <%
               if elem['id'] in endorsed_recommendation_ids:
                 endorseMode = 'endorsed'
+                endorsed_index = endorsed_recommendation_ids.index(elem['id'])
+                endorsed_reason = endorsed_recommendation_reasons[endorsed_index]
               else:
                 endorseMode = ''
+                endorsed_reason = ''
                
               if elem['id'] in downvoted_ids:
                 voteMode = "downvoting"
@@ -35,7 +38,7 @@
                 flagMode = ''
                 reason = ''
             %>
-            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode,endorseMode=endorseMode" />
+            <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flagMode,problematicReason=reason,voteMode=voteMode,endorseMode=endorseMode,endorsedReason=endorsed_reason" />
           % endfor
           <div class="recommender_resourceTemplate hidden">
 			<div class="recommender_vote_box">
@@ -49,14 +52,15 @@
 			  <div class="recommender_descriptionImg"></div>
 			  <div class="recommender_entryId"></div>
 			  <div class="recommender_problematicReason"></div>
+              <div class="recommender_endorse_reason"></div>
 		    </div>
-            <div class="recommender_endorse"><div class="checkIcon"></div></div>
+            <div class="recommender_endorse"><div class="endorse"></div></div>
 			<div class="recommender_edit"> <span class="ui-icon ui-icon-pencil resource_edit_button"></span> <span class="ui-icon ui-icon-flag flagResource "></span></div>
 		  </div>
         </div>
         <div class="resource_add_button">Add new resource &gt;&gt;</div>
 		<div class="clearFix"></div>
-        <div class="s3info_add_button">Set S3 information</div>
+        <div class="resource_ranking_for_deendorsement_button hidden">mode</div>
         <div class="clearFix"></div>
         <div class='pagination'>
           <div class="paginationRowTemplate hidden">
@@ -69,6 +73,10 @@
         </div>
         <div class="recommender_description">
           <div class="descriptionImg">
+            <div class='show_endorsed_reasons hidden'></div>
+            <div class="clearFix"></div>
+            <div class='show_problematic_reasons hidden'></div>
+            <div class="clearFix"></div>
             <div class='descriptionText'> This is a list of resources your fellow students
             thought might be helpful. If you find another useful
             resource, either on edx.org or elsewhere, please add
@@ -85,22 +93,32 @@
     </div>
     <div class='recommender_modify'>
       <div class='recommender_modify_title_container'><div class='backToViewButton'>&lt; Related resources</div><div class='recommender_modify_title'></div></div>
-      <div class="s3InfoBlock">
-        <div class="s3InfoBlockTitle">Provide your s3 information for file uploading.</div>
-      </div>    
-      <div class="staffEditionBlock">
-        <div class="staffEditionBlockTitle">Delete a resource.</div>
+      <div class="deendorseBlock">
+        <div class="deendorseBlockTitle">Deendorse this resource and give the reason why you do that.</div>
+        <input type="text" 
+          class="deendorse_reason" 
+          name="deendorse_rationale"
+          placeholder="Reason for why this resource should be removed"/><br/>
+        <input type="button" value="Deendorse resource" class="deendorse_resource"/>
       </div>
-      <div class="flagSourceBlock">
-        <div class="flagSourceBlockTitle">Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently. </div>
+      <div class="endorseBlock">
+        <div class="endorseBlockTitle">Endorse this resource and give the reason why you do that.</div>
+        <input type="text" 
+          class="endorse_reason" 
+          name="endorse_rationale"
+          placeholder="Reason for why this resource should be endorsed"/><br/>
+        <input type="button" value="Endorse resource" class="endorse_resource"/>
+      </div>
+      <div class="flagResourceBlock">
+        <div class="flagResourceBlockTitle">Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently. </div>
         <input type="text" 
           class="flag_reason" 
           name="flag_rationale"
           placeholder="Reason for why this resource should be removed"/><br/>
-        <input type="button" value="Flag resource" class="flag_reason_submit">
+        <input type="button" value="Flag resource" class="flag_reason_submit"/>
       </div>
-      <div class="editSourceBlock">
-        <div class="editSourceBlockTitle">Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.</div>
+      <div class="editResourceBlock">
+        <div class="editResourceBlockTitle">Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.</div>
         <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
         <textarea 
           class="edit_title" 
@@ -114,12 +132,12 @@
           class="edit_descriptionText" 
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" class="editResourceForm">
-          Preview screenshot: <input type="file" name="file" class='editResourceScreenshot'><br/>
-          <input type="button" value="Save change" class="edit_submit" disabled >
+          Preview screenshot: <input type="file" name="file" class='editResourceScreenshot'/><br/>
+          <input type="button" value="Save change" class="edit_submit" disabled/>
         </form>
       </div>
-      <div class="recommender_add">
-        <div class="addSourceBlockTitle">Suggest a resource which can help other students with this problem. Please do not give the answer directly.</div>
+      <div class="addResourceBlock">
+        <div class="addResourceBlockTitle">Suggest a resource which can help other students with this problem. Please do not give the answer directly.</div>
         <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
         <textarea 
           class="in_title" 
@@ -133,8 +151,8 @@
           class="in_descriptionText" 
           placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
         <form method="post" class="addResourceForm">
-          Preview screenshot: <input type="file" name="file" class='addResourceScreenshot'><br/>
-          <input type="button" value="Add resource" class="add_submit" disabled >
+          Preview screenshot: <input type="file" name="file" class='addResourceScreenshot'/><br/>
+          <input type="button" value="Add resource" class="add_submit" disabled/>
         </form>
       </div>
     </div>

@@ -5,6 +5,7 @@ students solving a given problem.
 import json
 import hashlib
 import pkg_resources
+from copy import deepcopy
 
 
 # TODO: Should be updated once XBlocks and tracking logs have finalized APIs
@@ -28,18 +29,21 @@ from mako.lookup import TemplateLookup
 from xblock.core import XBlock
 from xblock.fields import Scope, List, Dict
 from xblock.fragment import Fragment
+from xblock.reference.plugins import Filesystem
 
-from fs.s3fs import S3FS
 from webob.response import Response
 
-
+@XBlock.needs('fs')
 class RecommenderXBlock(XBlock):
     """
-    This XBlock will show a set of recommended resources which may be helpful to students solving a given problem.
-    The resources are provided and edited by students; they can also vote for useful resources and flag problematic ones.
+    This XBlock will show a set of recommended resources which may be helpful
+    to students solving a given problem. The resources are provided and edited
+    by students; they can also vote for useful resources and flag problematic
+    ones.
     """
-    default_recommendations = List(help="List of default help resources",
-                                   default=[], scope=Scope.content)
+    default_recommendations = List(
+        help="List of default help resources", default=[], scope=Scope.content
+    )
     # A list of default recommenations, it is a JSON object across all users,
     #    all runs of a course, for this xblock.
     # Usage: default_recommendations[index] = {
@@ -53,70 +57,58 @@ class RecommenderXBlock(XBlock):
     #    "descriptionText" : (String) a paragraph of
     #            description/summary of a resource }
 
-    recommendations = List(help="List of help resources", default=[],
-                           scope=Scope.user_state_summary)
+    recommendations = List(
+        help="List of help resources", default=[], scope=Scope.user_state_summary
+    )
     # A list of recommenations provided by students, it is a JSON object
     #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations
 
-    s3_configuration = Dict(help="Dictionary of Amazon S3 information",
-                            default={}, scope=Scope.user_state_summary)
-    # TODO: Switch to a Filesystem field once folded into edx-platform
-    # A dictionary of Amazon S3 information for file uploading, it is a JSON
-    #    object aggregated across many users of a single block.
-    # Usage: s3_configuration = {
-    #    "aws_access_key": (String) access key of Amazon S3 account
-    #    "aws_secret_key": (String) secret key of Amazon S3 account
-    #    "bucketName": (String) Bucket name of Amazon S3 account
-    #    "uploadedFileDir": (String) The path (relative to root directory) of
-    #            the directory for storing uploaded files }
+    deendorsed_recommendations = List(
+        help="List of deendorsed resources", default=[], scope=Scope.user_state_summary
+    )
+    # A list of recommendations deendorsed by course staff, it is a JSON object
+    #    aggregated across many users of a single block.
+    # Usage: the same as default_recommendations plus 
+    #    deendorsed_recommendations[index]['reason'] = (String) the reason why
+    #            course staff deendorse this resource
 
-    deleted_recommendation_ids = List(help="List of deleted resources' ID",
-                                      default=[],
-                                      scope=Scope.user_state_summary)
-    # A list of deleted recommendations' ids, it is a JSON object aggregated
-    #    across many users of a single block.
-    # Usage: deleted_recommendation_ids[index] = (Integer) id of a deleted
-    #    resource
-
-    endorsed_recommendation_ids = List(help="List of endorsed resources' ID",
-                                       default=[],
-                                       scope=Scope.user_state_summary)
+    endorsed_recommendation_ids = List(
+        help="List of endorsed resources' ID", default=[], scope=Scope.user_state_summary
+    )
     # A list of endorsed recommendations' ids, it is a JSON object aggregated
     #    across many users of a single block.
     # Usage: endorsed_recommendation_ids[index] = (Integer) id of a
     #    endorsed resource
+    
+    endorsed_recommendation_reasons = List(
+        help="List of reasons why the resources are endorsed", default=[], scope=Scope.user_state_summary
+    )
+    # A list of reasons why the resources are endorsed, it is a JSON object
+    #    aggregated across many users of a single block.
+    # Usage: endorsed_recommendation_reasons[index] = (String) the reason
+    #    why the resource (id = endorsed_recommendation_ids[index]) is endorsed
 
-    flagged_accum_ids = List(help="List of problematic resources' ids which " +
-                             "at least one user flagged to", default=[],
-                             scope=Scope.user_state_summary)
-    # TODO: For instructor interface
-    # A list of problematic recommendations' ids which at least one user
-    #    flagged to; it is a JSON object aggregated across many users of
-    #    a single block.
-    # Usage: flagged_accum_ids[index] = (Integer) id of a problematic
-    #    resource which was flagged by at least one user
+    flagged_accum_resources = Dict(
+        help="Dict of problematic resources which are flagged by users", default={}, scope=Scope.user_state_summary
+    )
+    # A dict of problematic recommendations which are flagged by users;
+    #    it is a JSON object aggregated across many users of a single block.
+    # Usage: flagged_accum_resources[userId] = {
+    #    "problematic resource id": (String) reason why the resource is
+    #            flagged as problematic by that user }
 
-    flagged_accum_reasons = List(help="List of reasons why the corresponding" +
-                                 " resources were flagged by user as " +
-                                 "problematic", default=[],
-                                 scope=Scope.user_state_summary)
-    # TODO: For instructor interface
-    # A list of reasons why the corresponding resources were flagged by user
-    #    as problematic; it is a JSON object aggregated across many users of
-    #    a single block.
-    # Usage: flagged_accum_reasons[index] = (String) list of reasons why the
-    #    resource 'flagged_accum_ids[index]' was flagged by user as problematic
-
-    upvoted_ids = List(help="List of resources' ids which user upvoted to",
-                       default=[], scope=Scope.user_state)
+    upvoted_ids = List(
+        help="List of resources' ids which user upvoted to", default=[], scope=Scope.user_state
+    )
     # A list of recommendations' ids which user upvoted to; it is a JSON
     #    object for one user, for one block, and for one run of a course.
     # Usage: upvoted_ids[index] = (Integer) id of a resource which was
     #    upvoted by the current user
 
-    downvoted_ids = List(help="List of resources' ids which user downvoted to",
-                         default=[], scope=Scope.user_state)
+    downvoted_ids = List(
+        help="List of resources' ids which user downvoted to", default=[], scope=Scope.user_state
+    )
     # A list of recommendations' ids which user downvoted to; it is a JSON
     #    object for one user, for one block, and for one run of a course.
     # Usage: downvoted_ids[index] = (Integer) id of a resource which was
@@ -130,26 +122,44 @@ class RecommenderXBlock(XBlock):
     # Usage: flagged_ids[index] = (Integer) id of a problematic resource which
     #    was flagged by the current user
 
-    flagged_reasons = List(help="List of reasons why the corresponding " +
-                           "resources were flagged by user as problematic",
-                           default=[], scope=Scope.user_state)
+    flagged_reasons = List(
+        help="List of reasons why the corresponding resources were flagged by user as problematic",
+        default=[],
+        scope=Scope.user_state
+    )
     # A list of reasons why the corresponding resources were flagged by user as
     #    problematic; it is a JSON object for one user, for one block, and for
     #    one run of a course.
     # Usage: flagged_reasons[index] = (String) reason why the resource
     #   'flagged_ids[index]' was flagged by the current user as problematic
 
+    fs = Filesystem(help="File system", scope=Scope.user_state_summary)
+    # The file system we used to store uploaded screenshot
+    
     template_lookup = None
 
-    resource_content_fields = ['url', 'title', 'description',
-                               'descriptionText']
+    resource_content_fields = [
+        'url', 'title', 'description', 'descriptionText'
+    ]
     # the dictionary keys for storing the content of a recommendation
 
     def get_user_is_staff(self):
         """
         Return self.xmodule_runtime.user_is_staff
+        This is not a supported part of the XBlocks API. User data is still
+        being defined. However, It's the only way to get the data right now.
+        TODO: Should be proper handled in future
         """
         return self.xmodule_runtime.user_is_staff
+    
+    def get_user_id(self):
+        """
+        Return the user id.
+        This is not a supported part of the XBlocks API. User data is still
+        being defined. However, It's the only way to get the data right now.
+        TODO: Should be proper handled in future
+        """
+        return self.xmodule_runtime.anonymous_student_id
 
     def resource_string(self, path):
         """
@@ -170,9 +180,9 @@ class RecommenderXBlock(XBlock):
         for recommendation in recommendations:
             if recommendation['id'] > resource_id:
                 resource_id = recommendation['id']
-        for deleted_recommendation_id in self.deleted_recommendation_ids:
-            if deleted_recommendation_id > resource_id:
-                resource_id = deleted_recommendation_id
+        for deendorsed_recommendation in self.deendorsed_recommendations:
+            if deendorsed_recommendation['id'] > resource_id:
+                resource_id = deendorsed_recommendation['id']
         return resource_id + 1
 
     def get_entry_index(self, entry_id, entry_list):
@@ -203,6 +213,27 @@ class RecommenderXBlock(XBlock):
         md5 = hashlib.md5()
         md5.update(data)
         return md5.hexdigest()
+    
+    def get_onetime_url(self, filename):
+        """
+        Return one time url for uploaded screenshot
+        
+        We benchmarked this as less than 8ms on a sandbox machine. 
+        """
+        if filename.startswith('fs://'):
+            return str(self.fs.get_url(filename.replace('fs://', ''), 1000*60*60*10))
+        else:
+            return filename
+    
+    def error_handler(self, error_msg, event, resource_id=None):
+        """
+        Generate returned dictionary and log when error comes out
+        """
+        result = {'error': error_msg, 'Success': False}
+        if resource_id is not None:
+            result['id'] = resource_id
+        tracker.emit(event, result)
+        return result
 
     @XBlock.json_handler
     def handle_upvote(self, data, _suffix=''):
@@ -222,14 +253,12 @@ class RecommenderXBlock(XBlock):
         """
         resource_id = data['id']
         idx = self.get_entry_index(resource_id, self.recommendations)
+        if idx not in range(0, len(self.recommendations)):
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'recommender_upvote', resource_id)
+
         result = {}
         result['id'] = resource_id
-        if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('recommender_upvote', result)
-            return result
-
         result['oldVotes'] = (self.recommendations[idx]['upvotes'] -
                               self.recommendations[idx]['downvotes'])
         if resource_id in self.upvoted_ids:
@@ -271,14 +300,12 @@ class RecommenderXBlock(XBlock):
         """
         resource_id = data['id']
         idx = self.get_entry_index(resource_id, self.recommendations)
+        if idx not in range(0, len(self.recommendations)):
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'recommender_downvote', resource_id)
+
         result = {}
         result['id'] = resource_id
-        if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('recommender_downvote', result)
-            return result
-
         result['oldVotes'] = (self.recommendations[idx]['upvotes'] -
                               self.recommendations[idx]['downvotes'])
         if resource_id in self.downvoted_ids:
@@ -318,15 +345,6 @@ class RecommenderXBlock(XBlock):
                 aws_secret_key: s3 secret key
                 bucket: name of the s3 bucket
         """
-        # TODO: Switch to a Filesystem field once folded into edx-platform
-        if self.s3_configuration == {}:
-            response = Response()
-            response.body = 'IMPROPER_S3_SETUP'
-            response.headers['Content-Type'] = 'text/plain'
-            tracker.emit('upload_screenshot',
-                         {'uploadedFileName': response.body})
-            return response
-
         # Check invalid file types
         image_types = {
             'jpeg': {
@@ -373,25 +391,23 @@ class RecommenderXBlock(XBlock):
                          {'uploadedFileName': response.body})
             return response
 
-        # Check whether file size exceeds threshold (4MB)
-        # already done in request submission, handled in client side
-
+        # Check whether file size exceeds threshold (30MB)
+        if request.POST['file'].file.size > 31457280:
+            response = Response()
+            response.body = 'FILE_SIZE_ERROR'
+            response.headers['Content-Type'] = 'text/plain'
+            tracker.emit('upload_screenshot',
+                         {'uploadedFileName': response.body})
+            return response
+        
         try:
-            s3fs_handler = S3FS(
-                self.s3_configuration['bucketName'],
-                aws_access_key=self.s3_configuration['aws_access_key'],
-                aws_secret_key=self.s3_configuration['aws_secret_key'])
-
-            dir_url = s3fs_handler.getpathurl("/")
             content = request.POST['file'].file.read()
             file_id = self.md5_check_sum(content)
-            file_name = (str(self.s3_configuration['uploadedFileDir']) +
-                         file_id + file_type)
+            file_name = (file_id + '.' + file_type)
 
-            fhwrite = s3fs_handler.open(file_name, 'wb')
+            fhwrite = self.fs.open(file_name, "wb")
             fhwrite.write(content)
             fhwrite.close()
-            s3fs_handler.makepublic(file_name)
         except BaseException:
             response = Response()
             response.body = 'IMPROPER_S3_SETUP'
@@ -401,12 +417,8 @@ class RecommenderXBlock(XBlock):
             return response
 
         response = Response()
-        if self.s3_configuration['uploadedFileDir'] == "/":
-            response.body = str(dir_url + file_id + file_type)
-        else:
-            response.body = str(dir_url +
-                                self.s3_configuration['uploadedFileDir'] +
-                                file_id + file_type)
+        #response.body = str(self.fs.get_url(file_name))
+        response.body = str("fs://" + file_name)
         response.headers['Content-Type'] = 'text/plain'
         tracker.emit('upload_screenshot',
                      {'uploadedFileName': response.body})
@@ -434,12 +446,24 @@ class RecommenderXBlock(XBlock):
         # check url for redundancy
         for recommendation in self.recommendations:
             if self.check_redundancy(recommendation['url'], data['url']):
-                result['error'] = 'redundant resource'
+                result['error'] = ('The resource you are attempting to ' +
+                                   'provide has already existed')
                 for field in self.resource_content_fields:
-                    result['dup_' + field] = self.recommendations[
-                        self.recommendations.index(recommendation)][field]
-                result['dup_id'] = self.recommendations[
-                    self.recommendations.index(recommendation)]['id']
+                    result['dup_' + field] = recommendation[field]
+                result['dup_id'] = recommendation['id']
+                result['Success'] = False
+                tracker.emit('add_resource', result)
+                return result
+            
+        # check url for de-endorsed resources
+        for deendorsed_resource in self.deendorsed_recommendations:
+            if self.check_redundancy(deendorsed_resource['url'], data['url']):
+                result['error'] = ('The resource you are attempting to ' +
+                                   'provide has been de-endorsed by staff, ' +
+                                   'because: ' + deendorsed_resource['reason'])
+                for field in self.resource_content_fields:
+                    result['dup_' + field] = recommendation[field]
+                result['dup_id'] = recommendation['id']
                 result['Success'] = False
                 tracker.emit('add_resource', result)
                 return result
@@ -451,6 +475,7 @@ class RecommenderXBlock(XBlock):
         self.recommendations.append(dict(result))
         result['Success'] = True
         tracker.emit('add_resource', result)
+        result["description"] = self.get_onetime_url(result["description"])
         return result
 
     @XBlock.json_handler
@@ -470,32 +495,44 @@ class RecommenderXBlock(XBlock):
                 result[resource_content_field]: the content of the resource after edited
         """
         resource_id = data['id']
-        result = {}
-        result['id'] = resource_id
         idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('edit_resource', result)
-            return result
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'edit_resource', resource_id)
 
+        result = {}
+        result['id'] = resource_id
         for field in self.resource_content_fields:
             result['old_' + field] = self.recommendations[idx][field]
             if data[field] == "":
                 result[field] = self.recommendations[idx][field]
             else:
                 result[field] = data[field]
-        # check url for redundancy
+
         if not(self.check_redundancy(self.recommendations[idx]['url'],
                                      data['url'])):
+            # check url for redundancy
             for recommendation in self.recommendations:
                 if self.check_redundancy(recommendation['url'], data['url']):
-                    result['error'] = 'existing url'
+                    result['error'] = ('The resource you are attempting to ' +
+                                       'provide has already existed')
                     for field in self.resource_content_fields:
-                        result['dup_' + field] = self.recommendations[
-                            self.recommendations.index(recommendation)][field]
-                    result['dup_id'] = self.recommendations[
-                        self.recommendations.index(recommendation)]['id']
+                        result['dup_' + field] = recommendation[field]
+                    result['dup_id'] = recommendation['id']
+                    result['Success'] = False
+                    tracker.emit('edit_resource', result)
+                    return result
+                
+            # check url for de-endorsed resources
+            for deendorsed_resource in self.deendorsed_recommendations:
+                if self.check_redundancy(deendorsed_resource['url'], data['url']):
+                    result['error'] = ('The resource you are attempting to ' +
+                                       'provide has been de-endorsed by ' +
+                                       'staff, because: ' +
+                                       deendorsed_resource['reason'])
+                    for field in self.resource_content_fields:
+                        result['dup_' + field] = recommendation[field]
+                    result['dup_id'] = recommendation['id']
                     result['Success'] = False
                     tracker.emit('edit_resource', result)
                     return result
@@ -508,6 +545,7 @@ class RecommenderXBlock(XBlock):
             self.recommendations[idx][field] = data[field]
         result['Success'] = True
         tracker.emit('edit_resource', result)
+        result["description"] = self.get_onetime_url(result["description"])
         return result
 
     @XBlock.json_handler
@@ -532,6 +570,9 @@ class RecommenderXBlock(XBlock):
         result['id'] = data['id']
         result['isProblematic'] = data['isProblematic']
         result['reason'] = data['reason']
+        
+        user_id = self.get_user_id()
+        
         if data['isProblematic']:
             if data['id'] in self.flagged_ids:
                 result['oldReason'] = self.flagged_reasons[
@@ -541,6 +582,11 @@ class RecommenderXBlock(XBlock):
             else:
                 self.flagged_ids.append(data['id'])
                 self.flagged_reasons.append(data['reason'])
+                
+                if user_id not in self.flagged_accum_resources:
+                    self.flagged_accum_resources[user_id] = {}
+            # I don't know why the reason won't be saved if I only use data['id'] as the key
+            self.flagged_accum_resources[user_id][str(data['id'])] = data['reason']
         else:
             if data['id'] in self.flagged_ids:
                 result['oldReason'] = self.flagged_reasons[
@@ -549,6 +595,8 @@ class RecommenderXBlock(XBlock):
                 idx = self.flagged_ids.index(data['id'])
                 del self.flagged_ids[idx]
                 del self.flagged_reasons[idx]
+
+                del self.flagged_accum_resources[user_id][str(data['id'])]
         result['Success'] = True
         tracker.emit('flag_resource', result)
         return result
@@ -563,40 +611,6 @@ class RecommenderXBlock(XBlock):
         """
         result = {'is_user_staff': self.get_user_is_staff()}
         tracker.emit('is_user_staff', result)
-        return result
-
-    @XBlock.json_handler
-    def set_s3_info(self, data, _suffix=''):
-        """
-        Set required information of amazon web service for file uploading.
-
-        Args:
-                data: dict in JSON format
-                data['aws_access_key']: Amazon Web Services access key
-                data['aws_secret_key']: Amazon Web Services secret key
-                data['bucketName']: Bucket name of your Amazon Web Services
-                data['uploadedFileDir']: Directory for your upload files
-        Returns:
-                result['Success']: the boolean indicator for whether the setting is complete
-        """
-        if not self.get_user_is_staff():
-            result = {
-                'error': 'Set S3 information without permission',
-                'Success': False
-            }
-            tracker.emit('set_s3_info', result)
-            return result
-        self.s3_configuration['aws_access_key'] = data['aws_access_key']
-        self.s3_configuration['aws_secret_key'] = data['aws_secret_key']
-        self.s3_configuration['bucketName'] = data['bucketName']
-        if data['uploadedFileDir'][len(data['uploadedFileDir']) - 1] == '/':
-            self.s3_configuration['uploadedFileDir'] = data['uploadedFileDir']
-        else:
-            self.s3_configuration['uploadedFileDir'] = (data['uploadedFileDir']
-                                                        + '/')
-        result = self.s3_configuration.copy()
-        result['Success'] = True
-        tracker.emit('set_s3_info', result)
         return result
 
     @XBlock.json_handler
@@ -615,73 +629,88 @@ class RecommenderXBlock(XBlock):
                 result['status']: endorse the resource or undo it
         """
         if not self.get_user_is_staff():
-            result = {
-                'error': 'Endorse resource without permission',
-                'Success': False
-            }
-            tracker.emit('endorse_resource', result)
-            return result
+            msg = 'Endorse resource without permission'
+            return self.error_handler(msg, 'endorse_resource')
         resource_id = data['id']
-        result = {}
-        result['id'] = resource_id
         idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('endorse_resource', result)
-            return result
-
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'endorse_resource', resource_id)
+        
+        result = {}
+        result['id'] = resource_id
         if resource_id in self.endorsed_recommendation_ids:
             result['status'] = 'undo endorsement'
-            del self.endorsed_recommendation_ids[
-                self.endorsed_recommendation_ids.index(resource_id)]
+            endorsed_index = self.endorsed_recommendation_ids.index(resource_id)
+            del self.endorsed_recommendation_ids[endorsed_index]
+            del self.endorsed_recommendation_reasons[endorsed_index]
         else:
+            result['reason'] = data['reason']
             result['status'] = 'endorsement'
             self.endorsed_recommendation_ids.append(resource_id)
+            self.endorsed_recommendation_reasons.append(data['reason'])
 
         result['Success'] = True
         tracker.emit('endorse_resource', result)
         return result
 
     @XBlock.json_handler
-    def delete_resource(self, data, _suffix=''):
+    def deendorse_resource(self, data, _suffix=''):
         """
-        Delete an entry of resource.
+        Deendorse an entry of resource.
 
         Args:
                 data: dict in JSON format
-                data['id']: the ID of the resouce to be deleted
+                data['id']: the ID of the resouce to be deendorsed
+                data['reason']: the reason why the resouce was deendorsed
         Returns:
                 result: dict in JSON format
-                result['Success']: the boolean indicator for whether the deletion is complete
-                result['error']: the error message generated when the deletion fails
-                result[resource_content_field]: the content of the deleted resource
+                result['Success']: the boolean indicator for whether the deendorsement is complete
+                result['error']: the error message generated when the deendorsement fails
+                result['recommendation']: (Dict) the deendorsed resource
+                result['recommendation']['reason']: the reason why the resouce was deendorsed
         """
+        # TODO: this function was named delete_resource previously, which should be changed in test_recommender
         if not self.get_user_is_staff():
-            result = {
-                'error': 'Delete resource without permission',
-                'Success': False
-            }
-            tracker.emit('delete_resource', result)
-            return result
+            msg = 'Deendorse resource without permission'
+            return self.error_handler(msg, 'deendorse_resource')
         resource_id = data['id']
-        result = {}
-        result['id'] = resource_id
         idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
-            result['error'] = 'bad id'
-            result['Success'] = False
-            tracker.emit('delete_resource', result)
-            return result
+            msg = 'The selected resource is not existing'
+            return self.error_handler(msg, 'deendorse_resource', resource_id)
 
-        result['upvotes'] = self.recommendations[idx]['upvotes']
-        result['downvotes'] = self.recommendations[idx]['downvotes']
-        for field in self.resource_content_fields:
-            result[field] = self.recommendations[idx][field]
-        self.deleted_recommendation_ids.append(resource_id)
+        result = {}
+        result['id'] = resource_id
+        deendorsed_resource = deepcopy(self.recommendations[idx])
         del self.recommendations[idx]
+
+        deendorsed_resource['reason'] = data['reason']
+        self.deendorsed_recommendations.append(deendorsed_resource)
         result['Success'] = True
-        tracker.emit('delete_resource', result)
+        result['recommendation'] = deendorsed_resource
+        tracker.emit('deendorse_resource', result)
+        return result
+
+    @XBlock.json_handler
+    def get_accum_flagged_resource(self, _data, _suffix=''):
+        if not self.get_user_is_staff():
+            msg = 'Get accumulated flagged resource without permission'
+            return self.error_handler(msg, 'get_accum_flagged_resource')
+        result = {
+            'Success': True,
+            'flagged_resources': {}
+        }
+        for _, flagged_accum_resource_map in self.flagged_accum_resources.iteritems():
+            for resource_id in flagged_accum_resource_map:
+                if self.get_entry_index(int(resource_id), self.deendorsed_recommendations) != -1:
+                    continue
+                if resource_id not in result['flagged_resources']:
+                    result['flagged_resources'][resource_id] = []
+                if flagged_accum_resource_map[resource_id] != '':
+                    result['flagged_resources'][resource_id].append(flagged_accum_resource_map[resource_id])
+                print result
+        tracker.emit('get_accum_flagged_resource', result)
         return result
 
     def student_view(self, _context=None):
@@ -695,6 +724,12 @@ class RecommenderXBlock(XBlock):
         if not self.recommendations:
             self.recommendations = []
 
+        # Transition between two versions. In the previous version, there is
+        # no endorsed_recommendation_reasons. Thus, we add empty reasons to
+        # make the length of the two lists equal
+        while len(self.endorsed_recommendation_ids) > len(self.endorsed_recommendation_reasons):
+            self.endorsed_recommendation_reasons.append('')
+
         if not self.template_lookup:
             self.template_lookup = TemplateLookup()
             self.template_lookup.put_string(
@@ -706,34 +741,40 @@ class RecommenderXBlock(XBlock):
 
         # Ideally, we'd estimate score based on votes, such that items with
         # 1 vote have a sensible ranking (rather than a perfect rating)
-
+        
+        # We pre-generate URLs for all resources. We benchmarked doing this 
+        # for 44 URLs, and the time per URL was about 8ms. The 44 URLs were
+        # all of the images added by students over several problem sets. If 
+        # load continues to be as-is, pre-generation is not a performance 
+        # issue. If students make substantially more resources, we may want 
+        # to paginate, and generate in sets of 5-20 URLs per load. 
         resources = [{'id': r['id'],
                       'title': r['title'],
                       "votes": r['upvotes'] - r['downvotes'],
                       'url': r['url'],
-                      'description': r['description'],
+                      'description': self.get_onetime_url(r['description']),
                       'descriptionText': r['descriptionText']}
                      for r in self.recommendations]
         resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
 
-        frag = Fragment(self.template_lookup.get_template("recommender.html")
-                        .render(resources=resources,
-                                upvoted_ids=self.upvoted_ids,
-                                downvoted_ids=self.downvoted_ids,
-                                endorsed_recommendation_ids=self.endorsed_recommendation_ids,
-                                flagged_ids=self.flagged_ids,
-                                flagged_reasons=self.flagged_reasons))
-        frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/" +
-                         "themes/smoothness/jquery-ui.css")
-        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/" +
-                                "1.10.4/jquery-ui.min.js")
+        frag = Fragment(
+            self.template_lookup.get_template("recommender.html").render(
+                resources=resources,
+                upvoted_ids=self.upvoted_ids,
+                downvoted_ids=self.downvoted_ids,
+                endorsed_recommendation_ids=self.endorsed_recommendation_ids,
+                endorsed_recommendation_reasons=self.endorsed_recommendation_reasons,
+                flagged_ids=self.flagged_ids,
+                flagged_reasons=self.flagged_reasons
+            )
+        )
+        frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
+        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_css(self.resource_string("static/css/tooltipster.css"))
         frag.add_css(self.resource_string("static/css/recommender.css"))
-        frag.add_javascript(self.resource_string("static/js/src/" +
-                                                 "jquery.tooltipster.min.js"))
+        frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
-        frag.add_javascript(self.resource_string("static/js/src/" +
-                                                 "recommender.js"))
+        frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
         frag.initialize_js('RecommenderXBlock')
         return frag
 
