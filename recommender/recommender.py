@@ -742,8 +742,8 @@ class RecommenderXBlock(XBlock):
         resources = [{'id': r['id'],
                       'title': r['title'],
                       "votes": r['upvotes'] - r['downvotes'],
-                      'url': self.get_onetime_url(r['url']),
-                      'description': r['description'],
+                      'url': r['url'],
+                      'description': self.get_onetime_url(r['description']),
                       'descriptionText': r['descriptionText']}
                      for r in self.recommendations]
         resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
