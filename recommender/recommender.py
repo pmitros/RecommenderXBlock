@@ -406,7 +406,7 @@ class RecommenderXBlock(XBlock):
             return response
 
         response = Response()
-        response.body = self.fs.get_url(file_name)
+        response.body = str(self.fs.get_url(file_name))
         response.headers['Content-Type'] = 'text/plain'
         tracker.emit('upload_screenshot',
                      {'uploadedFileName': response.body})
