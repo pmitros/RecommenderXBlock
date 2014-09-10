@@ -214,6 +214,15 @@ class RecommenderXBlock(XBlock):
         md5.update(data)
         return md5.hexdigest()
     
+    def get_onetime_url(self, filename):
+        """
+        Return one time url for uploaded screenshot
+        """
+        if filename.startswith('fs://')
+            return str(self.fs.get_url(filename.replace('fs://', ''), 1000*60*60*10))
+        else:
+            return filename
+    
     def error_handler(self, error_msg, event, resource_id=None):
         """
         Generate returned dictionary and log when error comes out
@@ -392,7 +401,7 @@ class RecommenderXBlock(XBlock):
         try:
             content = request.POST['file'].file.read()
             file_id = self.md5_check_sum(content)
-            file_name = (file_id + file_type)
+            file_name = (file_id + '.' + file_type)
 
             fhwrite = self.fs.open(file_name, "wb")
             fhwrite.write(content)
@@ -406,7 +415,8 @@ class RecommenderXBlock(XBlock):
             return response
 
         response = Response()
-        response.body = str(self.fs.get_url(file_name))
+        #response.body = str(self.fs.get_url(file_name))
+        response.body = str("fs://" + file_name)
         response.headers['Content-Type'] = 'text/plain'
         tracker.emit('upload_screenshot',
                      {'uploadedFileName': response.body})
@@ -463,6 +473,7 @@ class RecommenderXBlock(XBlock):
         self.recommendations.append(dict(result))
         result['Success'] = True
         tracker.emit('add_resource', result)
+        result["description"] = self.get_onetime_url(result["description"])
         return result
 
     @XBlock.json_handler
@@ -532,6 +543,7 @@ class RecommenderXBlock(XBlock):
             self.recommendations[idx][field] = data[field]
         result['Success'] = True
         tracker.emit('edit_resource', result)
+        result["description"] = self.get_onetime_url(result["description"])
         return result
 
     @XBlock.json_handler
@@ -727,11 +739,10 @@ class RecommenderXBlock(XBlock):
 
         # Ideally, we'd estimate score based on votes, such that items with
         # 1 vote have a sensible ranking (rather than a perfect rating)
-
         resources = [{'id': r['id'],
                       'title': r['title'],
                       "votes": r['upvotes'] - r['downvotes'],
-                      'url': r['url'],
+                      'url': self.get_onetime_url(r['url']),
                       'description': r['description'],
                       'descriptionText': r['descriptionText']}
                      for r in self.recommendations]
