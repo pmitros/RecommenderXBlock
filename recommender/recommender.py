@@ -218,7 +218,7 @@ class RecommenderXBlock(XBlock):
         """
         Return one time url for uploaded screenshot
         """
-        if filename.startswith('fs://')
+        if filename.startswith('fs://'):
             return str(self.fs.get_url(filename.replace('fs://', ''), 1000*60*60*10))
         else:
             return filename
