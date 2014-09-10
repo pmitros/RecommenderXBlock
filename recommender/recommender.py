@@ -217,6 +217,8 @@ class RecommenderXBlock(XBlock):
     def get_onetime_url(self, filename):
         """
         Return one time url for uploaded screenshot
+        
+        We benchmarked this as less than 8ms on a sandbox machine. 
         """
         if filename.startswith('fs://'):
             return str(self.fs.get_url(filename.replace('fs://', ''), 1000*60*60*10))
@@ -739,6 +741,13 @@ class RecommenderXBlock(XBlock):
 
         # Ideally, we'd estimate score based on votes, such that items with
         # 1 vote have a sensible ranking (rather than a perfect rating)
+        
+        # We pre-generate URLs for all resources. We benchmarked doing this 
+        # for 44 URLs, and the time per URL was about 8ms. The 44 URLs were
+        # all of the images added by students over several problem sets. If 
+        # load continues to be as-is, pre-generation is not a performance 
+        # issue. If students make substantially more resources, we may want 
+        # to paginate, and generate in sets of 5-20 URLs per load. 
         resources = [{'id': r['id'],
                       'title': r['title'],
                       "votes": r['upvotes'] - r['downvotes'],
