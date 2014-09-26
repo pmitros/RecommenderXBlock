@@ -2,11 +2,11 @@
 .clearFix {clear: both; height: 0.5em;}
 
 .recommender_block .count {
-    font-weight: bold;
+	font-weight: bold;
 }
 
 .recommender_block p {
-    cursor: pointer;
+	cursor: pointer;
 }
 
 .hidden { display: none; }
@@ -184,7 +184,7 @@
 .resource_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
 .resource_edit_button { float: left; }
 .addResourceBlockTitle, .editResourceBlockTitle, .flagResourceBlockTitle, .s3InfoBlockTitle, .deendorseBlockTitle, .endorseBlockTitle {
-    margin-bottom: 1em;
+	margin-bottom: 1em;
 }
 
 .editResourceBlock, .addResourceBlock, .flagResourceBlock {
@@ -210,7 +210,7 @@ input[type="button"]:not([DISABLED]){
 .endorse_resource, .deendorse_resource { margin-top: 0.5em; float:left; }
 
 .ui-icon.problematic {
-    background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
+	background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
 }
 
 .in_title, .edit_title, .in_descriptionText, .edit_descriptionText { 
