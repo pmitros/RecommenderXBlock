@@ -1,26 +1,26 @@
 /* CSS for RecommenderXBlock */
 .clearFix {clear: both; height: 0.5em;}
 
-.recommender_block .count {
+.recommenderBlock .count {
 	font-weight: bold;
 }
 
-.recommender_block p {
+.recommenderBlock p {
 	cursor: pointer;
 }
 
 .hidden { display: none; }
 
-.recommender_block {
+.recommenderBlock {
   width : 100%;
 }
 
-.recommender_content {
+.recommenderContent {
   width: 700px;
   float: left;
 }
 
-.recommender_row_top, .recommender_modify_title_container { 
+.hideShow, .recommenderModifyTitleContainer { 
   font-size: 14px;
   padding-top: 0.5em;
   padding-left: 0.5em;
@@ -29,14 +29,20 @@
   color: #948f8f;
 }
 
-.recommender_row_top:before { content: 'Show'; }
-.recommender_row_top.resource_list_expanded:before { content: 'Hide'; }
+.hideShow:before { content: 'Show'; }
+.hideShow.resourceListExpanded:before { content: 'Hide'; }
+.hideShow.resourceListExpanded { cursor: n-resize; }
+.hideShow:not(.resourceListExpanded) { cursor: s-resize; }
+.resourceListExpanded .expanded { display: block; }
+.resourceListExpanded .notExpanded {display: none; }
+.expanded { display: none; }
+.notExpanded {display: block; }
 
-.recommender_row { 
+.recommenderRow { 
   height: 380px;
 }
 
-.recommender_title {
+.recommenderTitle {
   flex-grow : 1;
   max-height: 65px;
   overflow-y: auto;
@@ -46,19 +52,19 @@
   width:700px;
 }
 
-.recommender_resource {
+.recommenderResource {
   padding-top : 0.25em;
   padding-bottom : 0.25em;
   float:left;
   width : 100%;
 }
 
-.recommender_panel {
+.expanded, .notExpanded {
   float: right;
   width: 50px;
 }
-
-.resource_list_less, .resource_list_more {
+/*
+.resourceListLess, .resourceListMore {
   border : 1;
   padding : 1;
   margin : 1;
@@ -67,15 +73,14 @@
   border-width:1px;
   border-style:solid;
   border-radius:5px;
-
 }
 
-.recommender_header {
+.recommenderHeader {
   display : flex;
   padding : 0 0 10 0;
-}
+}*/
 
-.recommender_modify {
+.recommenderModify {
   width: 700px;
 }
 
@@ -93,7 +98,7 @@
   color: #948f8f;
 }
 
-.show_problematic_reasons {
+.showProblematicReasons {
   max-height: 200px;
   overflow: auto;
   padding: 0.5em;
@@ -101,7 +106,7 @@
   color: white;
 }
 
-.show_endorsed_reasons {
+.showEndorsedReasons {
   max-height: 200px;
   overflow: auto;
   padding: 0.5em;
@@ -109,8 +114,8 @@
   color: white;
 }
 
-.show_problematic_reasons:before { content: 'This resource was flagged problematic by students.'; }
-.show_endorsed_reasons:before { content: 'This resource was endorsed by course staff.'; }
+.showProblematicReasons:before { content: 'This resource was flagged problematic by students.'; }
+.showEndorsedReasons:before { content: 'This resource was endorsed by course staff.'; }
 
 .previewingImg {
   margin-top: 1em;
@@ -118,35 +123,35 @@
   max-height: 600px;
 }
 
-.recommender_vote_arrow_down {
+.recommenderVoteArrowDown {
   width: 100%;
   margin-left:auto;
   margin-right:auto;
   text-align:center;
 }
 
-.recommender_vote_arrow_up {
+.recommenderVoteArrowUp {
   width: 100%; 
   margin-left:auto;
   margin-right:auto;
   text-align:center;
 }
 
-.recommender_vote_score {
+.recommenderVoteScore {
   width: 100%; 
   text-align: center;
   cursor: default;
   font-weight: 900;
 }
 
-.recommender_recommendations { display: table; }
+.recommenderRecommendations { display: table; }
 
 .pagination {
   display: table;
   margin: 0 auto;
 }
 
-.recommender_blurb {
+.recommenderBlurb {
   display:inline-block;
   vertical-align: middle;
   width:570px;
@@ -154,19 +159,19 @@
   word-wrap: break-word;
 }
 
-.recommender_endorse { width:15px; display: inline-block; }
+.recommenderEndorse { width:15px; display: inline-block; }
 
-.recommender_entryId, .recommender_descriptionImg, .recommender_problematicReason, .recommender_descriptionText, .recommender_endorse_reason {
+.recommenderEntryId, .recommenderDescriptionImg, .recommenderProblematicReason, .recommenderDescriptionText, .recommenderEndorseReason {
   display:none;
 }
 
-.recommender_vote_box {
+.recommenderVoteBox {
   display:inline-block;
   vertical-align: middle;
   width:50px;
 }
 
-.recommender_edit{
+.recommenderEdit {
   display:inline-block;
   vertical-align: top;
   float: right;
@@ -177,13 +182,11 @@
   color: #B4053D;
 }
 
-.recommender_vote_arrow_down, .recommender_vote_arrow_up, .resource_edit_button, .flagResource, .s3info_add_button, .deendorse, .resource_add_button, .hide-show, .paginationCell, .backToViewButton, .endorse, .resource_ranking_for_deendorsement_button { cursor: pointer; }
+.recommenderVoteArrowDown, .recommenderVoteArrowUp, .resourceEditButton, .flagResource, .deendorse, .resourceAddButton, .paginationCell, .backToViewButton, .endorse, .resourceRankingForDeendorsementButton { cursor: pointer; }
 
-
-.s3info_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
-.resource_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
-.resource_edit_button { float: left; }
-.addResourceBlockTitle, .editResourceBlockTitle, .flagResourceBlockTitle, .s3InfoBlockTitle, .deendorseBlockTitle, .endorseBlockTitle {
+.resourceAddButton { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
+.resourceEditButton { float: left; }
+.addResourceBlockTitle, .editResourceBlockTitle, .flagResourceBlockTitle, .deendorseBlockTitle, .endorseBlockTitle {
 	margin-bottom: 1em;
 }
 
@@ -200,68 +203,65 @@
 
 .backToViewButton { color: #1d9dd9; float: left; }
 
-.flag_reason_submit, .edit_submit, .add_submit, .deendorse_resource, .endorse_resource { margin-top: 0.5em; }
+.flagReasonSubmit, .editSubmit, .addSubmit, .deendorseResource, .endorseResource { margin-top: 0.5em; }
 
 input[type="button"]:not([DISABLED]){
   background-image: linear-gradient(#1d9dd9,#1d9dd9);
   color: white;
 }
 
-.endorse_resource, .deendorse_resource { margin-top: 0.5em; float:left; }
+.endorseResource, .deendorseResource { margin-top: 0.5em; float:left; }
 
 .ui-icon.problematic {
 	background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
 }
 
-.in_title, .edit_title, .in_descriptionText, .edit_descriptionText { 
+.inTitle, .editTitle, .inDescriptionText, .editDescriptionText { 
   height: 75px;
   margin-left: 0.5em;
   width:100%;
 }
-.in_url, .edit_url, .flag_reason, .deendorse_reason, .endorse_reason, .aws_access_key, .aws_secret_key, .bucketName, .uploadedFileUrl, .uploadedFileDir {
+.inUrl, .editUrl, .flagReason, .deendorseReason, .endorseReason, .awsAccessKey, .awsSecretKey, .bucketName, .uploadedFileUrl, .uploadedFileDir {
   height: 25px;
   margin-left: 0.5em;
   width:100%;
 }
 
-.submit_s3_info { margin-top: 0.5em; margin-bottom: 0.5em; } 
+.resourceHovered { background-color:#F2F7FA }
 
-.resource_hovered { background-color:#F2F7FA }
+.recommenderModifyTitle { float: right; padding-right: 2em; overflow: auto; }
 
-.recommender_modify_title { float: right; padding-right: 2em; overflow: auto; }
+.recommenderVoteScore, .recommenderVoteArrowUp, .recommenderVoteArrowDown { color: #948f8f; }
+.recommenderVoteScore.upvoting, .recommenderVoteArrowUp.upvoting { color: rgb(69, 194, 10); }
+.recommenderVoteScore.downvoting, .recommenderVoteArrowDown.downvoting { color: #B4053D; }
+.recommenderVoteArrowUp.downvoting, .recommenderVoteArrowDown.upvoting { color: #948f8f; }
 
-.hide-show-icon { margin-left: 0.5em; }
-
-.recommender_vote_score, .recommender_vote_arrow_up, .recommender_vote_arrow_down { color: #948f8f; }
-.recommender_vote_score.upvoting, .recommender_vote_arrow_up.upvoting { color: rgb(69, 194, 10); }
-.recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: #B4053D; }
-.recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #948f8f; }
-
-.resource_ranking_for_deendorsement_button:not(.deendorsement_mode) {
+.resourceRankingForDeendorsementButton:not(.deendorsementMode) {
   float: right;
   background-color: rgba(0,0,0,0.05);
   padding: 0.3em 1em 0.3em 1em;
   color: black;
 }
-.resource_ranking_for_deendorsement_button.deendorsement_mode {
+.resourceRankingForDeendorsementButton.deendorsementMode {
   float: right;
   background-color: #B4053D;
   padding: 0.3em 1em 0.3em 1em;
   color: white;
 }
-.resource_ranking_for_deendorsement_button:not(deendorsement_mode):before { content: 'Ordinary '; }
-.resource_ranking_for_deendorsement_button.deendorsement_mode:before { content: 'De-endorsement '; }
+.resourceRankingForDeendorsementButton:not(deendorsementMode):before { content: 'Ordinary '; }
+.resourceRankingForDeendorsementButton.deendorsementMode:before { content: 'De-endorsement '; }
 
 .endorse:not(.endorsed) { color: #DFD3D3; display: none; }
 .endorse.endorsed { color: rgb(69, 194, 10); }
 .endorse:before { content: '✔'; }
-.downArrowIcon:before { content: '▼'; }
-.upArrowIcon:before { content: '▲'; }
+.downArrow:before { content: '▼'; }
+.upArrow:before { content: '▲'; }
+.downArrow, .upArrow { margin-left: 0.5em; }
 .plusIcon:before { content: '+'; }
-.rightArrowIcon:before { content: '►'; }
-.leftArrowIcon:before { content: '◄'; }
-.moreIcon:before { content: '...'; }
-.lightgreyBg { background-color: #948f8f; }
+.nextPageIcon:before { content: '►'; }
+.previousPageIcon:before { content: '◄'; }
+.morePageIcon:before { content: '...'; }
+.highlightActiveCell { background-color: #948f8f; }
 
 .my-custom-theme {
 	background: #948f8f;

@@ -135,7 +135,19 @@ class RecommenderXBlock(XBlock):
 
 	fs = Filesystem(help="File system", scope=Scope.user_state_summary)
 	# The file system we used to store uploaded screenshot
-	
+
+	client_side_settings = Dict(
+		help="Dict of parameters for client side initial setting", 
+		default = {
+			'DISABLE_DEV_UX': True,
+			'CURRENT_PAGE': 1,
+			'ENTRIES_PER_PAGE': 5,
+			'PAGE_SPAN': 2
+		},
+		scope=Scope.user_state_summary
+	)
+	# A dict of parameters for client side initial setting
+
 	template_lookup = None
 
 	resource_content_fields = [
@@ -233,6 +245,25 @@ class RecommenderXBlock(XBlock):
 		if resource_id is not None:
 			result['id'] = resource_id
 		tracker.emit(event, result)
+		return result
+
+	@XBlock.json_handler
+	def get_client_side_settings(self, _data, _suffix=''):
+		"""
+		Return the parameters for client side environment setting.
+
+		Returns:
+				DISABLE_DEV_UX: whether to disable the UX under development
+				CURRENT_PAGE: the default page of resources showed to students
+				ENTRIES_PER_PAGE: the number of resources in each page
+				PAGE_SPAN: the number of previous and following pages showed in the pagination item
+				IS_USER_STAFF: whether the user is staff
+		"""
+		result = {}
+		for parameter in self.client_side_settings:
+			result[parameter] = self.client_side_settings[parameter]
+		result['IS_USER_STAFF'] = self.get_user_is_staff()
+		tracker.emit('get_client_side_settings', result)
 		return result
 
 	@XBlock.json_handler
@@ -605,9 +636,10 @@ class RecommenderXBlock(XBlock):
 	def is_user_staff(self, _data, _suffix=''):
 		"""
 		Return whether the user is staff.
+		TODO: merged with get_client_side_settings and not supported in future update
 
 		Returns:
-				is_user_staff: indicator for whether the user is staff
+				is_user_staff: whether the user is staff
 		"""
 		result = {'is_user_staff': self.get_user_is_staff()}
 		tracker.emit('is_user_staff', result)
@@ -694,6 +726,9 @@ class RecommenderXBlock(XBlock):
 
 	@XBlock.json_handler
 	def get_accum_flagged_resource(self, _data, _suffix=''):
+		"""
+		Accumulate the flagged resource ids and reasons from all students
+		"""
 		if not self.get_user_is_staff():
 			msg = 'Get accumulated flagged resource without permission'
 			return self.error_handler(msg, 'get_accum_flagged_resource')

@@ -1,18 +1,18 @@
 <%page args="title,votes,url,description,descriptionText,id,isProblematic,problematicReason,voteMode,endorseMode,endorsedReason"/> 
-  <div class="recommender_resource">
-	<div class="recommender_vote_box">
-	  <div class="recommender_vote_arrow_up ${voteMode}" role="button" aria-label="upvote" tabindex="0"><b>↑</b></div>
-	  <div class="recommender_vote_score ${voteMode}">${votes}</div>
-	  <div class="recommender_vote_arrow_down ${voteMode}" role="button" aria-label="downvote" tabindex="0"><b>↓</b></div>
+  <div class="recommenderResource">
+	<div class="recommenderVoteBox">
+	  <div class="recommenderVoteArrowUp ${voteMode}" role="button" aria-label="upvote" tabindex="0"><b>↑</b></div>
+	  <div class="recommenderVoteScore ${voteMode}">${votes}</div>
+	  <div class="recommenderVoteArrowDown ${voteMode}" role="button" aria-label="downvote" tabindex="0"><b>↓</b></div>
 	</div>
-	<div class="recommender_blurb">
-	  <div class="recommender_title"><a href="${url}" target="_blank">${title}</a></div>
-	  <div class="recommender_descriptionText">${descriptionText}</div>
-	  <div class="recommender_descriptionImg">${description}</div>
-	  <div class="recommender_entryId">${id}</div>
-	  <div class="recommender_problematicReason">${problematicReason}</div>
-	  <div class="recommender_endorse_reason">${endorsedReason}</div>
+	<div class="recommenderBlurb">
+	  <div class="recommenderTitle"><a href="${url}" target="_blank">${title}</a></div>
+	  <div class="recommenderDescriptionText">${descriptionText}</div>
+	  <div class="recommenderDescriptionImg">${description}</div>
+	  <div class="recommenderEntryId">${id}</div>
+	  <div class="recommenderProblematicReason">${problematicReason}</div>
+	  <div class="recommenderEndorseReason">${endorsedReason}</div>
 	</div>
-	<div class="recommender_endorse"><div class="endorse ${endorseMode}"></div></div>
-	<div class="recommender_edit"> <span class="ui-icon ui-icon-pencil resource_edit_button"></span> <span class="ui-icon ui-icon-flag flagResource ${isProblematic}"></span></div>
+	<div class="recommenderEndorse"><div class="endorse ${endorseMode}"></div></div>
+	<div class="recommenderEdit"> <span class="ui-icon ui-icon-pencil resourceEditButton"></span> <span class="ui-icon ui-icon-flag flagResource ${isProblematic}"></span></div>
   </div>
