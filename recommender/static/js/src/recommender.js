@@ -1002,4 +1002,6 @@ function RecommenderXBlock(runtime, element) {
         }
     }
     initial();
+
+    introJs().start();
 }
