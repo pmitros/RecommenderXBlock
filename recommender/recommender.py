@@ -27,7 +27,7 @@ except ImportError:
 from mako.lookup import TemplateLookup
 
 from xblock.core import XBlock
-from xblock.fields import Scope, List, Dict
+from xblock.fields import Scope, List, Dict, Boolean
 from xblock.fragment import Fragment
 from xblock.reference.plugins import Filesystem
 
@@ -42,6 +42,13 @@ class RecommenderXBlock(XBlock):
     by students; they can also vote for useful resources and flag problematic
     ones.
     """
+    seen = Boolean(help = "Has the interacted with the XBlock before?",
+                   default = False, 
+                   scope = Scope.user_info)
+
+    intro_enabled = Boolean(
+        help="Take users on a little tour the first time they see the XBlock?", default=True, scope=Scope.content)
+
     default_recommendations = List(
         help="List of default help resources", default=[], scope=Scope.content
     )
@@ -846,7 +853,7 @@ class RecommenderXBlock(XBlock):
         frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
-        frag.initialize_js('RecommenderXBlock', {'intro':True})
+        frag.initialize_js('RecommenderXBlock', {'intro':not self.seen and self.intro_enabled})
         return frag
 
     def studio_view(self, _context=None):
