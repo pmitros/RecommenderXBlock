@@ -5,7 +5,7 @@ if (typeof Logger == 'undefined') {
 }
 
 
-function RecommenderXBlock(runtime, element) {
+function RecommenderXBlock(runtime, element, init_data) {
     /* Grab URLs from server */
     var handleUpvoteUrl = runtime.handlerUrl(element, 'handle_upvote');
     var handleDownvoteUrl = runtime.handlerUrl(element, 'handle_downvote');
@@ -1003,5 +1003,7 @@ function RecommenderXBlock(runtime, element) {
     }
     initial();
 
-    introJs().start();
+    if(init_data['intro']){
+	introJs().start();
+    }
 }

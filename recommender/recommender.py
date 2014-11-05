@@ -846,7 +846,7 @@ class RecommenderXBlock(XBlock):
         frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
-        frag.initialize_js('RecommenderXBlock')
+        frag.initialize_js('RecommenderXBlock', {'intro':True})
         return frag
 
     def studio_view(self, _context=None):
