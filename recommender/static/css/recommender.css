@@ -63,22 +63,6 @@
   float: right;
   width: 50px;
 }
-/*
-.resourceListLess, .resourceListMore {
-  border : 1;
-  padding : 1;
-  margin : 1;
-  width : 95%;
-  border-color:gray;
-  border-width:1px;
-  border-style:solid;
-  border-radius:5px;
-}
-
-.recommenderHeader {
-  display : flex;
-  padding : 0 0 10 0;
-}*/
 
 .recommenderModify {
   width: 700px;

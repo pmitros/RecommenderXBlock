@@ -9,7 +9,7 @@
 /* Use this next selector to style things like font-size and line-height: */
 .tooltipster-default .tooltipster-content {
 	font-family: Arial, sans-serif;
-	font-size: 14px;
+    font-size: 14px;
 	line-height: 16px;
 	padding: 8px 10px;
 	overflow: hidden;
@@ -20,19 +20,11 @@
 	/* border-color: ... !important; */
 }
 
-
 /* If you're using the icon option, use this next selector to style them */
 .tooltipster-icon {
 	cursor: help;
 	margin-left: 4px;
 }
-
-
-
-
-
-
-
 
 /* This is the base styling required to make all Tooltipsters work */
 .tooltipster-base {
@@ -139,7 +131,6 @@
 	border-right: 9px solid;
 	margin-top: -8px;
 }
-
 
 /* Some CSS magic for the awesome animations - feel free to make your own custom animations and reference it in your Tooltipster settings! */
 
@@ -261,7 +252,6 @@
 	left: 0px !important;
 	opacity: 0;
 }
-
 
 /* CSS transition for when contenting is changing in a tooltip that is still open. The only properties that will NOT transition are: width, height, top, and left */
 .tooltipster-content-changing {
