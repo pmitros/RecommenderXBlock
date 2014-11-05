@@ -163,6 +163,8 @@ class RecommenderXBlock(XBlock):
         being defined. However, It's the only way to get the data right now.
         TODO: Should be proper handled in future
         """
+        if "workbench" in str(type(self.runtime)):
+            return True
         return self.xmodule_runtime.user_is_staff
 
     def get_user_id(self):
@@ -723,6 +725,38 @@ class RecommenderXBlock(XBlock):
         result['recommendation'] = deendorsed_resource
         tracker.emit('deendorse_resource', result)
         return result
+
+    @XBlock.json_handler
+    def export_resources(self, _data, _suffix):
+        """
+        Export all resources from the Recommender. This is intentionally not limited to staff
+        members (community contributions do not belong to the course staff). Sensitive 
+        information is exported *is* limited (flagged resources, and in the future, PII if 
+        any).
+        """
+        export = {'recommendations':self.recommendations,
+                  'deendorsed_recommendations':self.deendorsed_recommendations,
+                  'endorsed_recommendation_ids':self.endorsed_recommendation_ids,
+                  'endorsed_recommendation_reasons':self.endorsed_recommendation_reasons,
+                  }
+        if self.get_user_is_staff():
+            export['flagged_accum_resources'] = self.flagged_accum_resources
+
+        return export
+
+    @XBlock.json_handler
+    def import_resources(self, _data, _suffix):
+        """
+        Import resources into the recommender. *THIS IS UNTESTED*.
+        """
+        if not self.get_user_is_staff():
+            return self.error_handler("Only staff can import resources", 'import_resources')
+        self.flagged_accum_resources = _data['flagged_accum_resources']
+        self.endorsed_recommendation_reasons = _data['endorsed_recommendation_reasons']
+        self.endorsed_recommendation_ids = _data['endorsed_recommendation_ids']
+        if 'deendorsed_recommendations' in _data:
+            self.deendorsed_recommendations = _data['deendorsed_recommendations']
+        self.recommendations = _data['recommendations']
 
     @XBlock.json_handler
     def get_accum_flagged_resource(self, _data, _suffix=''):
