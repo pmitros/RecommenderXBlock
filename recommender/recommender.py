@@ -753,7 +753,6 @@ class RecommenderXBlock(XBlock):
 		The primary view of the RecommenderXBlock, shown to students
 		when viewing courses.
 		"""
-
 		if not self.recommendations:
 			self.recommendations = self.default_recommendations
 		if not self.recommendations:
@@ -805,12 +804,26 @@ class RecommenderXBlock(XBlock):
 		)
 		frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
 		frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
+		frag.add_javascript_url('//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.min.js')
 		frag.add_css(self.resource_string("static/css/tooltipster.css"))
 		frag.add_css(self.resource_string("static/css/recommender.css"))
 		frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
 		frag.add_javascript(self.resource_string("static/js/src/cats.js"))
 		frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
 		frag.initialize_js('RecommenderXBlock')
+		return frag
+
+	def studio_view(self, _context=None):
+		"""
+		The primary view of the RecommenderXBlock in studio. This is shown to 
+		course staff when editing a course in studio.
+		"""
+		if not self.template_lookup:
+			self.template_lookup = TemplateLookup()
+			self.template_lookup.put_string(
+				"recommenderstudio.html",
+				self.resource_string("static/html/recommenderstudio.html"))
+		frag = Fragment(self.template_lookup.get_template("recommenderstudio.html").render())
 		return frag
 
 	@staticmethod
