@@ -4,8 +4,9 @@ if (typeof Logger == 'undefined') {
     }
 }
 
+
 function RecommenderXBlock(runtime, element) {
-    /* Url for server side action */
+    /* Grab URLs from server */
     var handleUpvoteUrl = runtime.handlerUrl(element, 'handle_upvote');
     var handleDownvoteUrl = runtime.handlerUrl(element, 'handle_downvote');
     var addResourceUrl = runtime.handlerUrl(element, 'add_resource');
@@ -17,11 +18,12 @@ function RecommenderXBlock(runtime, element) {
     var getAccumFlaggedResourceUrl = runtime.handlerUrl(element, 'get_accum_flagged_resource');
     var getClientSideSettingsUrl = runtime.handlerUrl(element, 'get_client_side_settings');
 
-    /* Define global variables for setting */
+    /* Define global feature flags and setting variables */
     var DISABLE_DEV_UX, CURRENT_PAGE, ENTRIES_PER_PAGE, PAGE_SPAN, IS_USER_STAFF, FLAGGED_RESOURCE_REASONS;
 
-    /* Show or hide resource list */
-    $(".hideShow", element).click(function () {
+
+    function toggle_resource_list() {
+	/* Generally, triggered when clicking on the header of the resource list. */
         if ($(this).hasClass('resourceListExpanded')) {
             /* Initiate at least once for every session */
             Logger.log('hideShow.click.event', {
@@ -39,7 +41,10 @@ function RecommenderXBlock(runtime, element) {
         }
         $(this).toggleClass('resourceListExpanded');
         addTooltip();
-    });
+    }
+
+    /* Show or hide resource list on click on the header*/
+    $(".hideShow", element).click(toggle_resource_list);
 
     /* Show resources and page icons for different pages */
     function pagination() {
@@ -120,13 +125,11 @@ function RecommenderXBlock(runtime, element) {
      * Switch from pages of resource addition/edit/flag/staff-edit to pages listing resources.
      */
     function backToView() {
-        $('.recommenderModify', element).hide();
-        $('.flagResourcePage', element).hide();
-        $('.editResourcePage', element).hide();
-        $('.addResourcePage', element).hide();
-        $('.deendorsePage', element).hide();
-        $('.endorsePage', element).hide();
-        
+	modals = ['.recommenderModify','.flagResourcePage','.editResourcePage','.addResourcePage','.deendorsePage','.endorsePage']
+        for(i=0; i<modals.length; i++){
+	    $(modals[i], element).hide();
+        }
+
         if ($('.recommenderResource', element).length == 0) {
             $('.noResourceIntro', element).removeClass('hidden');
         }
