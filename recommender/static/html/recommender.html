@@ -1,5 +1,76 @@
 <style>
 </style>
+
+
+<script type="x-tmpl-mustache" id="paginationItemTemplate">
+    <div class="paginationItem">
+    	{{#paginationItemIndexIsOne}}
+    		<div class="paginationPageNumber previousPageIcon" style="visibility: hidden;"></div>
+    	{{/paginationItemIndexIsOne}}
+    	{{^paginationItemIndexIsOne}}
+        	<div class="paginationPageNumber previousPageIcon"></div>
+    	{{/paginationItemIndexIsOne}}
+    	{{#noMorePreviousPageIcon}}
+        	<div class="paginationPageNumber morePageIcon morePreviousPageIcon" style="visibility: hidden; 
+cursor: default;"></div>
+    	{{/noMorePreviousPageIcon}}
+    	{{^noMorePreviousPageIcon}}
+ 	       	<div class="paginationPageNumber morePageIcon morePreviousPageIcon" style="cursor: default;"></div>
+    	{{/noMorePreviousPageIcon}}
+
+        {{#pageNumberIndexes}}
+            {{#pageNumberIndexIsActive}}
+                <div class="paginationPageNumber highlightActivePageNumber">{{pageNumberIndex}}</div>
+        	{{/pageNumberIndexIsActive}}
+        	{{^pageNumberIndexIsActive}}
+        		{{#pageNumberIndexOutOfRange}}
+        			<div class="paginationPageNumber" style="visibility: hidden;">{{pageNumberIndex}}</div>
+        		{{/pageNumberIndexOutOfRange}}
+        		{{^pageNumberIndexOutOfRange}}
+        			<div class="paginationPageNumber">{{pageNumberIndex}}</div>
+        		{{/pageNumberIndexOutOfRange}}
+        	{{/pageNumberIndexIsActive}}
+        {{/pageNumberIndexes}}
+
+        {{#noMoreNextPageIcon}}
+            <div class="paginationPageNumber morePageIcon moreNextPageIcon" style="visibility: hidden; 
+cursor: default;"></div>
+        {{/noMoreNextPageIcon}}
+        {{^noMoreNextPageIcon}}
+            <div class="paginationPageNumber morePageIcon moreNextPageIcon" style="cursor: default;"></div>
+        {{/noMoreNextPageIcon}}
+        {{#paginationItemIndexIsLast}}
+            <div class="paginationPageNumber nextPageIcon" style="visibility: hidden;"></div>
+        {{/paginationItemIndexIsLast}}
+        {{^paginationItemIndexIsLast}}
+            <div class="paginationPageNumber nextPageIcon"></div>
+        {{/paginationItemIndexIsLast}}
+    </div>
+</script>
+<script type="x-tmpl-mustache" id="recommenderResourceTemplate">
+    <div class="recommenderResource">
+        <div class="recommenderVoteBox">
+            <div class="recommenderVoteArrowUp" role="button" aria-label="upvote" tabindex="0"><b>↑</b></div>
+            <div class="recommenderVoteScore">0</div>
+            <div class="recommenderVoteArrowDown" role="button" aria-label="downvote" tabindex="0"><b>↓</b></div>
+        </div>
+        <div class="recommenderBlurb">
+            <div class="recommenderTitle"><a href="{{resourceUrl}}" target="_blank">{{resourceTitle}}</a></div>
+            <div class="recommenderDescriptionText">{{resourceText}}</div>
+            <div class="recommenderDescriptionImg">{{resourceImg}}</div>
+            <div class="recommenderEntryId">{{resourceId}}</div>
+            <div class="recommenderProblematicReason"></div>
+            <div class="recommenderEndorseReason"></div>
+        </div>
+        <div class="recommenderEndorse">
+            <div class="endorse"></div>
+        </div>
+        <div class="recommenderEdit"> 
+            <span class="ui-icon ui-icon-pencil resourceEditButton"></span> 
+            <span class="ui-icon ui-icon-flag flagResource "></span>
+        </div>
+    </div>
+</script>
 <div class="recommenderBlock">
 	<div class="recommenderRecommendations">
 		<div class="recommenderContent">
@@ -42,37 +113,12 @@
                       %>
                       <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flag_mode,problematicReason=reason,voteMode=vote_mode,endorseMode=endorse_mode,endorsedReason=endorsed_reason" />
                     % endfor
-					<div class="recommenderResourceTemplate hidden">
-			<div class="recommenderVoteBox">
-				<div class="recommenderVoteArrowUp" role="button" aria-label="upvote" tabindex="0"><b>↑</b></div>
-				<div class="recommenderVoteScore"></div>
-				<div class="recommenderVoteArrowDown" role="button" aria-label="downvote" tabindex="0"><b>↓</b></div>
-			</div>
-			<div class="recommenderBlurb">
-				<div class="recommenderTitle"><a href="" target="_blank"></a></div>
-				<div class="recommenderDescriptionText"></div>
-				<div class="recommenderDescriptionImg"></div>
-				<div class="recommenderEntryId"></div>
-				<div class="recommenderProblematicReason"></div>
-							<div class="recommenderEndorseReason"></div>
-				</div>
-						<div class="recommenderEndorse"><div class="endorse"></div></div>
-			<div class="recommenderEdit"> <span class="ui-icon ui-icon-pencil resourceEditButton"></span> <span class="ui-icon ui-icon-flag flagResource "></span></div>
-			</div>
 				</div>
 				<div class="resourceAddButton">Add new resource &gt;&gt;</div>
-		<div class="clearFix"></div>
-				<div class="resourceRankingForDeendorsementButton hidden">mode</div>
-				<div class="clearFix"></div>
-				<div class='pagination'>
-					<div class="paginationRowTemplate hidden">
-				<div class="paginationCell previousPageIcon"></div>
-				<div class="paginationCell morePageIcon morePreviousPageIcon" style="cursor: default;"></div>
-				<div class="paginationCell highlightActiveCell"></div>
-				<div class="paginationCell morePageIcon moreNextPageIcon" style="cursor: default;"></div>
-				<div class="paginationCell nextPageIcon"></div>
-					</div>
-				</div>
+                <div class="clearFix"></div>
+                <div class="resourceRankingForDeendorsementButton hidden">mode</div>
+                <div class="clearFix"></div>
+                <div class='pagination'></div>
 				<div class="recommenderDescription">
 					<div class="descriptionImg">
 						<div class='showEndorsedReasons hidden'></div>
@@ -80,47 +126,49 @@
 						<div class='showProblematicReasons hidden'></div>
 						<div class="clearFix"></div>
 						<div class='descriptionText'> This is a list of resources your fellow students
-						thought might be helpful. If you find another useful
-						resource, either on edx.org or elsewhere, please add
-						it. If you can improve the description or preview of a
-						resource, please do so as well. If you find a resource
-						helpful, upvote it. If it&rsquo;s not so helpful, downvote
-						it. If it has issues (illegal material, incorrect, etc.),
-						please flag it and let us know the reason. </div>
-
+    						thought might be helpful. If you find another useful
+    						resource, either on edx.org or elsewhere, please add
+    						it. If you can improve the description or preview of a
+    						resource, please do so as well. If you find a resource
+    						helpful, upvote it. If it&rsquo;s not so helpful, downvote
+    						it. If it has issues (illegal material, incorrect, etc.),
+    						please flag it and let us know the reason. </div>
 						<img class="previewingImg hidden" src=""/>
 					</div>
 				</div>
 			</div>
 		</div>
 		<div class='recommenderModify'>
-			<div class='recommenderModifyTitleContainer'><div class='backToViewButton'>&lt; Related resources</div><div class='recommenderModifyTitle'></div></div>
-			<div class="deendorseBlock">
-				<div class="deendorseBlockTitle">Deendorse this resource and give the reason why you do that.</div>
+			<div class='recommenderModifyTitleContainer'>
+                <div class='backToViewButton'>&lt; Related resources</div>
+                <div class='recommenderModifyTitle'></div>
+            </div>
+			<div class="deendorsePage">
+				<div class="deendorsePageTitle">Deendorse this resource and give the reason why you do that.</div>
 				<input type="text" 
 					class="deendorseReason" 
 					name="deendorseRationale"
 					placeholder="Reason for why this resource should be removed"/><br/>
 				<input type="button" value="Deendorse resource" class="deendorseResource"/>
 			</div>
-			<div class="endorseBlock">
-				<div class="endorseBlockTitle">Endorse this resource and give the reason why you do that.</div>
+			<div class="endorsePage">
+				<div class="endorsePageTitle">Endorse this resource and give the reason why you do that.</div>
 				<input type="text" 
 					class="endorseReason" 
 					name="endorseRationale"
 					placeholder="Reason for why this resource should be endorsed"/><br/>
 				<input type="button" value="Endorse resource" class="endorseResource"/>
 			</div>
-			<div class="flagResourceBlock">
-				<div class="flagResourceBlockTitle">Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently. </div>
+			<div class="flagResourcePage">
+				<div class="flagResourcePageTitle">Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently. </div>
 				<input type="text" 
 					class="flagReason" 
 					name="flagRationale"
 					placeholder="Reason for why this resource should be removed"/><br/>
 				<input type="button" value="Flag resource" class="flagReasonSubmit"/>
 			</div>
-			<div class="editResourceBlock">
-				<div class="editResourceBlockTitle">Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.</div>
+			<div class="editResourcePage">
+				<div class="editResourcePageTitle">Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.</div>
 				<div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
 				<textarea 
 					class="editTitle" 
@@ -138,8 +186,8 @@
 					<input type="button" value="Save change" class="editSubmit" disabled/>
 				</form>
 			</div>
-			<div class="addResourceBlock">
-				<div class="addResourceBlockTitle">Suggest a resource which can help other students with this problem. Please do not give the answer directly.</div>
+			<div class="addResourcePage">
+				<div class="addResourcePageTitle">Suggest a resource which can help other students with this problem. Please do not give the answer directly.</div>
 				<div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
 				<textarea 
 					class="inTitle" 
@@ -158,6 +206,5 @@
 				</form>
 			</div>
 		</div>
-		
 	</div>
 </div>
