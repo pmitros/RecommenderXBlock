@@ -7,8 +7,7 @@ if (typeof Logger == 'undefined') {
 
 function RecommenderXBlock(runtime, element, init_data) {
     /* Grab URLs from server */
-    var handleUpvoteUrl = runtime.handlerUrl(element, 'handle_upvote');
-    var handleDownvoteUrl = runtime.handlerUrl(element, 'handle_downvote');
+    var handleVoteUrl = runtime.handlerUrl(element, 'handle_vote');
     var addResourceUrl = runtime.handlerUrl(element, 'add_resource');
     var editResourceUrl = runtime.handlerUrl(element, 'edit_resource');
     var flagResourceUrl = runtime.handlerUrl(element, 'flag_resource');
@@ -16,16 +15,14 @@ function RecommenderXBlock(runtime, element, init_data) {
     var deendorseResourceUrl = runtime.handlerUrl(element, 'deendorse_resource');
     var endorseResourceUrl = runtime.handlerUrl(element, 'endorse_resource');
     var getAccumFlaggedResourceUrl = runtime.handlerUrl(element, 'get_accum_flagged_resource');
-    var getClientSideSettingsUrl = runtime.handlerUrl(element, 'get_client_side_settings');
 
     /* Define global feature flags and setting variables */
     var DISABLE_DEV_UX, CURRENT_PAGE, ENTRIES_PER_PAGE, PAGE_SPAN, IS_USER_STAFF, FLAGGED_RESOURCE_REASONS;
 
 
     function toggle_resource_list() {
-	/* Generally, triggered when clicking on the header of the resource list. */
+    /* Generally, triggered when clicking on the header of the resource list. */
         if ($(this).hasClass('resourceListExpanded')) {
-            /* Initiate at least once for every session */
             Logger.log('hideShow.click.event', {
                 'status': 'hide',
                 'element': $(element).attr('data-usage-id')
@@ -125,20 +122,20 @@ function RecommenderXBlock(runtime, element, init_data) {
      * Switch from pages of resource addition/edit/flag/staff-edit to pages listing resources.
      */
     function backToView() {
-	modals = ['.recommenderModify','.flagResourcePage','.editResourcePage','.addResourcePage','.deendorsePage','.endorsePage']
+        modals = ['.recommenderModify','.flagResourcePage','.editResourcePage','.addResourcePage','.deendorsePage','.endorsePage']
         for(i=0; i<modals.length; i++){
-	    $(modals[i], element).hide();
+            $(modals[i], element).hide();
         }
 
         if ($('.recommenderResource', element).length == 0) {
-            $('.noResourceIntro', element).removeClass('hidden');
+            $('.noResourceIntro', element).show();
         }
         $('.recommenderResource', element).removeClass('resourceHovered');
-        $('.previewingImg', element).addClass('hidden');
+        $('.previewingImg', element).hide();
         $('.descriptionText', element).hide();
         if (!DISABLE_DEV_UX) {
-            $('.showProblematicReasons', element).addClass('hidden');
-            $('.showEndorsedReasons', element).addClass('hidden');
+            $('.showProblematicReasons', element).hide();
+            $('.showEndorsedReasons', element).hide();
         }
         $('.recommenderContent', element).show();
     }
@@ -297,7 +294,7 @@ function RecommenderXBlock(runtime, element, init_data) {
 
                     /* Show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
                     if ($('.recommenderResource', element).length == 0) {
-                        $('.noResourceIntro', element).addClass('hidden');
+                        $('.noResourceIntro', element).hide();
                         $('.descriptionText', element).show();
                         CURRENT_PAGE = 1;
                     }
@@ -351,14 +348,14 @@ function RecommenderXBlock(runtime, element, init_data) {
         if (voteType == 'upvote') {
             options['buttonClassName'] = 'recommenderVoteArrowUp';
             options['eventName'] = 'arrowUp';
-            options['url'] = handleUpvoteUrl;
+            options['serverEventName'] = 'recommender_upvote';
             options['voteClassName'] = 'upvoting';
             options['previousVoteClassName'] = 'downvoting';
         }
         else if (voteType == 'downvote') {
             options['buttonClassName'] = 'recommenderVoteArrowDown';
             options['eventName'] = 'arrowDown';
-            options['url'] = handleDownvoteUrl;
+            options['serverEventName'] = 'recommender_downvote';
             options['voteClassName'] = 'downvoting';
             options['previousVoteClassName'] = 'upvoting';
         }
@@ -367,6 +364,7 @@ function RecommenderXBlock(runtime, element, init_data) {
         $('.' + options['buttonClassName'], ele).click(function() {
             var data = {};
             data['id'] = parseInt($(this).parent().parent().find('.recommenderEntryId').text());
+            data['event'] = options['serverEventName'];
             if (data['id'] == -1) { return; }
             Logger.log('mit.recommender.' + options['eventName'] + '.click.event', {
                 'status': options['eventName'],
@@ -376,7 +374,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             
             $.ajax({
                 type: "POST",
-                url: options['url'],
+                url: handleVoteUrl,
                 data: JSON.stringify(data),
                 success: function(result) {
                     if (result['Success'] == true) {
@@ -412,13 +410,13 @@ function RecommenderXBlock(runtime, element, init_data) {
                 $('.descriptionText', element).text($(this).find('.recommenderDescriptionText').text());                
                 if ($('.descriptionText', element).text() != '') { $('.descriptionText', element).show(); }
 
-                $('.previewingImg', element).removeClass('hidden');
+                $('.previewingImg', element).show();
                 $('.previewingImg', element).attr('src', $(this).find('.recommenderDescriptionImg').text());
-                $(".previewingImg", element).error(function() { $('.previewingImg', element).addClass('hidden'); });
-                if ($('.previewingImg', element).attr('src') == '') { $('.previewingImg', element).addClass('hidden'); }
+                $(".previewingImg", element).error(function() { $('.previewingImg', element).hide(); });
+                if ($('.previewingImg', element).attr('src') == '') { $('.previewingImg', element).hide(); }
 
                 if (!DISABLE_DEV_UX) {
-                    $('.showProblematicReasons', element).addClass('hidden');
+                    $('.showProblematicReasons', element).hide();
                     if (!$.isEmptyObject(FLAGGED_RESOURCE_REASONS)) {
                         var resourceId = parseInt($(this).find('.recommenderEntryId').text());
                         var reasons = '';
@@ -427,19 +425,19 @@ function RecommenderXBlock(runtime, element, init_data) {
                          * Therefore, the content in showProblematicReasons will be showed only to staff.
                          */
                         if (resourceId in FLAGGED_RESOURCE_REASONS) {
-                            $('.showProblematicReasons', element).removeClass('hidden');
+                            $('.showProblematicReasons', element).show();
                             reasons = FLAGGED_RESOURCE_REASONS[resourceId].join(reasonSeparator);
                         }
                         if (reasons != '') { $('.showProblematicReasons', element).html(problematicReasonsPrefix + reasons); }
                         else { $('.showProblematicReasons', element).html(''); }
                     }
 
-                    $('.showEndorsedReasons', element).addClass('hidden');
+                    $('.showEndorsedReasons', element).hide();
                     if ($(this).find('.endorse').hasClass('endorsed')) {
                         var reasons = $(this).find('.recommenderEndorseReason').text();
                         if (reasons != '') { $('.showEndorsedReasons', element).html(endorsedReasonsPrefix + reasons); }
                         else { $('.showEndorsedReasons', element).html(''); }
-                        $('.showEndorsedReasons', element).removeClass('hidden');
+                        $('.showEndorsedReasons', element).show();
                     }
                 }
 
@@ -786,7 +784,7 @@ function RecommenderXBlock(runtime, element, init_data) {
      *      Rank resources in the order of descreasing votes
      */
     function toggleDeendorseMode() {
-        $('.resourceRankingForDeendorsementButton', element).removeClass('hidden');
+        $('.resourceRankingForDeendorsementButton', element).show();
         $('.resourceRankingForDeendorsementButton', element).click(function() {
             $(this).toggleClass('deendorsementMode');
             addTooltip();
@@ -819,7 +817,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 sortResource('decreasing', 0);
                 paginationItem();
                 pagination();
-                if (!DISABLE_DEV_UX) { $('.showProblematicReasons', element).addClass('hidden'); }
+                if (!DISABLE_DEV_UX) { $('.showProblematicReasons', element).hide(); }
                 FLAGGED_RESOURCE_REASONS = {};
             }
         });
@@ -968,26 +966,23 @@ function RecommenderXBlock(runtime, element, init_data) {
     function initial() {
         /* Set environment parameters */
         FLAGGED_RESOURCE_REASONS = {};
-        $.ajax({
-            type: "POST",
-            url: getClientSideSettingsUrl,
-            data: JSON.stringify({}),
-            success: function(result) {
-                DISABLE_DEV_UX = result['DISABLE_DEV_UX'];
-                CURRENT_PAGE = result['CURRENT_PAGE'];
-                ENTRIES_PER_PAGE = result['ENTRIES_PER_PAGE'];
-                PAGE_SPAN = result['PAGE_SPAN'];
-                IS_USER_STAFF = result['IS_USER_STAFF'];
-                /* Render the initial web page */
-                initialPageRendering();
-            }
-        });
+        DISABLE_DEV_UX = init_data['DISABLE_DEV_UX'];
+        CURRENT_PAGE = init_data['CURRENT_PAGE'];
+        ENTRIES_PER_PAGE = init_data['ENTRIES_PER_PAGE'];
+        PAGE_SPAN = init_data['PAGE_SPAN'];
+        IS_USER_STAFF = init_data['IS_USER_STAFF'];
+        /* Render the initial web page */
+        initialPageRendering();
+
+        if (init_data['INTRO']){
+            introJs().start();
+        }
     }
 
     /* Render the initial web page */
     function initialPageRendering() {
         backToView();
-        $(".hideShow", element).click();
+        addTooltip();
         initializeStaffVersion();
         
         paginationItem();
@@ -997,13 +992,9 @@ function RecommenderXBlock(runtime, element, init_data) {
         addTooltip();
     
         if ($('.recommenderResource', element).length == 0) {
-            $('.noResourceIntro', element).removeClass('hidden');
+            $('.noResourceIntro', element).show();
             $('.descriptionText', element).hide();
         }
     }
     initial();
-
-    if(init_data['intro']){
-	introJs().start();
-    }
 }

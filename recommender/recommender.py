@@ -257,8 +257,7 @@ class RecommenderXBlock(XBlock):
         tracker.emit(event, result)
         return result
 
-    @XBlock.json_handler
-    def get_client_side_settings(self, _data, _suffix=''):
+    def get_client_side_settings(self):
         """
         Return the parameters for client side environment setting.
 
@@ -267,23 +266,26 @@ class RecommenderXBlock(XBlock):
                 CURRENT_PAGE: the default page of resources showed to students
                 ENTRIES_PER_PAGE: the number of resources in each page
                 PAGE_SPAN: the number of previous and following pages showed in the pagination item
+                INTRO: whether to show intro.js
                 IS_USER_STAFF: whether the user is staff
         """
         result = {}
         for parameter in self.client_side_settings:
             result[parameter] = self.client_side_settings[parameter]
         result['IS_USER_STAFF'] = self.get_user_is_staff()
+        result['INTRO'] = not self.seen and self.intro_enabled;
         tracker.emit('get_client_side_settings', result)
         return result
 
     @XBlock.json_handler
-    def handle_upvote(self, data, _suffix=''):
+    def handle_vote(self, data, _suffix=''):
         """
-        Add one vote to an entry of resource.
+        Add/Subtract one vote to an entry of resource.
 
         Args:
                 data: dict in JSON format
-                data['id']: the ID of the resouce which was upvoted
+                data['id']: the ID of the resouce which was upvoted/downvoted
+                data['event']: recommender_upvote or recommender_downvote
         Returns:
                 result: dict in JSON format
                 result['Success']: the boolean indicator for whether the process of this voting action is complete
@@ -296,78 +298,51 @@ class RecommenderXBlock(XBlock):
         idx = self.get_entry_index(resource_id, self.recommendations)
         if idx not in range(0, len(self.recommendations)):
             msg = 'The selected resource is not existing'
-            return self.error_handler(msg, 'recommender_upvote', resource_id)
+            return self.error_handler(msg, data['event'], resource_id)
 
         result = {}
         result['id'] = resource_id
+        is_event_upvote = (data['event'] == 'recommender_upvote')
         result['oldVotes'] = (self.recommendations[idx]['upvotes'] -
                               self.recommendations[idx]['downvotes'])
-        if resource_id in self.upvoted_ids:
-            del self.upvoted_ids[self.upvoted_ids.index(resource_id)]
-            self.recommendations[idx]['upvotes'] -= 1
-            result['newVotes'] = (self.recommendations[idx]['upvotes'] -
-                                  self.recommendations[idx]['downvotes'])
+
+        if is_event_upvote:
+            if resource_id in self.upvoted_ids:
+                del self.upvoted_ids[self.upvoted_ids.index(resource_id)]
+                self.recommendations[idx]['upvotes'] -= 1
+                result['newVotes'] = (self.recommendations[idx]['upvotes'] -
+                                      self.recommendations[idx]['downvotes'])
+        else:
+            if resource_id in self.downvoted_ids:
+                del self.downvoted_ids[self.downvoted_ids.index(resource_id)]
+                self.recommendations[idx]['downvotes'] -= 1
+                result['newVotes'] = (self.recommendations[idx]['upvotes'] -
+                                      self.recommendations[idx]['downvotes'])
+
+        if 'newVotes' in result:
             result['Success'] = True
-            tracker.emit('recommender_upvote', result)
+            tracker.emit(data['event'], result)
             return result
 
-        if resource_id in self.downvoted_ids:
-            del self.downvoted_ids[self.downvoted_ids.index(resource_id)]
-            self.recommendations[idx]['downvotes'] -= 1
-            result['toggle'] = True
-        self.upvoted_ids.append(resource_id)
-        self.recommendations[idx]['upvotes'] += 1
+        if is_event_upvote:
+            if resource_id in self.downvoted_ids:
+                del self.downvoted_ids[self.downvoted_ids.index(resource_id)]
+                self.recommendations[idx]['downvotes'] -= 1
+                result['toggle'] = True
+            self.upvoted_ids.append(resource_id)
+            self.recommendations[idx]['upvotes'] += 1
+        else:
+            if resource_id in self.upvoted_ids:
+                del self.upvoted_ids[self.upvoted_ids.index(resource_id)]
+                self.recommendations[idx]['upvotes'] -= 1
+                result['toggle'] = True
+            self.downvoted_ids.append(resource_id)
+            self.recommendations[idx]['downvotes'] += 1
+        
         result['newVotes'] = (self.recommendations[idx]['upvotes'] -
                               self.recommendations[idx]['downvotes'])
         result['Success'] = True
-        tracker.emit('recommender_upvote', result)
-        return result
-
-    @XBlock.json_handler
-    def handle_downvote(self, data, _suffix=''):
-        """
-        Subtract one vote from an entry of resource.
-
-        Args:
-                data: dict in JSON format
-                data['id']: the ID of the resouce which was downvoted
-        Returns:
-                result: dict in JSON format
-                result['Success']: the boolean indicator for whether the process of this voting action is complete
-                result['error']: the error message generated when the process fails
-                result['oldVotes']: the original votes
-                result['newVotes']: the votes after this action
-                result['toggle']: the boolean indicator for whether the resource was switched from upvoted to downvoted
-        """
-        resource_id = data['id']
-        idx = self.get_entry_index(resource_id, self.recommendations)
-        if idx not in range(0, len(self.recommendations)):
-            msg = 'The selected resource is not existing'
-            return self.error_handler(msg, 'recommender_downvote', resource_id)
-
-        result = {}
-        result['id'] = resource_id
-        result['oldVotes'] = (self.recommendations[idx]['upvotes'] -
-                              self.recommendations[idx]['downvotes'])
-        if resource_id in self.downvoted_ids:
-            del self.downvoted_ids[self.downvoted_ids.index(resource_id)]
-            self.recommendations[idx]['downvotes'] -= 1
-            result['newVotes'] = (self.recommendations[idx]['upvotes'] -
-                                  self.recommendations[idx]['downvotes'])
-            result['Success'] = True
-            tracker.emit('recommender_downvote', result)
-            return result
-
-        if resource_id in self.upvoted_ids:
-            del self.upvoted_ids[self.upvoted_ids.index(resource_id)]
-            self.recommendations[idx]['upvotes'] -= 1
-            result['toggle'] = True
-        self.downvoted_ids.append(resource_id)
-        self.recommendations[idx]['downvotes'] += 1
-        result['newVotes'] = (self.recommendations[idx]['upvotes'] -
-                              self.recommendations[idx]['downvotes'])
-        result['Success'] = True
-        tracker.emit('recommender_downvote', result)
+        tracker.emit(data['event'], result)
         return result
 
     @XBlock.handler
@@ -853,7 +828,9 @@ class RecommenderXBlock(XBlock):
         frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
-        frag.initialize_js('RecommenderXBlock', {'intro':not self.seen and self.intro_enabled})
+        frag.initialize_js('RecommenderXBlock', self.get_client_side_settings())
+        if not self.seen:
+            self.seen = True
         return frag
 
     def studio_view(self, _context=None):
