@@ -716,29 +716,54 @@ class RecommenderXBlock(XBlock):
         information is exported *is* limited (flagged resources, and in the future, PII if 
         any).
         """
-        export = {'recommendations':self.recommendations,
-                  'deendorsed_recommendations':self.deendorsed_recommendations,
-                  'endorsed_recommendation_ids':self.endorsed_recommendation_ids,
-                  'endorsed_recommendation_reasons':self.endorsed_recommendation_reasons,
-                  }
+        result = {}
+        result['export'] = {
+            'recommendations':self.recommendations,
+            'deendorsed_recommendations':self.deendorsed_recommendations,
+            'endorsed_recommendation_ids':self.endorsed_recommendation_ids,
+            'endorsed_recommendation_reasons':self.endorsed_recommendation_reasons,
+        }
         if self.get_user_is_staff():
-            export['flagged_accum_resources'] = self.flagged_accum_resources
+            result['export']['flagged_accum_resources'] = self.flagged_accum_resources
 
-        return export
+        result['Success'] = True
+        tracker.emit('export_resources', result)
+        return result
 
-    @XBlock.json_handler
-    def import_resources(self, _data, _suffix):
+    @XBlock.handler
+    def import_resources(self, request, _suffix=''):
         """
         Import resources into the recommender. *THIS IS UNTESTED*.
         """
+        response = Response()
+        response.headers['Content-Type'] = 'text/plain'
         if not self.get_user_is_staff():
-            return self.error_handler("Only staff can import resources", 'import_resources')
-        self.flagged_accum_resources = _data['flagged_accum_resources']
-        self.endorsed_recommendation_reasons = _data['endorsed_recommendation_reasons']
-        self.endorsed_recommendation_ids = _data['endorsed_recommendation_ids']
-        if 'deendorsed_recommendations' in _data:
-            self.deendorsed_recommendations = _data['deendorsed_recommendations']
-        self.recommendations = _data['recommendations']
+            response.body = 'NOT_A_STAFF'
+            tracker.emit('import_resources', {'Status': response.body})
+            return response
+
+        raw_data = ''
+        try:
+            with request.POST['file'].file as lines:
+                for line in lines:
+                    raw_data += ' ' + line
+
+            raw_data = raw_data.strip()
+            data = json.loads(raw_data)
+            self.flagged_accum_resources = data['flagged_accum_resources']
+            self.endorsed_recommendation_reasons = data['endorsed_recommendation_reasons']
+            self.endorsed_recommendation_ids = data['endorsed_recommendation_ids']
+            if 'deendorsed_recommendations' in data:
+                self.deendorsed_recommendations = data['deendorsed_recommendations']
+            self.recommendations = data['recommendations']
+
+            tracker.emit('import_resources', {'Status': 'SUCCESS', 'data': data})
+            response.body = raw_data
+            return response
+        except:
+            response.body = 'FILE_FORMAT_ERROR'
+            tracker.emit('import_resources', {'Status': response.body, 'data': raw_data})
+            return response
 
     @XBlock.json_handler
     def get_accum_flagged_resource(self, _data, _suffix=''):

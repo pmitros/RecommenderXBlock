@@ -77,6 +77,16 @@ var uploadFileErrorText = {
     'FILE_SIZE_ERROR': 'Size of uploaded file exceeds threshold'
 };
 
+var importResourceError = [
+    'NOT_A_STAFF',
+    'FILE_FORMAT_ERROR'
+]
+
+var importResourceErrorText = {
+    'NOT_A_STAFF': 'Only staff can import resources',
+    'FILE_FORMAT_ERROR': 'Please submit the JSON file obtained with the download resources button'
+}
+
 var problematicReasonsPrefix = '<br/>Here is a list of reasons why students think this resource problematic: <br/>&nbsp;&nbsp;&nbsp;&nbsp;'
 var endorsedReasonsPrefix = '<br/>The reason why it is endorsed is: <br/>&nbsp;&nbsp;&nbsp;&nbsp;'
 var reasonSeparator = '<br/>&nbsp;&nbsp;&nbsp;&nbsp;'

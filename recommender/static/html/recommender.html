@@ -113,6 +113,8 @@
                     % endfor
                 </div>
                 <div class="resourceAddButton">Add new resource &gt;&gt;</div>
+                <div class="resourceExportButton">Download resources</div>
+                <div class="resourceImportButton" style='display: none;'>Upload resources</div>
                 <div class="clearFix"></div>
                 <div class="resourceRankingForDeendorsementButton" style='display: none;'>mode</div>
                 <div class="clearFix"></div>
@@ -140,6 +142,13 @@
             <div class='recommenderModifyTitleContainer'>
                 <div class='backToViewButton'>&lt; Related resources</div>
                 <div class='recommenderModifyTitle'></div>
+            </div>
+            <div class="importResourcePage" style='display: none;'>
+                <div class="importResourcePageTitle">Upload resources in JSON format to the database.</div>
+                <form method="post" class="importResourceForm">
+                    Resources (in JSON format): <input type="file" name="file" class='importResourceFile'/><br/>
+                    <input type="button" value="Upload resources" class="importResourceSubmit" disabled/>
+                </form>
             </div>
             <div class="deendorsePage" style='display: none;'>
                 <div class="deendorsePageTitle">Deendorse this resource and give the reason why you do that.</div>

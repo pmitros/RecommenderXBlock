@@ -11,10 +11,14 @@ function RecommenderXBlock(runtime, element, init_data) {
     var addResourceUrl = runtime.handlerUrl(element, 'add_resource');
     var editResourceUrl = runtime.handlerUrl(element, 'edit_resource');
     var flagResourceUrl = runtime.handlerUrl(element, 'flag_resource');
+    var exportResourceUrl = runtime.handlerUrl(element, 'export_resources');
+    var importResourceUrl = runtime.handlerUrl(element, 'import_resources');
     var uploadScreenshotUrl = runtime.handlerUrl(element, 'upload_screenshot');
     var deendorseResourceUrl = runtime.handlerUrl(element, 'deendorse_resource');
     var endorseResourceUrl = runtime.handlerUrl(element, 'endorse_resource');
     var getAccumFlaggedResourceUrl = runtime.handlerUrl(element, 'get_accum_flagged_resource');
+
+    
 
     /* Define global feature flags and setting variables */
     var DISABLE_DEV_UX, CURRENT_PAGE, ENTRIES_PER_PAGE, PAGE_SPAN, IS_USER_STAFF, FLAGGED_RESOURCE_REASONS;
@@ -117,12 +121,101 @@ function RecommenderXBlock(runtime, element, init_data) {
             pagination();
         });
     }
-    
+
+    function exportResource() {
+        $('.resourceExportButton', element).click(function () {
+            $.ajax({
+                type: "POST",
+                url: exportResourceUrl,
+                data: JSON.stringify({}),
+                success: function(result) {
+                    if (result['Success'] == true) {
+                        var resourceContent = "data:application/json;charset=utf-8,";
+                        resourceContent += JSON.stringify(result['export']);
+
+                        var encodedUri = encodeURI(resourceContent);
+                        var link = document.createElement("a");
+                        link.setAttribute("href", encodedUri);
+                        link.setAttribute("download", "resource.json");
+                        link.click();
+
+                        Logger.log('exportResource.click.event', {
+                            'status': 'Export resources',
+                            'data': result,
+                            'element': $(element).attr('data-usage-id')
+                        });
+                    }
+                }
+            });
+        });
+    }
+
+    function importResourcePageReset() {
+        $('.importResourceFile', element).val('');
+        $('.importResourceSubmit', element).attr('disabled', true);
+    }
+
+    function importResource() {
+        $('.resourceImportButton', element).click(function () {
+            Logger.log('importResource.click.event', {
+                'status': 'Entering import resource mode',
+                'element': $(element).attr('data-usage-id')
+            });
+
+            importResourcePageReset();
+            $('.importResourcePage', element).show();
+            $('.recommenderContent', element).hide();
+            $('.recommenderModify', element).show();
+            $('.recommenderModifyTitle', element).text('Import resources');
+            $('.importResourceFile', element).change(function() { $('.importResourceSubmit', element).attr('disabled', false); });
+
+            $('.importResourceSubmit', element).click(function() {
+                var formDiv = $('.importResourceForm', element);
+                var file = new FormData($(formDiv)[0]);
+
+                $.ajax({
+                    type: 'POST',
+                    url: importResourceUrl,
+                    data: file,
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    async: false,
+                    complete: function(result) {
+                        for (var key in importResourceError) {
+                            if (result.responseText.indexOf(importResourceError[key]) == 0) {
+                                alert(importResourceErrorText[importResourceError[key]]);
+                                importResourcePageReset();
+                                return;
+                            }
+                        }
+                        /* Rendering new resources */
+                        data = JSON.parse(result.responseText);
+                        $('.recommenderResource').remove();
+                        for (var idx in data['recommendations']) {
+                            item = data['recommendations'][idx];
+                            addResourceEntry(item['upvotes'] - item['downvotes'], item);
+                        }
+                        console.log(data);
+                        paginationItem();
+                        pagination();
+                        backToView();
+                        Logger.log('importResource.click.event', {
+                            'status': 'Import resources',
+                            'data': data,
+                            'element': $(element).attr('data-usage-id')
+                        });
+                    },
+                });
+            });
+        });
+    }
+
     /**
      * Switch from pages of resource addition/edit/flag/staff-edit to pages listing resources.
      */
     function backToView() {
-        modals = ['.recommenderModify','.flagResourcePage','.editResourcePage','.addResourcePage','.deendorsePage','.endorsePage']
+        modals = ['.recommenderModify','.flagResourcePage','.editResourcePage','.addResourcePage','.deendorsePage','.endorsePage','.importResourcePage']
         for(i=0; i<modals.length; i++){
             $(modals[i], element).hide();
         }
@@ -145,7 +238,7 @@ function RecommenderXBlock(runtime, element, init_data) {
      * addition/edit/flag/staff-edit to pages listing resources.
      */
     $('.backToViewButton', element).click(function() {
-        var divs = $('.flagResourcePage, .editResourcePage, .addResourcePage, .deendorsePage, .endorsePage', element);
+        var divs = $('.flagResourcePage, .editResourcePage, .addResourcePage, .deendorsePage, .endorsePage, .importResourcePage', element);
         function findActivePage() {
             for (var key in divs) {
                 if ($(divs[key]).attr('style') != "display: none;") { return divs[key]; }
@@ -271,6 +364,60 @@ function RecommenderXBlock(runtime, element, init_data) {
             },
         });
     }
+
+    /**
+     * Rendering an resource
+     * votes: number of votes of the rendered resources
+     * resource: resource to be rendered
+     */
+    function addResourceEntry(votes, resource) {
+        /* Decide the rigth place for the added resource (pos), based on sorting the votes */
+        var pos = -1;
+        $('.recommenderVoteScore', element).each(function(idx, ele){ 
+            if (parseInt($(ele).text()) < votes) {
+                pos = idx;
+                return false;
+            }
+        });
+
+        /* Show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
+        if ($('.recommenderResource', element).length == 0) {
+            $('.noResourceIntro', element).hide();
+            $('.descriptionText', element).show();
+            CURRENT_PAGE = 1;
+        }
+        else {
+            if (pos == -1) {
+                var toDiv = $('.recommenderResource:last', element);
+                CURRENT_PAGE = Math.ceil(($('.recommenderResource', element).length+1)/ENTRIES_PER_PAGE);
+            }
+            else {
+                var toDiv = $('.recommenderResource:eq(' + pos.toString() + ')', element);
+                CURRENT_PAGE = Math.ceil((pos + 1)/ENTRIES_PER_PAGE); 
+            }
+        }
+        var renderData = {
+            resourceUrl: resource['url'],
+            resourceTitle: resource['title'],
+            resourceImg: resource['description'],
+            resourceText: resource['descriptionText'],
+            resourceId: resource['id']
+        }
+
+        var newDiv = $(Mustache.render($("#recommenderResourceTemplate").html(), renderData));
+        bindEvent(newDiv);
+        if (IS_USER_STAFF) { addFunctionsForStaffPerResource(newDiv); }
+
+        if ($('.recommenderResource', element).length == 0) {
+            $('.noResourceIntro', element).after(newDiv);
+        }
+        else {
+            if (pos == -1) { $(toDiv).after(newDiv); }
+            else { $(toDiv).before(newDiv); }
+        }
+        $('.recommenderVoteScore', newDiv).text(votes);
+        addTooltipPerResource(newDiv);
+    }
     
     /**
      * Submit the new resource, save the resource in the database, and update the current view of resource
@@ -283,51 +430,8 @@ function RecommenderXBlock(runtime, element, init_data) {
             data: JSON.stringify(data),
             success: function(result) {
                 if (result['Success'] == true) {
-                    /* Decide the rigth place for the added resource (pos), based on sorting the votes */
-                    var pos = -1;
-                    $('.recommenderVoteScore', element).each(function(idx, ele){ 
-                        if (parseInt($(ele).text()) < 0) {
-                            pos = idx;
-                            return false;
-                        }
-                    });
-
-                    /* Show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
-                    if ($('.recommenderResource', element).length == 0) {
-                        $('.noResourceIntro', element).hide();
-                        $('.descriptionText', element).show();
-                        CURRENT_PAGE = 1;
-                    }
-                    else {
-                        if (pos == -1) {
-                            var toDiv = $('.recommenderResource:last', element);
-                            CURRENT_PAGE = Math.ceil(($('.recommenderResource', element).length+1)/ENTRIES_PER_PAGE);
-                        }
-                        else {
-                            var toDiv = $('.recommenderResource:eq(' + pos.toString() + ')', element);
-                            CURRENT_PAGE = Math.ceil((pos + 1)/ENTRIES_PER_PAGE); 
-                        }
-                    }
-                    var renderData = {
-                        resourceUrl: result['url'],
-                        resourceTitle: result['title'],
-                        resourceImg: result['description'],
-                        resourceText: result['descriptionText'],
-                        resourceId: result['id']
-                    }
-
-                    var newDiv = $(Mustache.render($("#recommenderResourceTemplate").html(), renderData));
-                    bindEvent(newDiv);
-                    if (IS_USER_STAFF) { addFunctionsForStaffPerResource(newDiv); }
-
-                    if ($('.recommenderResource', element).length == 0) {
-                        $('.noResourceIntro', element).after(newDiv);
-                    }
-                    else {
-                        if (pos == -1) { $(toDiv).after(newDiv); }
-                        else { $(toDiv).before(newDiv); }
-                    }
-                    addTooltipPerResource(newDiv);
+                    addResourceEntry(0, result);
+                    
                     addResourceReset();
                     paginationItem();
                     pagination();
@@ -771,6 +875,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 addFunctionsForStaffPerResource(ele);
                 addTooltipPerResource(ele);
             });
+            $('.resourceImportButton').show();
         }
     }
     
@@ -987,6 +1092,8 @@ function RecommenderXBlock(runtime, element, init_data) {
         
         paginationItem();
         pagination();
+        exportResource();
+        importResource();
         addResourceReset();
         $('.recommenderResource', element).each(function(index, ele) { bindEvent(ele); addTooltipPerResource(ele); });
         addTooltip();
