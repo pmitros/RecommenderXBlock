@@ -72,14 +72,14 @@
 <div class="recommenderBlock">
     <div class="recommenderRecommendations">
         <div class="recommenderContent">
-            <div class="hideShow resourceListExpanded">
+            <div class="hideShow" data-step="1" data-intro="This is a list of recommended resources. If you're stuck, curious, or want to learn more, please look around. If you find a useful resources, help your fellow classmates by adding it!">
                 related resources
                 <div class="expanded"><div class="upArrow"></div></div>
                 <div class="notExpanded"><div class="downArrow"></div></div>
             </div>
-            <div class='recommenderRowInner'>
+            <div class='recommenderRowInner' style='display: none;'>
                 <div class="recommenderRow">
-                    <div class="noResourceIntro hidden">    
+                    <div class="noResourceIntro" style='display: none;'>    
                         This will be a list of resources your fellow students
                         thought might be helpful, but it is empty currently.
                         If you find useful resources, either on edx.org or 
@@ -113,15 +113,17 @@
                     % endfor
                 </div>
                 <div class="resourceAddButton">Add new resource &gt;&gt;</div>
+                <div class="resourceExportButton">Download resources</div>
+                <div class="resourceImportButton" style='display: none;'>Upload resources</div>
                 <div class="clearFix"></div>
-                <div class="resourceRankingForDeendorsementButton hidden">mode</div>
+                <div class="resourceRankingForDeendorsementButton" style='display: none;'>mode</div>
                 <div class="clearFix"></div>
                 <div class='pagination'></div>
                 <div class="recommenderDescription">
                     <div class="descriptionImg">
-                        <div class='showEndorsedReasons hidden'></div>
+                        <div class='showEndorsedReasons' style='display: none;'></div>
                         <div class="clearFix"></div>
-                        <div class='showProblematicReasons hidden'></div>
+                        <div class='showProblematicReasons' style='display: none;'></div>
                         <div class="clearFix"></div>
                         <div class='descriptionText'> This is a list of resources your fellow students
                             thought might be helpful. If you find another useful
@@ -131,17 +133,24 @@
                             helpful, upvote it. If it&rsquo;s not so helpful, downvote
                             it. If it has issues (illegal material, incorrect, etc.),
                             please flag it and let us know the reason. </div>
-                        <img class="previewingImg hidden" src=""/>
+                        <img class="previewingImg" style='display: none;' src=""/>
                     </div>
                 </div>
             </div>
         </div>
-        <div class='recommenderModify'>
+        <div class='recommenderModify' style='display: none;'>
             <div class='recommenderModifyTitleContainer'>
                 <div class='backToViewButton'>&lt; Related resources</div>
                 <div class='recommenderModifyTitle'></div>
             </div>
-            <div class="deendorsePage">
+            <div class="importResourcePage" style='display: none;'>
+                <div class="importResourcePageTitle">Upload resources in JSON format to the database.</div>
+                <form method="post" class="importResourceForm">
+                    Resources (in JSON format): <input type="file" name="file" class='importResourceFile'/><br/>
+                    <input type="button" value="Upload resources" class="importResourceSubmit" disabled/>
+                </form>
+            </div>
+            <div class="deendorsePage" style='display: none;'>
                 <div class="deendorsePageTitle">Deendorse this resource and give the reason why you do that.</div>
                 <input type="text" 
                     class="deendorseReason" 
@@ -149,7 +158,7 @@
                     placeholder="Reason for why this resource should be removed"/><br/>
                 <input type="button" value="Deendorse resource" class="deendorseResource"/>
             </div>
-            <div class="endorsePage">
+            <div class="endorsePage" style='display: none;'>
                 <div class="endorsePageTitle">Endorse this resource and give the reason why you do that.</div>
                 <input type="text" 
                     class="endorseReason" 
@@ -157,7 +166,7 @@
                     placeholder="Reason for why this resource should be endorsed"/><br/>
                 <input type="button" value="Endorse resource" class="endorseResource"/>
             </div>
-            <div class="flagResourcePage">
+            <div class="flagResourcePage" style='display: none;'>
                 <div class="flagResourcePageTitle">Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently. </div>
                 <input type="text" 
                     class="flagReason" 
@@ -165,7 +174,7 @@
                     placeholder="Reason for why this resource should be removed"/><br/>
                 <input type="button" value="Flag resource" class="flagReasonSubmit"/>
             </div>
-            <div class="editResourcePage">
+            <div class="editResourcePage" style='display: none;'>
                 <div class="editResourcePageTitle">Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.</div>
                 <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
                 <textarea 
@@ -184,7 +193,7 @@
                     <input type="button" value="Save change" class="editSubmit" disabled/>
                 </form>
             </div>
-            <div class="addResourcePage">
+            <div class="addResourcePage" style='display: none;'>
                 <div class="addResourcePageTitle">Suggest a resource which can help other students with this problem. Please do not give the answer directly.</div>
                 <div style="float: left">Title&nbsp;</div><div class = 'redTxt'>*</div>
                 <textarea 

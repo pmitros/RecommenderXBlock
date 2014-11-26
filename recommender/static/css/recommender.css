@@ -176,11 +176,11 @@
   color: #B4053D;
 }
 
-.recommenderVoteArrowDown, .recommenderVoteArrowUp, .resourceEditButton, .flagResource, .deendorse, .resourceAddButton, .paginationPageNumber, .backToViewButton, .endorse, .resourceRankingForDeendorsementButton { cursor: pointer; }
+.recommenderVoteArrowDown, .recommenderVoteArrowUp, .resourceEditButton, .flagResource, .deendorse, .resourceImportButton, .resourceExportButton, .resourceAddButton, .paginationPageNumber, .backToViewButton, .endorse, .resourceRankingForDeendorsementButton { cursor: pointer; }
 
-.resourceAddButton { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
+.resourceAddButton, .resourceExportButton, .resourceImportButton { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em; margin-left: 1em;}
 .resourceEditButton { float: left; }
-.addResourcePageTitle, .editResourcePageTitle, .flagResourcePageTitle, .deendorsePageTitle, .endorsePageTitle {
+.addResourcePageTitle, .editResourcePageTitle, .flagResourcePageTitle, .deendorsePageTitle, .endorsePageTitle, .importResourcePageTitle {
 	margin-bottom: 1em;
 }
 
@@ -197,7 +197,7 @@
 
 .backToViewButton { color: #1d9dd9; float: left; }
 
-.flagReasonSubmit, .editSubmit, .addSubmit, .deendorseResource, .endorseResource { margin-top: 0.5em; }
+.flagReasonSubmit, .editSubmit, .addSubmit, .deendorseResource, .endorseResource, .importResourceSubmit { margin-top: 0.5em; }
 
 input[type="button"]:not([DISABLED]){
   background-image: linear-gradient(#1d9dd9,#1d9dd9);
