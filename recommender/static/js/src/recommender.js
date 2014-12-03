@@ -192,11 +192,15 @@ function RecommenderXBlock(runtime, element, init_data) {
                         /* Rendering new resources */
                         data = JSON.parse(result.responseText);
                         $('.recommenderResource').remove();
-                        for (var idx in data['recommendations']) {
-                            item = data['recommendations'][idx];
-                            addResourceEntry(item['upvotes'] - item['downvotes'], item);
+                        for (var resource_id in data['recommendations']) {
+                            item = data['recommendations'][resource_id];
+                            var new_resource_div = addResourceEntry(item['upvotes'] - item['downvotes'], item);
+
+                            if (data['endorsed_recommendation_ids'].indexOf(resource_id) != -1){
+                                $('.endorse', new_resource_div).addClass('endorsed');
+                                $('.recommenderEndorseReason', new_resource_div).text(data['endorsed_recommendation_reasons'][data['endorsed_recommendation_ids'].indexOf(resource_id)]);
+                            }
                         }
-                        console.log(data);
                         paginationItem();
                         pagination();
                         backToView();
@@ -417,6 +421,8 @@ function RecommenderXBlock(runtime, element, init_data) {
         }
         $('.recommenderVoteScore', newDiv).text(votes);
         addTooltipPerResource(newDiv);
+
+        return newDiv;
     }
     
     /**
@@ -467,7 +473,7 @@ function RecommenderXBlock(runtime, element, init_data) {
         
         $('.' + options['buttonClassName'], ele).click(function() {
             var data = {};
-            data['id'] = parseInt($(this).parent().parent().find('.recommenderEntryId').text());
+            data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
             data['event'] = options['serverEventName'];
             if (data['id'] == -1) { return; }
             Logger.log('mit.recommender.' + options['eventName'] + '.click.event', {
@@ -522,7 +528,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 if (!DISABLE_DEV_UX) {
                     $('.showProblematicReasons', element).hide();
                     if (!$.isEmptyObject(FLAGGED_RESOURCE_REASONS)) {
-                        var resourceId = parseInt($(this).find('.recommenderEntryId').text());
+                        var resourceId = $(this).find('.recommenderEntryId').text();
                         var reasons = '';
                         /**
                          * FLAGGED_RESOURCE_REASONS is empty except that user is course staff.
@@ -568,7 +574,7 @@ function RecommenderXBlock(runtime, element, init_data) {
     
             /* data: resource to be submitted to database */
             var data = {};
-            data['id'] = parseInt(resourceDiv.find('.recommenderEntryId').text());
+            data['id'] = resourceDiv.find('.recommenderEntryId').text();
     
             /* Initialize resource edit mode */
             $('.editTitle', element).val(resourceDiv.find('.recommenderTitle').find('a').text());
@@ -645,10 +651,11 @@ function RecommenderXBlock(runtime, element, init_data) {
             data: JSON.stringify(data),
             success: function(result) {
                 if (result['Success'] == true) {
-                    var resourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
+                    var resourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['old_id']).toString() + ')', element);
                     /* Update the edited resource */
                     resourceDiv.find('.recommenderTitle').find('a').text(result['title']);
                     resourceDiv.find('.recommenderTitle').find('a').attr('href', result['url']);
+                    resourceDiv.find('.recommenderEntryId').text(result['id']);
                     if (data["description"] != "") { resourceDiv.find('.recommenderDescriptionImg').text(result['description']); }
                     if (data["descriptionText"] != "") { resourceDiv.find('.recommenderDescriptionText').text(result['descriptionText']); }
                     backToView();
@@ -673,7 +680,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             var flaggedResourceDiv = $(this).parent().parent();
              $('.flagReason', element).val($(flaggedResourceDiv).find('.recommenderProblematicReason').text());
             data = {};
-            data['id'] = parseInt($(flaggedResourceDiv).find('.recommenderEntryId').text());
+            data['id'] = $(flaggedResourceDiv).find('.recommenderEntryId').text();
           
             Logger.log('flagResource.click.event', {
                 'status': 'Entering flag resource mode',
@@ -857,7 +864,7 @@ function RecommenderXBlock(runtime, element, init_data) {
     function findResourceDiv(resourceId) {
         index = -1;
         $('.recommenderEntryId', element).each(function(idx, ele){
-            if (parseInt($(ele).text()) == resourceId) {
+            if ($(ele).text() == resourceId) {
                 index = idx;
                 return false;
             }
@@ -968,7 +975,7 @@ function RecommenderXBlock(runtime, element, init_data) {
         $(ele).find('.endorse').show();
         $(ele).find('.endorse').click(function() {
             var data = {};
-            data['id'] = parseInt($(this).parent().parent().find('.recommenderEntryId').text());
+            data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
             
             if ($(this).hasClass('endorsed')) {
                 /* Undo the endorsement of a selected resource */
@@ -1031,7 +1038,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             $('.recommenderModifyTitle', element).text('Deendorse Resource');
             $('.deendorsePage', element).find('input[type="text"]').val('');
             var data = {};
-            data['id'] = parseInt($(this).parent().parent().find('.recommenderEntryId').text());
+            data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
             
             $('.deendorseResource', element).unbind();
             /* Deendorse a selected resource */
