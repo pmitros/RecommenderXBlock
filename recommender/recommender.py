@@ -27,7 +27,7 @@ except ImportError:
 from mako.lookup import TemplateLookup
 
 from xblock.core import XBlock
-from xblock.fields import Scope, List, Dict, Boolean
+from xblock.fields import Scope, List, Dict, Boolean, String
 from xblock.fragment import Fragment
 from xblock.reference.plugins import Filesystem
 
@@ -69,11 +69,11 @@ class RecommenderXBlock(XBlock):
         scope=Scope.user_info
     )
 
-#    recommender_version = String(
-#        help="The version of this RecommenderXBlock",
-#        default="recommender.v1.0", 
-#        scope=Scope.content
-#    )
+    recommender_version = String(
+        help="The version of this RecommenderXBlock",
+        default="recommender.v1.0", 
+        scope=Scope.content
+    )
 
     intro_enabled = Boolean(
         help="Take users on a little tour the first time they see the XBlock?", default=True, scope=Scope.content
@@ -94,12 +94,11 @@ class RecommenderXBlock(XBlock):
     #    "description" : (String) the url of a resource's screenshot,
     #    "descriptionText" : (String) a paragraph of
     #            description/summary of a resource }
-    #    we use url as key (index) of resources
-
+    #    we use url as key (index) of resourcs
     recommendations = Dict(
-        help="Dict of help resources", default={}, scope=Scope.user_state_summary
-    )
-    # A dict of recommenations provided by students, it is a JSON object
+       help="Dict of help resources", default={}, scope=Scope.user_state_summary
+   )
+   # A dict of recommenations provided by students, it is a JSON object
     #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations
 
