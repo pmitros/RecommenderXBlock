@@ -82,7 +82,7 @@ class RecommenderXBlock(XBlock):
     default_recommendations = Dict(
         help="Dict of default help resources", default={}, scope=Scope.content
     )
-    # A dict of default recommenations, it is a JSON object across all users,
+    # A dict of default recommendations, it is a JSON object across all users,
     #    all runs of a course, for this xblock.
     # Usage: default_recommendations[index] = {
     #    "id": (String) id of a resource,
@@ -97,8 +97,8 @@ class RecommenderXBlock(XBlock):
     #    we use url as key (index) of resourcs
     recommendations = Dict(
        help="Dict of help resources", default={}, scope=Scope.user_state_summary
-   )
-   # A dict of recommenations provided by students, it is a JSON object
+    )
+    # A dict of recommendations provided by students, it is a JSON object
     #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations
 
@@ -219,18 +219,6 @@ class RecommenderXBlock(XBlock):
         """
         data = pkg_resources.resource_string(__name__, path)
         return data.decode("utf8")
-
-    def md5_check_sum(self, data):
-        """
-        Generate the MD5 hash of file
-        Args:
-                data: the content of the file (e.g., open(filePath, 'rb').read())
-        Returns:
-                The MD5 hash
-        """
-        md5 = hashlib.md5()
-        md5.update(data)
-        return md5.hexdigest()
 
     def get_onetime_url(self, filename):
         """
@@ -413,7 +401,7 @@ class RecommenderXBlock(XBlock):
 
         try:
             content = request.POST['file'].file.read()
-            file_id = self.md5_check_sum(content)
+            file_id = hashlib.md5(content).hexdigest()
             file_name = (file_id + '.' + file_type)
 
             fhwrite = self.fs.open(file_name, "wb")
@@ -511,6 +499,7 @@ class RecommenderXBlock(XBlock):
         result = {}
         result['id'] = resource_id
         result['old_id'] = resource_id
+
         for field in self.resource_content_fields:
             result['old_' + field] = self.recommendations[resource_id][field]
             if data[field] == "":
@@ -651,6 +640,7 @@ class RecommenderXBlock(XBlock):
 
         result = {}
         result['id'] = resource_id
+
         if resource_id in self.endorsed_recommendation_ids:
             result['status'] = 'undo endorsement'
             endorsed_index = self.endorsed_recommendation_ids.index(resource_id)
@@ -794,10 +784,11 @@ class RecommenderXBlock(XBlock):
         The primary view of the RecommenderXBlock, shown to students
         when viewing courses.
         """
-        if not self.recommendations:
-            self.recommendations = self.default_recommendations
-        if not self.recommendations:
-            self.recommendations = {}
+        self.recommendations = (
+            self.recommendations or
+            self.default_recommendations or
+            {}
+        )
 
         # Transition between two versions. In the previous version, there is
         # no endorsed_recommendation_reasons. Thus, we add empty reasons to
