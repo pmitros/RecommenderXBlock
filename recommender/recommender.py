@@ -33,12 +33,14 @@ from xblock.reference.plugins import Filesystem
 
 from webob.response import Response
 
+
 def stem_url(url):
     """
     Get the base form of url.
     This is not designed for security, just to check common errors/use-cases.
     """
     return url.split('#')[0].split('%23')[0]
+
 
 def data_structure_upgrade(old_list):
     """
@@ -54,6 +56,7 @@ def data_structure_upgrade(old_list):
         return new_dict
     else:
         return old_list
+
 
 @XBlock.needs('fs')
 class RecommenderXBlock(XBlock):
@@ -71,7 +74,7 @@ class RecommenderXBlock(XBlock):
 
     recommender_version = String(
         help="The version of this RecommenderXBlock",
-        default="recommender.v1.0", 
+        default="recommender.v1.0",
         scope=Scope.content
     )
 
@@ -96,7 +99,7 @@ class RecommenderXBlock(XBlock):
     #            description/summary of a resource }
     #    we use url as key (index) of resourcs
     recommendations = Dict(
-       help="Dict of help resources", default={}, scope=Scope.user_state_summary
+        help="Dict of help resources", default={}, scope=Scope.user_state_summary
     )
     # A dict of recommendations provided by students, it is a JSON object
     #    aggregated across many users of a single block.
@@ -257,7 +260,7 @@ class RecommenderXBlock(XBlock):
         for parameter in self.client_side_settings:
             result[parameter] = self.client_side_settings[parameter]
         result['IS_USER_STAFF'] = self.get_user_is_staff()
-        result['INTRO'] = not self.seen and self.intro_enabled;
+        result['INTRO'] = not self.seen and self.intro_enabled
         tracker.emit('get_client_side_settings', result)
         return result
 
@@ -321,7 +324,7 @@ class RecommenderXBlock(XBlock):
                 result['toggle'] = True
             self.downvoted_ids.append(resource_id)
             self.recommendations[resource_id]['downvotes'] += 1
-        
+
         result['newVotes'] = (self.recommendations[resource_id]['upvotes'] -
                               self.recommendations[resource_id]['downvotes'])
         result['Success'] = True
@@ -602,19 +605,6 @@ class RecommenderXBlock(XBlock):
         return result
 
     @XBlock.json_handler
-    def is_user_staff(self, _data, _suffix=''):
-        """
-        Return whether the user is staff.
-        TODO: merged with get_client_side_settings and not supported in future update
-
-        Returns:
-                is_user_staff: whether the user is staff
-        """
-        result = {'is_user_staff': self.get_user_is_staff()}
-        tracker.emit('is_user_staff', result)
-        return result
-
-    @XBlock.json_handler
     def endorse_resource(self, data, _suffix=''):
         """
         Endorse an entry of resource.
@@ -672,7 +662,6 @@ class RecommenderXBlock(XBlock):
                 result['recommendation']: (Dict) the deendorsed resource
                 result['recommendation']['reason']: the reason why the resouce was deendorsed
         """
-        # TODO: this function was named delete_resource previously, which should be changed in test_recommender
         if not self.get_user_is_staff():
             msg = 'Deendorse resource without permission'
             return self.error_handler(msg, 'deendorse_resource')
@@ -698,16 +687,16 @@ class RecommenderXBlock(XBlock):
     def export_resources(self, _data, _suffix):
         """
         Export all resources from the Recommender. This is intentionally not limited to staff
-        members (community contributions do not belong to the course staff). Sensitive 
-        information is exported *is* limited (flagged resources, and in the future, PII if 
+        members (community contributions do not belong to the course staff). Sensitive
+        information is exported *is* limited (flagged resources, and in the future, PII if
         any).
         """
         result = {}
         result['export'] = {
-            'recommendations':self.recommendations,
-            'deendorsed_recommendations':self.deendorsed_recommendations,
-            'endorsed_recommendation_ids':self.endorsed_recommendation_ids,
-            'endorsed_recommendation_reasons':self.endorsed_recommendation_reasons,
+            'recommendations': self.recommendations,
+            'deendorsed_recommendations': self.deendorsed_recommendations,
+            'endorsed_recommendation_ids': self.endorsed_recommendation_ids,
+            'endorsed_recommendation_reasons': self.endorsed_recommendation_reasons,
         }
         if self.get_user_is_staff():
             result['export']['flagged_accum_resources'] = self.flagged_accum_resources
@@ -736,18 +725,18 @@ class RecommenderXBlock(XBlock):
 
             raw_data = raw_data.strip()
             data = json.loads(raw_data)
-            
+
             self.flagged_accum_resources = data['flagged_accum_resources']
             self.endorsed_recommendation_reasons = data['endorsed_recommendation_reasons']
             self.endorsed_recommendation_ids = data['endorsed_recommendation_ids']
-            
+
             if 'deendorsed_recommendations' in data:
-                self.deendorsed_recommendations = data_structure_upgrade(data['deendorsed_recommendations'])                
+                self.deendorsed_recommendations = data_structure_upgrade(data['deendorsed_recommendations'])
                 data['deendorsed_recommendations'] = self.deendorsed_recommendations
             self.recommendations = data_structure_upgrade(data['recommendations'])
             data['recommendations'] = self.recommendations
 
-            tracker.emit('import_resources', {'Status': 'SUCCESS', 'data': data})            
+            tracker.emit('import_resources', {'Status': 'SUCCESS', 'data': data})
             response.body = json.dumps(data, sort_keys=True)
             return response
         except:
