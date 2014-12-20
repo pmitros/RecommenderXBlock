@@ -708,7 +708,7 @@ class RecommenderXBlock(XBlock):
     @XBlock.handler
     def import_resources(self, request, _suffix=''):
         """
-        Import resources into the recommender. *THIS IS UNTESTED*.
+        Import resources into the recommender.
         """
         response = Response()
         response.headers['Content-Type'] = 'text/plain'

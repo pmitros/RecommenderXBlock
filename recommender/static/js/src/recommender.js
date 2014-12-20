@@ -4,7 +4,6 @@ if (typeof Logger == 'undefined') {
     }
 }
 
-
 function RecommenderXBlock(runtime, element, init_data) {
     /* Grab URLs from server */
     var handleVoteUrl = runtime.handlerUrl(element, 'handle_vote');
@@ -18,44 +17,56 @@ function RecommenderXBlock(runtime, element, init_data) {
     var endorseResourceUrl = runtime.handlerUrl(element, 'endorse_resource');
     var getAccumFlaggedResourceUrl = runtime.handlerUrl(element, 'get_accum_flagged_resource');
 
-    
-
-    /* Define global feature flags and setting variables */
+    /* Define global configuration variables */
     var DISABLE_DEV_UX, CURRENT_PAGE, ENTRIES_PER_PAGE, PAGE_SPAN, IS_USER_STAFF, FLAGGED_RESOURCE_REASONS;
 
-
-    function toggle_resource_list() {
-    /* Generally, triggered when clicking on the header of the resource list. */
-        if ($(this).hasClass('resourceListExpanded')) {
-            Logger.log('hideShow.click.event', {
-                'status': 'hide',
+    /**
+     * Generate the dictionary for logging an event.
+     * @param {string} status The status of the logged event.
+     * @param {dictionary=} information The information (e.g., submitted resource, clicked resource id, etc.) coming along with the event
+     * @returns {dictionary} The dictionary for logging an event.
+     */
+    function generateLog(status, information) {
+        if (!information) {
+            return { 'status': status, 'element': $(element).attr('data-usage-id') };
+        }
+        else {
+            return {
+                'status': status,
+                'information': information,
                 'element': $(element).attr('data-usage-id')
-            });
+            }
+        }
+    }
+
+    /**
+     * Expand or collapse resource list.
+     * This function is triggered when clicking on the header of the resource list.
+     */
+    function bindToggleResourceListEvent() {
+        if ($(this).hasClass('resourceListExpanded')) {
+            Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['hide']));
             $(".recommenderRowInner", element).slideUp('fast');
         }
         else {
-            Logger.log('hideShow.click.event', {
-                'status': 'show',
-                'element': $(element).attr('data-usage-id')
-            });
+            Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['show']));
             $(".recommenderRowInner", element).slideDown('fast');
         }
         $(this).toggleClass('resourceListExpanded');
         addTooltip();
     }
 
-    /* Show or hide resource list on click on the header*/
-    $(".hideShow", element).click(toggle_resource_list);
-
-    /* Show resources and page icons for different pages */
+    /**
+     * Show resources and page icons for the current page.
+     */
     function pagination() {
-        /* Show resources for each page */
+        /* Show resources for the current page */
         $('.recommenderResource', element).each(function(index, ele) {
             if (index < (CURRENT_PAGE-1)*ENTRIES_PER_PAGE || index >= CURRENT_PAGE*ENTRIES_PER_PAGE) { $(ele, element).hide(); }
             else { $(ele, element).show(); }
         });
 
-        /* Show page icons for each page */
+        /* Show page icons for the current page */
         $('.paginationItem', element).each(function(index, ele) {
             if (index + 1 == CURRENT_PAGE) { $(ele, element).show(); }
             else { $(ele, element).hide(); }
@@ -100,12 +111,9 @@ function RecommenderXBlock(runtime, element, init_data) {
 
         /* Page-changing event */
         $('.paginationPageNumber', element).click(function () {
-            var logStudentInput = 'From page ' + CURRENT_PAGE.toString();
+            var previousPage = CURRENT_PAGE.toString();
             if ($(this).hasClass('morePageIcon')) {
-                Logger.log('pagination.click.event', {
-                    'status': 'Click on morePageIcon',
-                    'element': $(element).attr('data-usage-id')
-                });
+                Logger.log('mit.recommender.pagination', generateLog(loggerStatus['pagination']['moreIcon']));
                 return;
             }
             else if ($(this).hasClass('previousPageIcon')) {
@@ -113,114 +121,118 @@ function RecommenderXBlock(runtime, element, init_data) {
             }
             else if ($(this).hasClass('nextPageIcon')) { CURRENT_PAGE += 1; }
             else { CURRENT_PAGE = parseInt($(this).text()); }
-            logStudentInput += ' To page ' + CURRENT_PAGE.toString();
-            Logger.log('pagination.click.event', {
-                'status': logStudentInput,
-                'element': $(element).attr('data-usage-id')
-            });
+            var status = loggerStatus['pagination']['toPageNIcon'](previousPage, CURRENT_PAGE.toString())
+            Logger.log('mit.recommender.pagination', generateLog(status));
             pagination();
         });
     }
 
-    function exportResource() {
-        $('.resourceExportButton', element).click(function () {
-            $.ajax({
-                type: "POST",
-                url: exportResourceUrl,
-                data: JSON.stringify({}),
-                success: function(result) {
-                    if (result['Success'] == true) {
-                        var resourceContent = "data:application/json;charset=utf-8,";
-                        resourceContent += JSON.stringify(result['export']);
+    /**
+     * Export all resources from the Recommender. This is intentionally not limited to staff
+     * members (community contributions do not belong to the course staff). Sensitive
+     * information is exported *is* limited (flagged resources, and in the future, PII if
+     * any).
+     */
+    function bindExportResourceEvent() {
+        $.ajax({
+            type: "POST",
+            url: exportResourceUrl,
+            data: JSON.stringify({}),
+            success: function(result) {
+                if (result['Success'] == true) {
+                    var resourceContent = exportResourceFileInfo['fileType'];
+                    resourceContent += JSON.stringify(result['export']);
 
-                        var encodedUri = encodeURI(resourceContent);
-                        var link = document.createElement("a");
-                        link.setAttribute("href", encodedUri);
-                        link.setAttribute("download", "resource.json");
-                        link.click();
+                    var encodedUri = encodeURI(resourceContent);
+                    var link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", exportResourceFileInfo['fileName']);
+                    link.click();
 
-                        Logger.log('exportResource.click.event', {
-                            'status': 'Export resources',
-                            'data': result,
-                            'element': $(element).attr('data-usage-id')
-                        });
-                    }
+                    Logger.log('mit.recommender.exportResource', generateLog(
+                        loggerStatus['exportResource']['exportResource'], result
+                    ));
                 }
-            });
+            }
         });
     }
 
-    function importResourcePageReset() {
+    /**
+     * Clear the previously given information in the page for importing resources.
+     */
+    function resetImportResourcePage() {
         $('.importResourceFile', element).val('');
         $('.importResourceSubmit', element).attr('disabled', true);
     }
 
-    function importResource() {
-        $('.resourceImportButton', element).click(function () {
-            Logger.log('importResource.click.event', {
-                'status': 'Entering import resource mode',
-                'element': $(element).attr('data-usage-id')
-            });
+    /**
+     * Import resources into the recommender.
+     */
+    function bindImportResourceEvent() {
+        Logger.log('mit.recommender.importResource', generateLog(loggerStatus['importResource']['attempt']));
 
-            importResourcePageReset();
-            $('.importResourcePage', element).show();
-            $('.recommenderContent', element).hide();
-            $('.recommenderModify', element).show();
-            $('.recommenderModifyTitle', element).text('Import resources');
-            $('.importResourceFile', element).change(function() { $('.importResourceSubmit', element).attr('disabled', false); });
+        resetImportResourcePage();
+        $('.importResourcePage', element).show();
+        $('.recommenderContent', element).hide();
+        $('.recommenderModify', element).show();
+        $('.recommenderModifyTitle', element).text(headerText['importResource']);
+        $('.importResourceFile', element).change(function() { $('.importResourceSubmit', element).attr('disabled', false); });
 
-            $('.importResourceSubmit', element).click(function() {
-                var formDiv = $('.importResourceForm', element);
-                var file = new FormData($(formDiv)[0]);
+        $('.importResourceSubmit', element).click(function() {
+            var formDiv = $('.importResourceForm', element);
+            var file = new FormData($(formDiv)[0]);
 
-                $.ajax({
-                    type: 'POST',
-                    url: importResourceUrl,
-                    data: file,
-                    contentType: false,
-                    cache: false,
-                    processData: false,
-                    async: false,
-                    complete: function(result) {
-                        for (var key in importResourceError) {
-                            if (result.responseText.indexOf(importResourceError[key]) == 0) {
-                                alert(importResourceErrorText[importResourceError[key]]);
-                                importResourcePageReset();
-                                return;
-                            }
+            $.ajax({
+                type: 'POST',
+                url: importResourceUrl,
+                data: file,
+                contentType: false,
+                cache: false,
+                processData: false,
+                async: false,
+                complete: function(result) {
+                    for (var key in importResourceError) {
+                        if (result.responseText.indexOf(importResourceError[key]) == 0) {
+                            alert(importResourceErrorText[importResourceError[key]]);
+                            resetImportResourcePage();
+                            return;
                         }
-                        /* Rendering new resources */
-                        data = JSON.parse(result.responseText);
-                        $('.recommenderResource').remove();
-                        for (var resource_id in data['recommendations']) {
-                            item = data['recommendations'][resource_id];
-                            var new_resource_div = addResourceEntry(item['upvotes'] - item['downvotes'], item);
+                    }
+                    /* Rendering new resources */
+                    data = JSON.parse(result.responseText);
+                    $('.recommenderResource', element).remove();
+                    for (var resource_id in data['recommendations']) {
+                        item = data['recommendations'][resource_id];
+                        var newResourceDiv = showResourceEntry(item['upvotes'] - item['downvotes'], item);
 
-                            if (data['endorsed_recommendation_ids'].indexOf(resource_id) != -1){
-                                $('.endorse', new_resource_div).addClass('endorsed');
-                                $('.recommenderEndorseReason', new_resource_div).text(data['endorsed_recommendation_reasons'][data['endorsed_recommendation_ids'].indexOf(resource_id)]);
-                            }
+                        if (data['endorsed_recommendation_ids'].indexOf(resource_id) != -1){
+                            $('.endorse', newResourceDiv).addClass('endorsed');
+                            $('.recommenderEndorseReason', newResourceDiv).text(data['endorsed_recommendation_reasons'][data['endorsed_recommendation_ids'].indexOf(resource_id)]);
                         }
-                        paginationItem();
-                        pagination();
-                        backToView();
-                        Logger.log('importResource.click.event', {
-                            'status': 'Import resources',
-                            'data': data,
-                            'element': $(element).attr('data-usage-id')
-                        });
-                    },
-                });
+                    }
+                    paginationItem();
+                    pagination();
+                    backToView();
+                    Logger.log('mit.recommender.importResource', generateLog(loggerStatus['importResource']['complete'], data));
+                },
             });
         });
     }
 
     /**
-     * Switch from pages of resource addition/edit/flag/staff-edit to pages listing resources.
+     * Switch from pages for resource addition, edit, flag, etc. to pages for viewing resources.
      */
     function backToView() {
-        modals = ['.recommenderModify','.flagResourcePage','.editResourcePage','.addResourcePage','.deendorsePage','.endorsePage','.importResourcePage']
-        for(i=0; i<modals.length; i++){
+        modals = [
+            '.recommenderModify',
+            '.flagResourcePage',
+            '.editResourcePage',
+            '.addResourcePage',
+            '.deendorsePage',
+            '.endorsePage',
+            '.importResourcePage'
+        ]
+        for (i = 0; i < modals.length; i++){
             $(modals[i], element).hide();
         }
 
@@ -238,61 +250,65 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
 
     /**
-     * Bind event to backToViewButton for switching from pages of resource
-     * addition/edit/flag/staff-edit to pages listing resources.
+     * Log the typed information for an incomplete submission.
+     * @param {string} selector The string indicating the element we are going to select and log its value.
+     * @param {element} activePage The element which is currently shown to learners.
+     * @param {dictionary} logStudentInput The information which will be logged.
+     * @returns {dictionary} The information which will be logged.
      */
-    $('.backToViewButton', element).click(function() {
+    function logTypedInformation(selector, activePage, logStudentInput) {
+        if ($(selector, activePage).length != 0) {
+            $(selector, activePage).each(function() {
+                logStudentInput[$(this).clone().removeClass('tooltipstered').attr('class').trim()] = $(this).val();
+            });
+        }
+        return logStudentInput;
+    }
+
+    /**
+     * Interrupt a submission (resource add, edit, flag, endorse, deendorse,
+     * import, etc.). First, log the typed information for an incomplete
+     * submission. Second, go back from pages for resource addition, edit,
+     * flag, etc. to pages for viewing resources.
+     */
+    function bindInterruptSubmissionEvent() {
         var divs = $('.flagResourcePage, .editResourcePage, .addResourcePage, .deendorsePage, .endorsePage, .importResourcePage', element);
-        function findActivePage() {
-            for (var key in divs) {
-                if ($(divs[key]).attr('style') != "display: none;") { return divs[key]; }
+        var activePage;
+        var logStudentInput = {};
+
+        for (var key in divs) {
+            if ($(divs[key]).is(':visible')) {
+                activePage = divs[key];
+                break;
             }
         }
-        var activePage = findActivePage();
         
-        var logStudentInput = {'status': 'Back to resource list mode', 'element': $(element).attr('data-usage-id')};
-        function getTypedContent(selector) {
-            if ($(activePage).find(selector).length != 0) {
-                $(activePage).find(selector).each(function() {
-                    logStudentInput[$(this).attr('class').replace('tooltipstered', '').trim()] = $(this).val();
-                });
-            }
-        }
-        getTypedContent('textarea');
-        getTypedContent('input[type="text"]');
-        getTypedContent('input[type="file"]');
-        Logger.log('backToView.click.event', logStudentInput);
+        logStudentInput = logTypedInformation('textarea', activePage, logStudentInput);
+        logStudentInput = logTypedInformation('input[type="text"]', activePage, logStudentInput);
+        logStudentInput = logTypedInformation('input[type="file"]', activePage, logStudentInput);
+        Logger.log('mit.recommender.backToView', generateLog(loggerStatus['backToView']['backToView'], logStudentInput));
 
         var canGoBackToView = true;
-        if ($(activePage).find('input[type="button"]:disabled').length == 0) {
-            canGoBackToView = confirm('The content you typed has not been submitted yet. Are you sure to go back?')
+        if ($('input[type="button"]:disabled', activePage).length == 0) {
+            canGoBackToView = confirm(confirmInterruptSubmission)
         }
         if (canGoBackToView) { backToView(); }
-    });
-    
-    /* Enter resource addition mode */
-    $('.resourceAddButton', element).click(function() {
-        Logger.log('addResource.click.event', {
-            'status': 'Entering add resource mode',
-            'element': $(element).attr('data-usage-id')
-        });
-    
-        addResourceReset();
-        $('.addResourcePage', element).show();
-        $('.recommenderContent', element).hide();
-        $('.recommenderModify', element).show();
-        $('.recommenderModifyTitle', element).text('Suggest resource');
-    });
+    }
 
-    /* Initialize resource addition mode */
-    function addResourceReset() {
+    /**
+     * Clear the previously given information in the page for adding resources.
+     */
+    function resetAddResourcePage() {
         $('.addResourcePage', element).find('input[type="text"]').val('');
         $('.addResourcePage', element).find('textarea').val('')
         $('.addResourceForm', element).find("input[name='file']").val('');
         $('.addSubmit', element).attr('disabled', true);
     }
 
-    /* Check whether enough information (title/url) is provided for recommending a resource, if yes, enable summission button */
+    /**
+     * Check whether enough information (title/url) is provided for
+     * recommending a resource, if yes, enable the summission button.
+     */
     function enableAddSubmit() {
         if ($('.inTitle', element).val() == '' || $('.inUrl', element).val() == '') {
             $('.addSubmit', element).attr('disabled', true);
@@ -301,81 +317,14 @@ function RecommenderXBlock(runtime, element, init_data) {
         $('.addSubmit', element).attr('disabled', false);
     }
 
-    /* If the input (text) area is changed, check whether user provides enough information to submit the resource */
-    $('.inTitle,.inUrl,.inDescriptionText', element).bind('input propertychange', function() { enableAddSubmit(); });
-    $('.addResourceForm', element).find("input[name='file']").change(function() {
-        if ($(this).val() != '') { enableAddSubmit(); }
-    });
-
-    /* Upload the screenshot, submit the new resource, save the resource in the database, and update the current view of resource */
-    $('.addSubmit', element).click(function() {
-        /* data: resource to be submitted to database */
-        var data = {};
-        data['url'] = $('.inUrl', element).val();
-        data['title'] = $('.inTitle', element).val();
-        data['descriptionText'] = $('.inDescriptionText', element).val();
-        data['description'] = '';
-        var formDiv = $('.addResourceForm', element);
-        var file = new FormData($(formDiv)[0]);
-        Logger.log('addResource.click.event', {
-            'status': 'Add new resource',
-            'title': data['title'],
-            'url': data['url'],
-            'description': $(formDiv).find("input[name='file']").val(),
-            'descriptionText': data['descriptionText'],
-            'element': $(element).attr('data-usage-id')
-        });
-        
-        /* Add resource when the screenshot isn't/is provided */
-        if ($(formDiv).find("input[name='file']").val() == '') { addResource(data); }
-        else { writeResourceWithScreenshot(formDiv, file, 'add', data); }
-    });
-
     /**
-     * Upload the screenshot of resource before writing (adding/editing) the
-     * submitted resource to database.
+     * Show a resource in the resource list.
+     * @param {number} votes The votes which the shown resource have.
+     * @param {dictionary} resource The resource to be shown.
+     * @returns {element} The element of shown resource.
      */
-    function writeResourceWithScreenshot(formDiv, file, writeType, data) {
-        $.ajax({
-            type: 'POST',
-            url: uploadScreenshotUrl,
-            data: file,
-            contentType: false,
-            cache: false,
-            processData: false,
-            async: false,
-            /* WANRING: I DON'T KNOW WHY IT ALWAYS ACTIVATES ERROR (COMPLETE) EVENT, INSTEAD OF SUCCESS, ALTHOUGH IT ACTIVATES SUCCESS CORRECTLY IN XBLOCK-SDK */
-            complete: function(result) {
-                /* File uploading error:
-                   1. Wrong file type is provided; accept files only in jpg, png, and gif
-                   2. The configuration of Amazon S3 is not properly set
-                   3. Size of uploaded file exceeds threshold
-                */
-                for (var key in uploadFileError) {
-                    if (result.responseText.indexOf(uploadFileError[key]) == 0) {
-                        alert(uploadFileErrorText[uploadFileError[key]]);
-                        $(formDiv).find("input[name='file']").val('');
-                        if (writeType == 'add') { enableAddSubmit(); }
-                        else if (writeType == 'edit') { enableEditSubmit(); }
-                        else { return; }
-                    }
-                }
-                /* Submit the written resource */
-                data['description'] = result.responseText;
-                if (writeType == 'add') { addResource(data); }
-                else if (writeType == 'edit') { editResource(data); }
-                else { return; }
-            },
-        });
-    }
-
-    /**
-     * Rendering an resource
-     * votes: number of votes of the rendered resources
-     * resource: resource to be rendered
-     */
-    function addResourceEntry(votes, resource) {
-        /* Decide the rigth place for the added resource (pos), based on sorting the votes */
+    function showResourceEntry(votes, resource) {
+        /* Decide the position for the added resource (pos), by sorting the votes */
         var pos = -1;
         $('.recommenderVoteScore', element).each(function(idx, ele){ 
             if (parseInt($(ele).text()) < votes) {
@@ -384,7 +333,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             }
         });
 
-        /* Show the added resource at right place (pos), based on sorting the votes, and lead student to that page */
+        /* Show the added resource at the decided position (pos), and lead learners to that page */
         if ($('.recommenderResource', element).length == 0) {
             $('.noResourceIntro', element).hide();
             $('.descriptionText', element).show();
@@ -409,8 +358,8 @@ function RecommenderXBlock(runtime, element, init_data) {
         }
 
         var newDiv = $(Mustache.render($("#recommenderResourceTemplate").html(), renderData));
-        bindEvent(newDiv);
-        if (IS_USER_STAFF) { addFunctionsForStaffPerResource(newDiv); }
+        bindResourceDependentEvent(newDiv);
+        if (IS_USER_STAFF) { bindStaffLimitedResourceDependentEvent(newDiv); }
 
         if ($('.recommenderResource', element).length == 0) {
             $('.noResourceIntro', element).after(newDiv);
@@ -420,14 +369,14 @@ function RecommenderXBlock(runtime, element, init_data) {
             else { $(toDiv).before(newDiv); }
         }
         $('.recommenderVoteScore', newDiv).text(votes);
-        addTooltipPerResource(newDiv);
+        addResourceDependentTooltip(newDiv);
 
         return newDiv;
     }
     
     /**
-     * Submit the new resource, save the resource in the database, and update the current view of resource
-     * data: resource to be submitted to database 
+     * Add the new resource to the database, and update the resource list.
+     * @param {dictionary} data The resource to be added.
      */
     function addResource(data) {
         $.ajax({
@@ -436,51 +385,115 @@ function RecommenderXBlock(runtime, element, init_data) {
             data: JSON.stringify(data),
             success: function(result) {
                 if (result['Success'] == true) {
-                    addResourceEntry(0, result);
+                    showResourceEntry(0, result);
                     
-                    addResourceReset();
+                    resetAddResourcePage();
                     paginationItem();
                     pagination();
                     backToView();
                 }
-                else {
-                    alert(result['error']);
-                }
+                else { alert(result['error']); }
             }
         });
     }
 
     /**
-     * Bind upvote/downvote event for each resource
+     * Upload the screenshot of resource before writing (adding/editing) the
+     * submitted resource to database.
+     * @param {element} formDiv The submission form for the resource.
+     * @param {file} file The file of screenshot.
+     * @param {string} writeType The string indicating we are going to add or edit resource.
+     * @param {dictionary} data The resource to be written.
+     */
+    function writeResourceWithScreenshot(formDiv, file, writeType, data) {
+        $.ajax({
+            type: 'POST',
+            url: uploadScreenshotUrl,
+            data: file,
+            contentType: false,
+            cache: false,
+            processData: false,
+            async: false,
+            complete: function(result) {
+                /**
+                 * File uploading error:
+                 * 1. The provided file is in wrong file type: accept files only in jpg, png, and gif.
+                 * 2. The filesystem (e.g., Amazon S3) is not properly set
+                 * 3. Size of uploaded file exceeds threshold
+                 */
+                for (var key in uploadFileError) {
+                    if (result.responseText.indexOf(uploadFileError[key]) == 0) {
+                        alert(uploadFileErrorText[uploadFileError[key]]);
+                        $("input[name='file']", formDiv).val('');
+                        if (writeType == writeDatabaseEnum.ADD) { enableAddSubmit(); }
+                        else if (writeType == writeDatabaseEnum.EDIT) { enableEditSubmit(); }
+                        return;
+                    }
+                }
+                /* Writing the resource to database */
+                data['description'] = result.responseText;
+                if (writeType == writeDatabaseEnum.ADD) { addResource(data); }
+                else if (writeType == writeDatabaseEnum.EDIT) { editResource(data); }
+            },
+        });
+    }
+
+    /**
+     * Bind the event for adding a resource into the recommender.
+     */
+    function bindResourceAddEvent() {
+        /* Entering the page for adding resources */
+        $('.resourceAddButton', element).click(function() {
+            Logger.log('mit.recommender.addResource', generateLog(loggerStatus['addResource']['attempt']));
+        
+            resetAddResourcePage();
+            $('.addResourcePage', element).show();
+            $('.recommenderContent', element).hide();
+            $('.recommenderModify', element).show();
+            $('.recommenderModifyTitle', element).text(headerText['addResource']);
+        });
+
+        /* If the input (text) area is changed, check whether user provides enough information for the resource */
+        $('.inTitle,.inUrl,.inDescriptionText', element).bind('input propertychange', function() { enableAddSubmit(); });
+        $('.addResourceForm', element).find("input[name='file']").change(function() {
+            if ($(this).val() != '') { enableAddSubmit(); }
+        });
+
+        /* Upload the screenshot, add the new resource in the database, and update the resource list */
+        $('.addSubmit', element).click(function() {
+            /* data: resource to be added to database */
+            var data = {};
+            data['url'] = $('.inUrl', element).val();
+            data['title'] = $('.inTitle', element).val();
+            data['descriptionText'] = $('.inDescriptionText', element).val();
+            data['description'] = '';
+            var formDiv = $('.addResourceForm', element);
+            var file = new FormData($(formDiv)[0]);
+
+            var information = $.extend({}, data);
+            information['description'] = $("input[name='file']", formDiv).val();
+            Logger.log('mit.recommender.addResource', generateLog(loggerStatus['addResource']['complete'], information));
+            
+            /* Add resource when the screenshot isn't/is provided */
+            if ($("input[name='file']", formDiv).val() == '') { addResource(data); }
+            else { writeResourceWithScreenshot(formDiv, file, writeDatabaseEnum.ADD, data); }
+        });
+    }
+
+    /**
+     * Bind upvote/downvote event for the given resource.
+     * @param {string} voteType The string indicating we are going to upvote or downvote.
+     * @param {element} ele The recommenderResource element the upvote/downvote events will be bound to.
      */
     function bindResourceVoteEvent(voteType, ele) {
-        var options = {}
-        if (voteType == 'upvote') {
-            options['buttonClassName'] = 'recommenderVoteArrowUp';
-            options['eventName'] = 'arrowUp';
-            options['serverEventName'] = 'recommender_upvote';
-            options['voteClassName'] = 'upvoting';
-            options['previousVoteClassName'] = 'downvoting';
-        }
-        else if (voteType == 'downvote') {
-            options['buttonClassName'] = 'recommenderVoteArrowDown';
-            options['eventName'] = 'arrowDown';
-            options['serverEventName'] = 'recommender_downvote';
-            options['voteClassName'] = 'downvoting';
-            options['previousVoteClassName'] = 'upvoting';
-        }
-        else { return; }
-        
-        $('.' + options['buttonClassName'], ele).click(function() {
+        var voteConfig = voteConfigs[voteType];
+
+        $('.' + voteConfig['buttonClassName'], ele).click(function() {
             var data = {};
             data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
-            data['event'] = options['serverEventName'];
+            data['event'] = voteConfig['serverEventName'];
             if (data['id'] == -1) { return; }
-            Logger.log('mit.recommender.' + options['eventName'] + '.click.event', {
-                'status': options['eventName'],
-                'id': data['id'],
-                'element': $(element).attr('data-usage-id')
-            });
+            Logger.log('mit.recommender.' + voteConfig['eventName'], generateLog(voteConfig['eventName'], {'id': data['id']}));
             
             $.ajax({
                 type: "POST",
@@ -489,26 +502,23 @@ function RecommenderXBlock(runtime, element, init_data) {
                 success: function(result) {
                     if (result['Success'] == true) {
                         var resource = $('.recommenderResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
-                        $(resource)
-                            .find('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore')
-                            .toggleClass(options['voteClassName']);
-                        if ('toggle' in result) {
-                            $(resource)
-                                .find('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore')
-                                .toggleClass(options['previousVoteClassName']);
+                        $('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore', resource)
+                            .toggleClass(voteConfig['voteClassName']);
+                        if (toggleVoteFlag in result) {
+                            $('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore', resource)
+                                .toggleClass(voteConfig['previousVoteClassName']);
                         }
-                        $(resource).find('.recommenderVoteScore').html(result['newVotes'].toString());
+                        $('.recommenderVoteScore', resource).html(result['newVotes'].toString());
                     }
-                    else {
-                        alert(result['error']);
-                    }
+                    else { alert(result['error']); }
                 }
             });
         });
     }
     
     /**
-     * Show preview image and description of a resource when hovering over it.
+     * Show screenshot (preview image) and description of a resource when hovering over it.
+     * @param {element} ele The recommenderResource element the hover event will be bound to.
      */
     function bindResourceHoverEvent(ele) {
         $(ele).hover(
@@ -517,18 +527,18 @@ function RecommenderXBlock(runtime, element, init_data) {
                 $(this).addClass('resourceHovered');
 
                 $('.descriptionText', element).hide();
-                $('.descriptionText', element).text($(this).find('.recommenderDescriptionText').text());                
+                $('.descriptionText', element).text($('.recommenderDescriptionText', this).text());                
                 if ($('.descriptionText', element).text() != '') { $('.descriptionText', element).show(); }
 
                 $('.previewingImg', element).show();
-                $('.previewingImg', element).attr('src', $(this).find('.recommenderDescriptionImg').text());
+                $('.previewingImg', element).attr('src', $('.recommenderDescriptionImg', this).text());
                 $(".previewingImg", element).error(function() { $('.previewingImg', element).hide(); });
                 if ($('.previewingImg', element).attr('src') == '') { $('.previewingImg', element).hide(); }
 
                 if (!DISABLE_DEV_UX) {
                     $('.showProblematicReasons', element).hide();
                     if (!$.isEmptyObject(FLAGGED_RESOURCE_REASONS)) {
-                        var resourceId = $(this).find('.recommenderEntryId').text();
+                        var resourceId = $('.recommenderEntryId', this).text();
                         var reasons = '';
                         /**
                          * FLAGGED_RESOURCE_REASONS is empty except that user is course staff.
@@ -543,51 +553,80 @@ function RecommenderXBlock(runtime, element, init_data) {
                     }
 
                     $('.showEndorsedReasons', element).hide();
-                    if ($(this).find('.endorse').hasClass('endorsed')) {
-                        var reasons = $(this).find('.recommenderEndorseReason').text();
+                    if ($('.endorse', this).hasClass('endorsed')) {
+                        var reasons = $('.recommenderEndorseReason', this).text();
                         if (reasons != '') { $('.showEndorsedReasons', element).html(endorsedReasonsPrefix + reasons); }
                         else { $('.showEndorsedReasons', element).html(''); }
                         $('.showEndorsedReasons', element).show();
                     }
                 }
 
-                Logger.log('resource.hover.event', {
-                    'status': 'Hovering resource',
-                    'id': $(this).find('.recommenderEntryId').text(),
-                    'element': $(element).attr('data-usage-id')
-                });
+                Logger.log('mit.recommender.hover', generateLog(loggerStatus['hover']['hover'], {'id': $('.recommenderEntryId', this).text()}));
             }, function() {
             }
         );
     }
+
+    /**
+     * Check whether enough information (title/url) is provided for editing a resource, if yes, enable summission button.
+     */
+    function enableEditSubmit() {
+        if ($('.editTitle', element).val() == '' || $('.editUrl', element).val() == '') {
+            $('.editSubmit', element).attr('disabled', true);
+            return;
+        }
+        $('.editSubmit', element).attr('disabled', false);
+    }
+    
+    /**
+     * Submit the edited resource, write the resource to the database, and update the current view of resource.
+     * @param {dictionary} data The resource to be edited.
+     */
+    function editResource(data) {
+        $.ajax({
+            type: "POST",
+            url: editResourceUrl,
+            data: JSON.stringify(data),
+            success: function(result) {
+                if (result['Success'] == true) {
+                    var resourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['old_id']).toString() + ')', element);
+                    /* Update the edited resource */
+                    $('.recommenderTitle', resourceDiv).find('a').text(result['title']);
+                    $('.recommenderTitle', resourceDiv).find('a').attr('href', result['url']);
+                    $('.recommenderEntryId', resourceDiv).text(result['id']);
+                    if (data["description"] != "") { $('.recommenderDescriptionImg', resourceDiv).text(result['description']); }
+                    if (data["descriptionText"] != "") { $('.recommenderDescriptionText', resourceDiv).text(result['descriptionText']); }
+                    backToView();
+                }
+                else { alert(result['error']); }
+            }
+        });
+    }
     
     /**
      * Bind the event for editing an existing resource.
+     * @param {element} ele The recommenderResource element the edit event will be bound to.
      */
     function bindResourceEditEvent(ele) {
-        $(ele).find('.resourceEditButton').click(function() {
+        $('.resourceEditButton', ele).click(function() {
             $('.editResourcePage', element).show();
             $('.recommenderContent', element).hide();
             $('.recommenderModify', element).show();
-            $('.recommenderModifyTitle', element).text('Edit existing resource');
+            $('.recommenderModifyTitle', element).text(headerText['editResource']);
             var resourceDiv = $(this).parent().parent();
     
             /* data: resource to be submitted to database */
             var data = {};
-            data['id'] = resourceDiv.find('.recommenderEntryId').text();
+            data['id'] = $('.recommenderEntryId', resourceDiv).text();
     
             /* Initialize resource edit mode */
-            $('.editTitle', element).val(resourceDiv.find('.recommenderTitle').find('a').text());
-            $('.editUrl', element).val(resourceDiv.find('.recommenderTitle').find('a').attr('href'));
-            $('.editDescriptionText', element).val(resourceDiv.find('.recommenderDescriptionText').text());
+            $('.editTitle', element).val($('.recommenderTitle', resourceDiv).find('a').text());
+            $('.editUrl', element).val($('.recommenderTitle', resourceDiv).find('a').attr('href'));
+            $('.editDescriptionText', element).val($('.recommenderDescriptionText', resourceDiv).text());
             $('.editResourceForm', element).find("input[name='file']").val('');
             $('.editSubmit', element).attr('disabled', true);
     
-            Logger.log('editResource.click.event', {
-                'status': 'Entering edit resource mode',
-                'id': data['id'],
-                'element': $(element).attr('data-usage-id')
-            });
+            Logger.log('mit.recommender.editResource', generateLog(loggerStatus['editResource']['attempt'], {'id': data['id']}));
     
             /* If the input (text) area is changed, or a new file is uploaded, check whether user provides enough information to submit the resource */
             $('.editTitle,.editUrl,.editDescriptionText', element).unbind();
@@ -600,7 +639,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             /* Add tooltips for editting page */
             addTooltipPerCats(tooltipsEditCats);
 
-            /* Upload the screen shot, submit the edited resource, save the resource in the database, and update the current view of resource */
+            /* Upload the screenshot, edit the resource in the database, and update the resource list */
             $('.editSubmit', element).unbind();
             $('.editSubmit', element).click(function() {
                 /* data: resource to be submitted to database */
@@ -612,81 +651,35 @@ function RecommenderXBlock(runtime, element, init_data) {
                 var formDiv = $('.editResourceForm', element);
                 var file = new FormData($(formDiv)[0]);
 
-                Logger.log('editResource.click.event', {
-                    'status': 'Edit existing resource',
-                    'title': data['title'],
-                    'url': data['url'],
-                    'descriptionText': data['descriptionText'],
-                    'description': $(formDiv).find("input[name='file']").val(),
-                    'id': data['id'],
-                    'element': $(element).attr('data-usage-id')
-                });
+                var information = $.extend({}, data);
+                information['description'] = $("input[name='file']", formDiv).val();
+                Logger.log('mit.recommender.editResource', generateLog(loggerStatus['editResource']['complete'], information));
 
-                /* Add resource when the screenshot isn't/is provided */
-                if ($(formDiv).find("input[name='file']").val() == '') { editResource(data); }
-                else { writeResourceWithScreenshot(formDiv, file, 'edit', data); }
+                /* Edit resource when the screenshot isn't/is provided */
+                if ($("input[name='file']", formDiv).val() == '') { editResource(data); }
+                else { writeResourceWithScreenshot(formDiv, file, writeDatabaseEnum.EDIT, data); }
             });
         });
     }
 
-    /**
-     * Check whether enough information (title/url) is provided for editing a resource, if yes, enable summission button 
-     */
-    function enableEditSubmit() {
-        if ($('.editTitle', element).val() == '' || $('.editUrl', element).val() == '') {
-            $('.editSubmit', element).attr('disabled', true);
-            return;
-        }
-        $('.editSubmit', element).attr('disabled', false);
-    }
-    
-    /**
-     * Submit the edited resource, write the resource to the database, and update the current view of resource.
-     * data: resource which is going to be submitted to the database 
-     */
-    function editResource (data) {
-        $.ajax({
-            type: "POST",
-            url: editResourceUrl,
-            data: JSON.stringify(data),
-            success: function(result) {
-                if (result['Success'] == true) {
-                    var resourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['old_id']).toString() + ')', element);
-                    /* Update the edited resource */
-                    resourceDiv.find('.recommenderTitle').find('a').text(result['title']);
-                    resourceDiv.find('.recommenderTitle').find('a').attr('href', result['url']);
-                    resourceDiv.find('.recommenderEntryId').text(result['id']);
-                    if (data["description"] != "") { resourceDiv.find('.recommenderDescriptionImg').text(result['description']); }
-                    if (data["descriptionText"] != "") { resourceDiv.find('.recommenderDescriptionText').text(result['descriptionText']); }
-                    backToView();
-                }
-                else { alert(result['error']); }
-            }
-        });
-    }
-    
     /** 
      * Bind the event for flagging problematic resource and submitting the
      * reason why student think the resource is problematic.
+     * @param {element} ele The recommenderResource element the flag event will be bound to.
      */
     function bindResourceFlagEvent(ele) {
-        $(ele).find('.flagResource').click(function() {
+        $('.flagResource', ele).click(function() {
             $('.flagResourcePage', element).show();
             $('.recommenderContent', element).hide();
             $('.recommenderModify', element).show();
-            $('.recommenderModifyTitle', element).text('Flag Resource');
+            $('.recommenderModifyTitle', element).text(headerText['flagResource']);
 
             var flagDiv = $(this);
             var flaggedResourceDiv = $(this).parent().parent();
-             $('.flagReason', element).val($(flaggedResourceDiv).find('.recommenderProblematicReason').text());
+            $('.flagReason', element).val($('.recommenderProblematicReason', flaggedResourceDiv).text());
             data = {};
-            data['id'] = $(flaggedResourceDiv).find('.recommenderEntryId').text();
-          
-            Logger.log('flagResource.click.event', {
-                'status': 'Entering flag resource mode',
-                'id': data['id'],
-                'element': $(element).attr('data-usage-id')
-            });
+            data['id'] = $('.recommenderEntryId', flaggedResourceDiv).text();
+            Logger.log('mit.recommender.flagResource', generateLog(loggerStatus['flagResource']['attempt'], {'id': data['id']}));
 
             $('.flagReasonSubmit', element).unbind();
             $('.unflagButton', element).unbind();
@@ -695,13 +688,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             $('.flagReasonSubmit', element).click(function() {
                 data['reason'] = $('.flagReason', element).val();
                 data['isProblematic'] = true;
-                Logger.log('flagResource.click.event', {
-                    'status': 'Flagging resource',
-                    'id': data['id'],
-                    'reason': data['reason'],
-                    'isProblematic': data['isProblematic'],
-                    'element': $(element).attr('data-usage-id')
-                });
+                Logger.log('mit.recommender.flagResource', generateLog(loggerStatus['flagResource']['complete'], data));
 
                 $.ajax({
                     type: "POST",
@@ -711,24 +698,19 @@ function RecommenderXBlock(runtime, element, init_data) {
                         var flaggedResourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
                         var flagDiv = $('.flagResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
         
-                        $(flaggedResourceDiv).find('.recommenderProblematicReason').text(result['reason']);
+                        $('.recommenderProblematicReason', flaggedResourceDiv).text(result['reason']);
                         if (result['isProblematic']) { $(flagDiv).addClass('problematic'); }
                         else { $(flagDiv).removeClass('problematic'); }
-                        addTooltipPerResource(flaggedResourceDiv);
+                        addResourceDependentTooltip(flaggedResourceDiv);
                         backToView();
                     }
                 });
             });
-        
+
             /* Unflag the resource */
             $('.unflagButton', element).click(function() {
                 data['isProblematic'] = false;
-                Logger.log('flagResource.click.event', {
-                    'status': 'Unflagging resource',
-                    'id': data['id'],
-                    'isProblematic': data['isProblematic'],
-                    'element': $(element).attr('data-usage-id')
-                });
+                Logger.log('mit.recommender.flagResource', generateLog(loggerStatus['flagResource']['unflag'], data));
             
                 $.ajax({
                     type: "POST",
@@ -738,10 +720,10 @@ function RecommenderXBlock(runtime, element, init_data) {
                         var flaggedResourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
                         var flagDiv = $('.flagResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
         
-                        $(flaggedResourceDiv).find('.recommenderProblematicReason').text(result['reason']);
+                        $('.recommenderProblematicReason', flaggedResourceDiv).text(result['reason']);
                         if (result['isProblematic']) { $(flagDiv).addClass('problematic'); }
                         else { $(flagDiv).removeClass('problematic'); }
-                        addTooltipPerResource(flaggedResourceDiv);
+                        addResourceDependentTooltip(flaggedResourceDiv);
                         backToView();
                     }
                 });
@@ -750,117 +732,108 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
 
     /**
-     * Bind event for each entry of resource 
-     * 1. Upvote
-     * 2. Downvote
-     * 3. Hover
-     * 4. Edit
-     * 5. Flag
-     * Arg:
-     *         ele: recommenderResource element
+     * Bind events to the given resource.
+     * 1. Upvote/Downvote
+     * 2. Hover
+     * 3. Edit
+     * 4. Flag
+     * @param {element} ele The recommenderResource element the events will be bound to.
      */
-    function bindEvent(ele) {
-        bindResourceVoteEvent('upvote', ele);
-        bindResourceVoteEvent('downvote', ele);
+    function bindResourceDependentEvent(ele) {
+        bindResourceVoteEvent(voteTypeEnum.UPVOTE, ele);
+        bindResourceVoteEvent(voteTypeEnum.DOWNVOTE, ele);
         bindResourceHoverEvent(ele);
         bindResourceEditEvent(ele);
         bindResourceFlagEvent(ele);
 
-        /* Generate log when students click a resource */
-        $(ele).find('a').click(function() {
-            Logger.log('resource.click.event', {
-                'status': 'A resource was clicked',
-                'id': $(ele).find('.recommenderEntryId').text(),
-                'element': $(element).attr('data-usage-id')
-            });
+        /* Log the event of students' clicking on a resource */
+        $('a', ele).click(function() {
+            Logger.log('mit.recommender.clickResource', generateLog(
+                loggerStatus['clickResource']['clickResource'],
+                {'id': $('.recommenderEntryId', ele).text()}
+            ));
         });
     }
 
-    /* Add tooltips to each global component */
+    /**
+     * Generate configuration of tooltips.
+     * @param {string} tooltipContent The text and span element of tooltips.
+     * @returns {dictionary} The configuration of tooltips.
+     */
+    function generateTooltipConfig(tooltipContent) {
+        return {
+            content: $(tooltipContent), theme: '.my-custom-theme', maxWidth: '300'
+        };
+    }
+
+    /**
+     * Add tooltips to elements which are not resource-dependent.
+     */
     function addTooltip() {
-        tooltipsCats.forEach(function(cats, ind) {
-            var classes = cats.split(".");
-            try {
-                $("." + classes[1], element).tooltipster('destroy');
-            }
+        tooltipsCats.forEach(function(cat, ind) {
+            var classes = cat.split(".");
+            try { $("." + classes[1], element).tooltipster('destroy'); }
             catch (e) {  }
         });
-        tooltipsCats.forEach(function(cats, ind) {
-            var classes = cats.split(".");
+        tooltipsCats.forEach(function(cat, ind) {
+            var classes = cat.split(".");
             try {
                 if (classes.length == 3 && (! $("." + classes[1], element).hasClass(classes[2]) )) {
-                    $("." + classes[1], element).tooltipster({
-                        content: $('<span>' + tooltipsCatsText["." + classes[1]] + '</span>'),
-                        theme: '.my-custom-theme',
-                        maxWidth: '300'
-                    });
+                    $("." + classes[1], element).tooltipster(generateTooltipConfig(tooltipsCatsText["." + classes[1]]));
                     return;
                 }
-                if ($(cats, element).hasClass('tooltipstered')) { return; }
-                $(cats, element).tooltipster({
-                    content: $('<span>' + tooltipsCatsText[cats] + '</span>'),
-                    theme: '.my-custom-theme',
-                    maxWidth: '300'
-                }); 
+                if ($(cat, element).hasClass('tooltipstered')) { return; }
+                $(cat, element).tooltipster(generateTooltipConfig(tooltipsCatsText[cat])); 
             }
             catch (e) {  }
         });
      }
 
-    /* Add tooltips to each cat in cats */
+    /**
+     * Add tooltips to an array of elements.
+     * @param {string array} cats An string array where each string indicating the element we are going to add tooltips to.
+     */
     function addTooltipPerCats(cats) {
         cats.forEach(function(cat, ind) {
-            try {
-                $(cat, element).tooltipster('destroy');
-            }
-            catch (e) {  }
+            try { $(cat, element).tooltipster('destroy'); }
+            catch (e) { }
         });
         cats.forEach(function(cat, ind) {
-            try {
-                $(cat, element).tooltipster({
-                    content: $('<span>' + tooltipsCatsText[cat] + '</span>'),
-                    theme: '.my-custom-theme',
-                    maxWidth: '300'
-                }); 
-            }
-            catch (e) {  }
+            try { $(cat, element).tooltipster(generateTooltipConfig(tooltipsCatsText[cat])); }
+            catch (e) { }
         });
      }
 
-    /* Add tooltips to each component in each resource */
-    function addTooltipPerResource(ele) {
-        tooltipsCatsPerResource.forEach(function(cats, ind) {
-            var classes = cats.split(".");
+    /**
+     * Add resource-dependent tooltips to the given resource.
+     * @param {element} ele The recommenderResource element the tooltips will be added to.
+     */
+    function addResourceDependentTooltip(ele) {
+        tooltipsCatsPerResource.forEach(function(cat, ind) {
+            var classes = cat.split(".");
             if (classes.length == 3) {
-                try {
-                    $(ele, element).find("." + classes[1]).tooltipster('destroy');
-                }
-                catch (e) {  }
+                try { $(ele, element).find("." + classes[1]).tooltipster('destroy'); }
+                catch (e) { }
             }
         });
-        tooltipsCatsPerResource.forEach(function(cats, ind) {            
-            var classes = cats.split(".");
+        tooltipsCatsPerResource.forEach(function(cat, ind) {
+            var classes = cat.split(".");
             try {
                 if (classes.length == 3 && (! $(ele, element).find("." + classes[1]).hasClass(classes[2]) )) {
-                    $(ele, element).find("." + classes[1]).tooltipster({
-                        content: $('<span>' + tooltipsCatsText["." + classes[1]] + '</span>'),
-                        theme: '.my-custom-theme',
-                        maxWidth: '300'
-                    });
+                    $(ele, element).find("." + classes[1]).tooltipster(generateTooltipConfig(tooltipsCatsText["." + classes[1]]));
                     return;
                 }
-                //if ($(ele, element).find(cats).hasClass('tooltipstered')) { return; }
-                $(ele, element).find(cats).tooltipster({
-                    content: $('<span>' + tooltipsCatsText[cats] + '</span>'),
-                    theme: '.my-custom-theme',
-                    maxWidth: '300'
-                }); 
+                $(ele, element).find(cat).tooltipster(generateTooltipConfig(tooltipsCatsText[cat]));
             }
-            catch (e) {  }
+            catch (e) { }
         });
      }
 
-    /* Find the position (index of div) of a resource based on the resource Id */
+    /**
+     * Find the position (index of div) of a resource based on its resource Id.
+     * @param {string} resourceId The resource Id.
+     * @returns {Number} The position (index) of the resource.
+     */
     function findResourceDiv(resourceId) {
         index = -1;
         $('.recommenderEntryId', element).each(function(idx, ele){
@@ -871,29 +844,29 @@ function RecommenderXBlock(runtime, element, init_data) {
         });
         return index;
     }
-    
+
     /**
-     * Check whether user is staff and add functions which are restricted to course staff
+     * Bind course-staff-limited events.
      */
-    function initializeStaffVersion() {
+    function bindStaffLimitedEvent() {
         if (IS_USER_STAFF) {
             if (!DISABLE_DEV_UX) { toggleDeendorseMode(); }
             $('.recommenderResource', element).each(function(index, ele) {
-                addFunctionsForStaffPerResource(ele);
-                addTooltipPerResource(ele);
+                bindStaffLimitedResourceDependentEvent(ele);
+                addResourceDependentTooltip(ele);
             });
-            $('.resourceImportButton').show();
+            $('.resourceImportButton', element).show();
         }
     }
     
     /**
-     * This is a function restricted to course staff, where we can toggle between viewing mode for de-endorsement and
+     * This is a function restricted to course staff, where we can toggle between viewing mode for deendorsement and
      * ordinary browsing
-     * De-endorsement:
-     *      Re-rank resources by first showing flagged resource, then non-flagged one in the order of inscreasing votes
+     * Deendorsement mode:
+     *      Re-rank resources by first showing flagged resource, then non-flagged one in the order of increasing votes
      *      Show the reason and accumulated flagged result
-     * Ordinary:
-     *      Rank resources in the order of descreasing votes
+     * Ordinary mode:
+     *      Rank resources in the order of decreasing votes
      */
     function toggleDeendorseMode() {
         $('.resourceRankingForDeendorsementButton', element).show();
@@ -917,7 +890,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                                 startEntryIndex++;
                             }
 
-                            sortResource('increasing', startEntryIndex);
+                            sortResource(sortResourceEnum.INCREASE, startEntryIndex);
                             paginationItem();
                             pagination();
                         }
@@ -926,7 +899,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 });
             }
             else {
-                sortResource('decreasing', 0);
+                sortResource(sortResourceEnum.DECREASE, 0);
                 paginationItem();
                 pagination();
                 if (!DISABLE_DEV_UX) { $('.showProblematicReasons', element).hide(); }
@@ -936,8 +909,9 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
     
     /**
-     * Sort resources by their votes
-     * mode = descreasing or increasing
+     * Sort resources by their votes.
+     * @param {string} mode The string indicating the resources are sorted in increasing or descreasing order.
+     * @param {number} startEntryIndex The position (index) of the first resource to be sorted.
      */
     function sortResource(mode, startEntryIndex) {
         if (startEntryIndex < 0) { return; }
@@ -946,7 +920,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             var optimalValue = parseInt($('.recommenderResource:eq(' + optimalIdx + ')', element).find('.recommenderVoteScore').text())
             for (index2 = index + 1; index2 < $('.recommenderResource', element).length; index2++) {
                 var currentValue = parseInt($('.recommenderResource:eq(' + index2 + ')', element).find('.recommenderVoteScore').text())
-                if (mode == 'increasing') {
+                if (mode == sortResourceEnum.INCREASE) {
                     if (currentValue < optimalValue){
                         optimalValue = currentValue;
                         optimalIdx = index2;
@@ -966,76 +940,83 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
 
     /**
-     * This is a function restricted to course staff, where we can deendorse a resource.
-     * This function should be called once for each resource.
-     * TODO: collect the reason for endorsement
+     * Bind the event for endorsing/unendorsing a resource and submitting the
+     * reason why the staff think the resource should be endorsed.
+     * @param {element} ele The recommenderResource element the event will be bound to.
      */
-    function addFunctionsForStaffPerResource(ele) {
-        /* Add event for endorsement */
-        $(ele).find('.endorse').show();
-        $(ele).find('.endorse').click(function() {
+    function bindResourceEndorseEvent(ele) {
+        $('.endorse', ele).show();
+        $('.endorse', ele).click(function() {
             var data = {};
             data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
             
             if ($(this).hasClass('endorsed')) {
                 /* Undo the endorsement of a selected resource */
-                endorse(data)
+                callEndorseHandler(data);
             }
             else {
                 $('.endorsePage', element).show();
                 $('.recommenderContent', element).hide();
                 $('.recommenderModify', element).show();
-                $('.recommenderModifyTitle', element).text('Endorse Resource');
+                $('.recommenderModifyTitle', element).text(headerText['endorseResource']);
                 $('.endorsePage', element).find('input[type="text"]').val('');
                 $('.endorseResource', element).unbind();
                 /* Endorse a selected resource */
                 $('.endorseResource', element).click(function() {
                     data['reason'] = $('.endorseReason', element).val();
                     /* Endorse a selected resource */
-                    endorse(data);
+                    callEndorseHandler(data);
                 });
             }
         });
-        
-        /* Handle the student view and ajax calling for endorsement, given the provided data */
-        function endorse(data) {
-            var logStudentInput = data;
-            if ('reason' in logStudentInput) { logStudentInput['status'] = 'Endorse resource'; }
-            else { logStudentInput['status'] = 'Un-endorse resource'; }
-            logStudentInput['element'] = $(element).attr('data-usage-id');
-            Logger.log('endorseResource.click.event', logStudentInput);
-            $.ajax({
-                type: "POST",
-                url: endorseResourceUrl,
-                data: JSON.stringify(data),
-                success: function(result) {
-                    if (result['Success']) {
-                        var endorsedResourceIdx = findResourceDiv(result['id']);
-                        var endorsedDiv = $('.recommenderResource:eq(' + endorsedResourceIdx.toString() + ')', element);
-                        endorsedDiv.find('.endorse').toggleClass('endorsed').show();
-                        addTooltipPerResource(endorsedDiv);
-                        if ('reason' in result) {
-                            $(endorsedDiv).find('.recommenderEndorseReason').text(result['reason']);
-                            backToView();
-                        }
-                        else { $(endorsedDiv).find('.recommenderEndorseReason').text(''); }
+    }
+
+    /**
+     * Call the handler for endorsement with the provided data and update the resource list.
+     * @param {dictionary} data The information sent to the handler.
+     */
+    function callEndorseHandler(data) {
+        if (endorseFlag in data) {
+            Logger.log('mit.recommender.endorseResource', generateLog(loggerStatus['endorseResource']['endorse'], data));
+        }
+        else {
+            Logger.log('mit.recommender.endorseResource', generateLog(loggerStatus['endorseResource']['unendorse'], data));
+        }
+        $.ajax({
+            type: "POST",
+            url: endorseResourceUrl,
+            data: JSON.stringify(data),
+            success: function(result) {
+                if (result['Success']) {
+                    var endorsedResourceIdx = findResourceDiv(result['id']);
+                    var endorsedDiv = $('.recommenderResource:eq(' + endorsedResourceIdx.toString() + ')', element);
+                    $('.endorse', endorsedDiv).toggleClass('endorsed').show();
+                    addResourceDependentTooltip(endorsedDiv);
+                    if (endorseFlag in result) {
+                        $('.recommenderEndorseReason', endorsedDiv).text(result['reason']);
+                        backToView();
                     }
-                    else { alert(result['error']); }
+                    else { $('.recommenderEndorseReason', endorsedDiv).text(''); }
                 }
-            });
-        }
-        
-        /* Add the button for entering deendorse mode */
-        if ($(ele).find('.deendorse').length == 0) {
-            $(ele).find('.recommenderEdit').append('<span class="ui-icon ui-icon-gear deendorse"></span>');
-        }
+                else { alert(result['error']); }
+            }
+        });
+    }
+
+    /**
+     * Bind the event for deendorsing a resource and submitting the
+     * reason why the staff think the resource should be deendorsed.
+     * @param {element} ele The recommenderResource element the event will be bound to.
+     */
+    function bindResourceDeendorseEvent(ele) {
+        if ($('.deendorse', ele).length == 0) { $('.recommenderEdit', ele).append(deendorseIcon); }
                     
         /* Enter deendorse mode */
-        $(ele).find('.deendorse').click(function() {
+        $('.deendorse', ele).click(function() {
             $('.deendorsePage', element).show();
             $('.recommenderContent', element).hide();
             $('.recommenderModify', element).show();
-            $('.recommenderModifyTitle', element).text('Deendorse Resource');
+            $('.recommenderModifyTitle', element).text(headerText['deendorseResource']);
             $('.deendorsePage', element).find('input[type="text"]').val('');
             var data = {};
             data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
@@ -1044,12 +1025,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             /* Deendorse a selected resource */
             $('.deendorseResource', element).click(function() {
                 data['reason'] = $('.deendorseReason', element).val();
-                Logger.log('deendorseResource.click.event', {
-                    'status': 'Deendorse resource',
-                    'id': data['id'],
-                    'reason': data['reason'],
-                    'element': $(element).attr('data-usage-id')
-                });
+                Logger.log('mit.recommender.deendorseResource', generateLog(loggerStatus['deendorseResource']['deendorseResource'], data));
                 $.ajax({
                     type: "POST",
                     url: deendorseResourceUrl,
@@ -1069,14 +1045,23 @@ function RecommenderXBlock(runtime, element, init_data) {
                     }
                 });
             });
-        });        
+        });
     }
 
     /**
-     * Initialize the interface by first setting the environment parameters and then rendering the web page.
+     * Bind course-staff-limited, resource-dependent events to the given resource.
+     * @param {element} ele The recommenderResource element the events will be bound to.
      */
-    function initial() {
-        /* Set environment parameters */
+    function bindStaffLimitedResourceDependentEvent(ele) {
+        bindResourceEndorseEvent(ele);
+        bindResourceDeendorseEvent(ele);
+    }
+
+    /**
+     * Initialize the recommender by first setting the configuration variables and then rendering the web page.
+     */
+    function initializeRecommender() {
+        /* Set configuration variables */
         FLAGGED_RESOURCE_REASONS = {};
         DISABLE_DEV_UX = init_data['DISABLE_DEV_UX'];
         CURRENT_PAGE = init_data['CURRENT_PAGE'];
@@ -1084,25 +1069,41 @@ function RecommenderXBlock(runtime, element, init_data) {
         PAGE_SPAN = init_data['PAGE_SPAN'];
         IS_USER_STAFF = init_data['IS_USER_STAFF'];
         /* Render the initial web page */
-        initialPageRendering();
+        renderInitialPage();
 
         if (init_data['INTRO']){
             introJs().start();
         }
     }
 
-    /* Render the initial web page */
-    function initialPageRendering() {
+    /**
+     * Render the initial web page.
+     */
+    function renderInitialPage() {
+        /* Bind the list expansion or collapse event to the resource header */
+        $(".hideShow", element).click(bindToggleResourceListEvent);
+
+        /* Bind the resource export event */
+        $('.resourceExportButton', element).click(bindExportResourceEvent);
+
+        /* Bind the resource import event */
+        $('.resourceImportButton', element).click(bindImportResourceEvent);
+
+        /* Bind the submission interruption event */
+        $('.backToViewButton', element).click(bindInterruptSubmissionEvent);
+
+        bindResourceAddEvent();
         backToView();
         addTooltip();
-        initializeStaffVersion();
+        bindStaffLimitedEvent();
         
         paginationItem();
         pagination();
-        exportResource();
-        importResource();
-        addResourceReset();
-        $('.recommenderResource', element).each(function(index, ele) { bindEvent(ele); addTooltipPerResource(ele); });
+        resetAddResourcePage();
+        $('.recommenderResource', element).each(function(index, ele) {
+            bindResourceDependentEvent(ele);
+            addResourceDependentTooltip(ele);
+        });
         addTooltip();
     
         if ($('.recommenderResource', element).length == 0) {
@@ -1110,5 +1111,5 @@ function RecommenderXBlock(runtime, element, init_data) {
             $('.descriptionText', element).hide();
         }
     }
-    initial();
+    initializeRecommender();
 }
