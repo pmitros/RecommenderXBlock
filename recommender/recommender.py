@@ -214,6 +214,8 @@ class RecommenderXBlock(XBlock):
         being defined. However, It's the only way to get the data right now.
         TODO: Should be proper handled in future
         """
+        if "workbench" in str(type(self.runtime)):
+            return 'user1'
         return self.xmodule_runtime.anonymous_student_id
 
     def resource_string(self, path):
@@ -576,7 +578,6 @@ class RecommenderXBlock(XBlock):
         result['reason'] = data['reason']
 
         user_id = self.get_user_id()
-
         if data['isProblematic']:
             if data['id'] in self.flagged_ids:
                 result['oldReason'] = self.flagged_reasons[

@@ -47,10 +47,12 @@ function RecommenderXBlock(runtime, element, init_data) {
         if ($(this).hasClass('resourceListExpanded')) {
             Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['hide']));
             $(".recommenderRowInner", element).slideUp('fast');
+            $(this).text(resourceListHeader['show']);
         }
         else {
             Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['show']));
             $(".recommenderRowInner", element).slideDown('fast');
+            $(this).text(resourceListHeader['hide']);
         }
         $(this).toggleClass('resourceListExpanded');
         addTooltip();
@@ -62,14 +64,14 @@ function RecommenderXBlock(runtime, element, init_data) {
     function pagination() {
         /* Show resources for the current page */
         $('.recommenderResource', element).each(function(index, ele) {
-            if (index < (CURRENT_PAGE-1)*ENTRIES_PER_PAGE || index >= CURRENT_PAGE*ENTRIES_PER_PAGE) { $(ele, element).hide(); }
-            else { $(ele, element).show(); }
+            if (index < (CURRENT_PAGE-1)*ENTRIES_PER_PAGE || index >= CURRENT_PAGE*ENTRIES_PER_PAGE) { $(ele, element).hide().attr('aria-hidden', 'true'); }
+            else { $(ele, element).show().attr('aria-hidden', 'false'); }
         });
 
         /* Show page icons for the current page */
         $('.paginationItem', element).each(function(index, ele) {
-            if (index + 1 == CURRENT_PAGE) { $(ele, element).show(); }
-            else { $(ele, element).hide(); }
+            if (index + 1 == CURRENT_PAGE) { $(ele, element).show().attr('aria-hidden', 'false'); }
+            else { $(ele, element).hide().attr('aria-hidden', 'true'); }
         });
     }
     
@@ -166,16 +168,25 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
 
     /**
+     * Hide resource list and show pages for modifying
+     * (i.e., add/edit/endorse/deendorse/import/flag) recommender
+     * @param {string} page The string indicating the page we are going to show. 
+     */
+    function showModifyingPage(page) {
+        $(page, element).show().attr('aria-hidden', 'false');
+        $('.recommenderContent', element).hide().attr('aria-hidden', 'true');
+        $('.recommenderModify', element).show().attr('aria-hidden', 'false');
+        $('.recommenderModifyTitle', element).text(headerText[page]);
+    }
+
+    /**
      * Import resources into the recommender.
      */
     function bindImportResourceEvent() {
         Logger.log('mit.recommender.importResource', generateLog(loggerStatus['importResource']['attempt']));
 
         resetImportResourcePage();
-        $('.importResourcePage', element).show();
-        $('.recommenderContent', element).hide();
-        $('.recommenderModify', element).show();
-        $('.recommenderModifyTitle', element).text(headerText['importResource']);
+        showModifyingPage('.importResourcePage');
         $('.importResourceFile', element).change(function() { $('.importResourceSubmit', element).attr('disabled', false); });
 
         $('.importResourceSubmit', element).click(function() {
@@ -233,20 +244,20 @@ function RecommenderXBlock(runtime, element, init_data) {
             '.importResourcePage'
         ]
         for (i = 0; i < modals.length; i++){
-            $(modals[i], element).hide();
+            $(modals[i], element).hide().attr('aria-hidden', 'true');
         }
 
         if ($('.recommenderResource', element).length == 0) {
-            $('.noResourceIntro', element).show();
+            $('.noResourceIntro', element).show().attr('aria-hidden', 'false');
         }
         $('.recommenderResource', element).removeClass('resourceHovered');
-        $('.previewingImg', element).hide();
-        $('.descriptionText', element).hide();
+        $('.previewingImg', element).hide().attr('aria-hidden', 'true');
+        $('.descriptionText', element).hide().attr('aria-hidden', 'true');
         if (!DISABLE_DEV_UX) {
-            $('.showProblematicReasons', element).hide();
-            $('.showEndorsedReasons', element).hide();
+            $('.showProblematicReasons', element).hide().attr('aria-hidden', 'true');
+            $('.showEndorsedReasons', element).hide().attr('aria-hidden', 'true');
         }
-        $('.recommenderContent', element).show();
+        $('.recommenderContent', element).show().attr('aria-hidden', 'false');
     }
 
     /**
@@ -335,8 +346,8 @@ function RecommenderXBlock(runtime, element, init_data) {
 
         /* Show the added resource at the decided position (pos), and lead learners to that page */
         if ($('.recommenderResource', element).length == 0) {
-            $('.noResourceIntro', element).hide();
-            $('.descriptionText', element).show();
+            $('.noResourceIntro', element).hide().attr('aria-hidden', 'true');
+            $('.descriptionText', element).show().attr('aria-hidden', 'false');
             CURRENT_PAGE = 1;
         }
         else {
@@ -447,10 +458,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             Logger.log('mit.recommender.addResource', generateLog(loggerStatus['addResource']['attempt']));
         
             resetAddResourcePage();
-            $('.addResourcePage', element).show();
-            $('.recommenderContent', element).hide();
-            $('.recommenderModify', element).show();
-            $('.recommenderModifyTitle', element).text(headerText['addResource']);
+            showModifyingPage('.addResourcePage');
         });
 
         /* If the input (text) area is changed, check whether user provides enough information for the resource */
@@ -508,6 +516,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                             $('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore', resource)
                                 .toggleClass(voteConfig['previousVoteClassName']);
                         }
+                        setVoteAriaParam(resource);
                         $('.recommenderVoteScore', resource).html(result['newVotes'].toString());
                     }
                     else { alert(result['error']); }
@@ -526,9 +535,9 @@ function RecommenderXBlock(runtime, element, init_data) {
                 $('.recommenderResource', element).removeClass('resourceHovered');
                 $(this).addClass('resourceHovered');
 
-                $('.descriptionText', element).hide();
+                $('.descriptionText', element).hide().attr('aria-hidden', 'true');
                 $('.descriptionText', element).text($('.recommenderDescriptionText', this).text());                
-                if ($('.descriptionText', element).text() != '') { $('.descriptionText', element).show(); }
+                if ($('.descriptionText', element).text() != '') { $('.descriptionText', element).show().attr('aria-hidden', 'false'); }
 
                 $('.previewingImg', element).show();
                 $('.previewingImg', element).attr('src', $('.recommenderDescriptionImg', this).text());
@@ -536,7 +545,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 if ($('.previewingImg', element).attr('src') == '') { $('.previewingImg', element).hide(); }
 
                 if (!DISABLE_DEV_UX) {
-                    $('.showProblematicReasons', element).hide();
+                    $('.showProblematicReasons', element).hide().attr('aria-hidden', 'true');
                     if (!$.isEmptyObject(FLAGGED_RESOURCE_REASONS)) {
                         var resourceId = $('.recommenderEntryId', this).text();
                         var reasons = '';
@@ -545,19 +554,19 @@ function RecommenderXBlock(runtime, element, init_data) {
                          * Therefore, the content in showProblematicReasons will be showed only to staff.
                          */
                         if (resourceId in FLAGGED_RESOURCE_REASONS) {
-                            $('.showProblematicReasons', element).show();
+                            $('.showProblematicReasons', element).show().attr('aria-hidden', 'false');
                             reasons = FLAGGED_RESOURCE_REASONS[resourceId].join(reasonSeparator);
                         }
                         if (reasons != '') { $('.showProblematicReasons', element).html(problematicReasonsPrefix + reasons); }
                         else { $('.showProblematicReasons', element).html(''); }
                     }
 
-                    $('.showEndorsedReasons', element).hide();
+                    $('.showEndorsedReasons', element).hide().attr('aria-hidden', 'true');
                     if ($('.endorse', this).hasClass('endorsed')) {
                         var reasons = $('.recommenderEndorseReason', this).text();
                         if (reasons != '') { $('.showEndorsedReasons', element).html(endorsedReasonsPrefix + reasons); }
                         else { $('.showEndorsedReasons', element).html(''); }
-                        $('.showEndorsedReasons', element).show();
+                        $('.showEndorsedReasons', element).show().attr('aria-hidden', 'false');
                     }
                 }
 
@@ -609,10 +618,7 @@ function RecommenderXBlock(runtime, element, init_data) {
      */
     function bindResourceEditEvent(ele) {
         $('.resourceEditButton', ele).click(function() {
-            $('.editResourcePage', element).show();
-            $('.recommenderContent', element).hide();
-            $('.recommenderModify', element).show();
-            $('.recommenderModifyTitle', element).text(headerText['editResource']);
+            showModifyingPage('.editResourcePage')
             var resourceDiv = $(this).parent().parent();
     
             /* data: resource to be submitted to database */
@@ -669,10 +675,7 @@ function RecommenderXBlock(runtime, element, init_data) {
      */
     function bindResourceFlagEvent(ele) {
         $('.flagResource', ele).click(function() {
-            $('.flagResourcePage', element).show();
-            $('.recommenderContent', element).hide();
-            $('.recommenderModify', element).show();
-            $('.recommenderModifyTitle', element).text(headerText['flagResource']);
+            showModifyingPage('.flagResourcePage')
 
             var flagDiv = $(this);
             var flaggedResourceDiv = $(this).parent().parent();
@@ -702,6 +705,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                         if (result['isProblematic']) { $(flagDiv).addClass('problematic'); }
                         else { $(flagDiv).removeClass('problematic'); }
                         addResourceDependentTooltip(flaggedResourceDiv);
+                        setFlagAriaParam(flaggedResourceDiv);
                         backToView();
                     }
                 });
@@ -724,6 +728,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                         if (result['isProblematic']) { $(flagDiv).addClass('problematic'); }
                         else { $(flagDiv).removeClass('problematic'); }
                         addResourceDependentTooltip(flaggedResourceDiv);
+                        setFlagAriaParam(flaggedResourceDiv);
                         backToView();
                     }
                 });
@@ -753,6 +758,10 @@ function RecommenderXBlock(runtime, element, init_data) {
                 {'id': $('.recommenderEntryId', ele).text()}
             ));
         });
+
+        setVoteAriaParam(ele);
+        setFlagAriaParam(ele);
+        setEndorseAriaParamForStudent(ele);
     }
 
     /**
@@ -855,7 +864,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 bindStaffLimitedResourceDependentEvent(ele);
                 addResourceDependentTooltip(ele);
             });
-            $('.resourceImportButton', element).show();
+            $('.resourceImportButton', element).show().attr('aria-hidden', 'false');
         }
     }
     
@@ -869,7 +878,7 @@ function RecommenderXBlock(runtime, element, init_data) {
      *      Rank resources in the order of decreasing votes
      */
     function toggleDeendorseMode() {
-        $('.resourceRankingForDeendorsementButton', element).show();
+        $('.resourceRankingForDeendorsementButton', element).show().attr('aria-hidden', 'false');
         $('.resourceRankingForDeendorsementButton', element).click(function() {
             $(this).toggleClass('deendorsementMode');
             addTooltip();
@@ -902,7 +911,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 sortResource(sortResourceEnum.DECREASE, 0);
                 paginationItem();
                 pagination();
-                if (!DISABLE_DEV_UX) { $('.showProblematicReasons', element).hide(); }
+                if (!DISABLE_DEV_UX) { $('.showProblematicReasons', element).hide().attr('aria-hidden', 'true'); }
                 FLAGGED_RESOURCE_REASONS = {};
             }
         });
@@ -945,7 +954,7 @@ function RecommenderXBlock(runtime, element, init_data) {
      * @param {element} ele The recommenderResource element the event will be bound to.
      */
     function bindResourceEndorseEvent(ele) {
-        $('.endorse', ele).show();
+        $('.endorse', ele).show().attr('aria-hidden', 'false');
         $('.endorse', ele).click(function() {
             var data = {};
             data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
@@ -955,10 +964,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 callEndorseHandler(data);
             }
             else {
-                $('.endorsePage', element).show();
-                $('.recommenderContent', element).hide();
-                $('.recommenderModify', element).show();
-                $('.recommenderModifyTitle', element).text(headerText['endorseResource']);
+                showModifyingPage('.endorsePage')
                 $('.endorsePage', element).find('input[type="text"]').val('');
                 $('.endorseResource', element).unbind();
                 /* Endorse a selected resource */
@@ -990,8 +996,9 @@ function RecommenderXBlock(runtime, element, init_data) {
                 if (result['Success']) {
                     var endorsedResourceIdx = findResourceDiv(result['id']);
                     var endorsedDiv = $('.recommenderResource:eq(' + endorsedResourceIdx.toString() + ')', element);
-                    $('.endorse', endorsedDiv).toggleClass('endorsed').show();
+                    $('.endorse', endorsedDiv).toggleClass('endorsed').show().attr('aria-hidden', 'false');
                     addResourceDependentTooltip(endorsedDiv);
+                    setEndorseDeendorseAriaParam(endorsedDiv);
                     if (endorseFlag in result) {
                         $('.recommenderEndorseReason', endorsedDiv).text(result['reason']);
                         backToView();
@@ -1013,10 +1020,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                     
         /* Enter deendorse mode */
         $('.deendorse', ele).click(function() {
-            $('.deendorsePage', element).show();
-            $('.recommenderContent', element).hide();
-            $('.recommenderModify', element).show();
-            $('.recommenderModifyTitle', element).text(headerText['deendorseResource']);
+            showModifyingPage('.deendorsePage')
             $('.deendorsePage', element).find('input[type="text"]').val('');
             var data = {};
             data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
@@ -1055,6 +1059,48 @@ function RecommenderXBlock(runtime, element, init_data) {
     function bindStaffLimitedResourceDependentEvent(ele) {
         bindResourceEndorseEvent(ele);
         bindResourceDeendorseEvent(ele);
+        setEndorseDeendorseAriaParam(ele);
+    }
+
+    /**
+     * Set the text of upvote/downvote buttons for accessibility.
+     * @param {element} ele The recommenderResource element the buttons attached to.
+     */
+    function setVoteAriaParam(ele) {
+        /* Reset aria-text for upvote/downvote button */
+        $('.recommenderVoteArrowUp', ele).attr('aria-label', ariaLabelText['upvote']);
+        $('.recommenderVoteArrowDown', ele).attr('aria-label', ariaLabelText['downvote']);
+        /* Set aria-text for clicked upvote/downvote button */
+        $('.recommenderVoteArrowUp.upvoting', ele).attr('aria-label', ariaLabelText['undoUpvote']);
+        $('.recommenderVoteArrowDown.downvoting', ele).attr('aria-label', ariaLabelText['undoDownvote']);
+    }
+
+    /**
+     * Set the text of flag buttons for accessibility.
+     * @param {element} ele The recommenderResource element the button attached to.
+     */
+    function setFlagAriaParam(ele) {
+        $('.flagResource.problematic', ele).attr('aria-label', ariaLabelText['problematicResource']);
+    }
+
+    /**
+     * Set the text of endorse buttons for accessibility, when users are not staff.
+     * @param {element} ele The recommenderResource element the button attached to.
+     */
+    function setEndorseAriaParamForStudent(ele) {
+        if (!IS_USER_STAFF) { $('.endorsed', ele).attr('aria-label', ariaLabelText['endorsedResource']); }
+    }
+
+    /**
+     * Set the text of endorse/deendorse buttons for accessibility, these
+     * buttons are limited to staff.
+     * @param {element} ele The recommenderResource element the buttons attached to.
+     */
+    function setEndorseDeendorseAriaParam(ele) {
+        $('.endorse', ele).attr('role', 'button').attr('tabindex', '0');
+        $('.deendorse', ele).attr('role', 'button').attr('tabindex', '0').attr('aria-label', ariaLabelText['deendorseResource']);;
+        $('.endorse:not(.endorsed)', ele).attr('aria-label', ariaLabelText['endorseResource']);
+        $('.endorse.endorsed', ele).attr('aria-label', ariaLabelText['undoEndorseResource']);
     }
 
     /**
@@ -1107,8 +1153,8 @@ function RecommenderXBlock(runtime, element, init_data) {
         addTooltip();
     
         if ($('.recommenderResource', element).length == 0) {
-            $('.noResourceIntro', element).show();
-            $('.descriptionText', element).hide();
+            $('.noResourceIntro', element).show().attr('aria-hidden', 'false');
+            $('.descriptionText', element).hide().attr('aria-hidden', 'true');
         }
     }
     initializeRecommender();
