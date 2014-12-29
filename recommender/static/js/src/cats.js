@@ -99,12 +99,12 @@ var exportResourceFileInfo = {
 var confirmInterruptSubmission = 'The content you typed has not been submitted yet. Are you sure to go back?';
 
 var headerText = {
-    'importResource': 'Import resources',
-    'addResource': 'Suggest resource',
-    'editResource': 'Edit existing resource',
-    'flagResource': 'Flag Resource',
-    'endorseResource': 'Endorse Resource',
-    'deendorseResource': 'Deendorse Resource'
+    '.importResourcePage': 'Import resources',
+    '.addResourcePage': 'Suggest resource',
+    '.editResourcePage': 'Edit existing resource',
+    '.flagResourcePage': 'Flag Resource',
+    '.endorsePage': 'Endorse Resource',
+    '.deendorsePage': 'Deendorse Resource'
 };
 
 var writeDatabaseEnum = {
@@ -138,6 +138,23 @@ var voteConfigs = {
         'previousVoteClassName': 'upvoting'
     }
 };
+
+var resourceListHeader = {
+    'hide': 'Hide related resources',
+    'show': 'Show related resources'
+}
+
+var ariaLabelText = {
+    'upvote': 'upvote',
+    'downvote': 'downvote',
+    'undoUpvote': 'undo upvote',
+    'undoDownvote': 'undo downvote',
+    'problematicResource': 'problematic resource',
+    'endorsedResource': 'endorsed resource',
+    'endorseResource': 'endorse resource',
+    'undoEndorseResource': 'undo endorse resource',
+    'deendorseResource': 'deendorse resource'
+}
 
 var toggleVoteFlag = 'toggle';
 var endorseFlag = 'reason';
