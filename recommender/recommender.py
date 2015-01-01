@@ -185,7 +185,7 @@ class RecommenderXBlock(XBlock):
             'ENTRIES_PER_PAGE': 5,
             'PAGE_SPAN': 2
         },
-        scope=Scope.user_state_summary
+        scope=Scope.content
     )
     # A dict of parameters for client side initial setting
 
@@ -254,8 +254,8 @@ class RecommenderXBlock(XBlock):
                 DISABLE_DEV_UX: whether to disable the UX under development
                 CURRENT_PAGE: the default page of resources showed to students
                 ENTRIES_PER_PAGE: the number of resources in each page
-                PAGE_SPAN: the number of previous and following pages showed in the pagination item
-                INTRO: whether to show intro.js
+                PAGE_SPAN: page range in pagination control
+                INTRO: whether to take users on a little tour when they see the RecommenderXBlock first time
                 IS_USER_STAFF: whether the user is staff
         """
         result = {}
@@ -265,6 +265,34 @@ class RecommenderXBlock(XBlock):
         result['INTRO'] = not self.seen and self.intro_enabled
         tracker.emit('get_client_side_settings', result)
         return result
+
+    @XBlock.json_handler
+    def set_client_side_settings(self, data, _suffix=''):
+        """
+        Set the parameters for student-view, client side configurations.
+
+        Args:
+                data: dict in JSON format
+                data['DISABLE_DEV_UX']: whether to disable the UX under development
+                data['ENTRIES_PER_PAGE']: the number of resources in each page
+                data['PAGE_SPAN']: page range in pagination control
+                data['INTRO']: whether to take users on a little tour when they see the RecommenderXBlock first time
+        """
+        if data['DISABLE_DEV_UX'].lower() == 'false':
+            self.client_side_settings['DISABLE_DEV_UX'] = False
+        else:
+            self.client_side_settings['DISABLE_DEV_UX'] = True
+
+        if data['INTRO'].lower() == 'false':
+            self.intro_enabled = False
+        else:
+            self.intro_enabled = True
+
+        for key in ['PAGE_SPAN', 'ENTRIES_PER_PAGE']:
+            self.client_side_settings[key] = int(data[key])
+
+        tracker.emit('set_client_side_settings', data)
+        return {'Success': True}
 
     @XBlock.json_handler
     def handle_vote(self, data, _suffix=''):
@@ -850,6 +878,10 @@ class RecommenderXBlock(XBlock):
                 "recommenderstudio.html",
                 self.resource_string("static/html/recommenderstudio.html"))
         frag = Fragment(self.template_lookup.get_template("recommenderstudio.html").render())
+        frag.add_css(pkg_resources.resource_string(__name__, "static/css/recommenderstudio.css"))
+        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
+        frag.add_javascript(pkg_resources.resource_string(__name__, "static/js/src/recommenderstudio.js"))
+        frag.initialize_js('RecommenderXBlock')
         return frag
 
     @staticmethod
