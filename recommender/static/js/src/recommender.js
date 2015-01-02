@@ -40,19 +40,37 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
 
     /**
+     * Focus on the first shown resource in list.
+     */
+    function focusFirstResource() {
+        if ($('.recommenderResource', element).length == 0) { $('.noResourceIntro', element).focus(); }
+        else {
+            $($('.recommenderResource', element).get().reverse()).each(function() {
+                if ($(this).css('display') != 'none') {
+                    $(this).focus();
+                    return;
+                }
+            });
+        }
+    }
+
+    /**
      * Expand or collapse resource list.
      * This function is triggered when clicking on the header of the resource list.
      */
     function bindToggleResourceListEvent() {
         if ($(this).hasClass('resourceListExpanded')) {
             Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['hide']));
-            $(".recommenderRowInner", element).slideUp('fast');
-            $(this).text(resourceListHeader['show']);
+            $(".recommenderRowInner", element).slideUp('fast').attr('aria-hidden', 'true');
+            $(this).text(resourceListHeader['show']).attr('aria-expanded', 'false');
+
+
         }
         else {
             Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['show']));
-            $(".recommenderRowInner", element).slideDown('fast');
-            $(this).text(resourceListHeader['hide']);
+            $(".recommenderRowInner", element).slideDown('fast').attr('aria-hidden', 'false');
+            $(this).text(resourceListHeader['hide']).attr('aria-expanded', 'true');
+            focusFirstResource();
         }
         $(this).toggleClass('resourceListExpanded');
         addTooltip();
@@ -73,6 +91,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             if (index + 1 == CURRENT_PAGE) { $(ele, element).show().attr('aria-hidden', 'false'); }
             else { $(ele, element).hide().attr('aria-hidden', 'true'); }
         });
+        focusFirstResource();
     }
     
     /** 
@@ -174,8 +193,9 @@ function RecommenderXBlock(runtime, element, init_data) {
      */
     function showModifyingPage(page) {
         $(page, element).show().attr('aria-hidden', 'false');
+        $(page, element).find('.modifyPageTitle').text(modifyPageTitle[page]);
         $('.recommenderContent', element).hide().attr('aria-hidden', 'true');
-        $('.recommenderModify', element).show().attr('aria-hidden', 'false');
+        $('.recommenderModify', element).show().attr('aria-hidden', 'false').attr('aria-label', modifyPageTitle[page]).focus();
         $('.recommenderModifyTitle', element).text(headerText[page]);
     }
 
@@ -258,6 +278,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             $('.showEndorsedReasons', element).hide().attr('aria-hidden', 'true');
         }
         $('.recommenderContent', element).show().attr('aria-hidden', 'false');
+        $('.hideShow').focus();
     }
 
     /**
@@ -365,7 +386,8 @@ function RecommenderXBlock(runtime, element, init_data) {
             resourceTitle: resource['title'],
             resourceImg: resource['description'],
             resourceText: resource['descriptionText'],
-            resourceId: resource['id']
+            resourceId: resource['id'],
+            resourceVotes: votes
         }
 
         var newDiv = $(Mustache.render($("#recommenderResourceTemplate").html(), renderData));
@@ -379,7 +401,6 @@ function RecommenderXBlock(runtime, element, init_data) {
             if (pos == -1) { $(toDiv).after(newDiv); }
             else { $(toDiv).before(newDiv); }
         }
-        $('.recommenderVoteScore', newDiv).text(votes);
         addResourceDependentTooltip(newDiv);
 
         return newDiv;
@@ -510,6 +531,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 success: function(result) {
                     if (result['Success'] == true) {
                         var resource = $('.recommenderResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
+                        var newVotes = result['newVotes'].toString();
                         $('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore', resource)
                             .toggleClass(voteConfig['voteClassName']);
                         if (toggleVoteFlag in result) {
@@ -517,7 +539,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                                 .toggleClass(voteConfig['previousVoteClassName']);
                         }
                         setVoteAriaParam(resource);
-                        $('.recommenderVoteScore', resource).html(result['newVotes'].toString());
+                        $('.recommenderVoteScore', resource).html(newVotes).attr('aria-label', newVotes + recommenderVoteScorePostfix);
                     }
                     else { alert(result['error']); }
                 }
@@ -601,10 +623,12 @@ function RecommenderXBlock(runtime, element, init_data) {
                     var resourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['old_id']).toString() + ')', element);
                     /* Update the edited resource */
                     $('.recommenderTitle', resourceDiv).find('a').text(result['title']);
+                    resourceDiv.attr('aria-label', recommenderResourceAriaPrefix + result['title']);
                     $('.recommenderTitle', resourceDiv).find('a').attr('href', result['url']);
                     $('.recommenderEntryId', resourceDiv).text(result['id']);
                     if (data["description"] != "") { $('.recommenderDescriptionImg', resourceDiv).text(result['description']); }
                     if (data["descriptionText"] != "") { $('.recommenderDescriptionText', resourceDiv).text(result['descriptionText']); }
+                    $('.recommenderTitle', resourceDiv).find('a').attr('aria-label', $('.recommenderDescriptionText', resourceDiv).text());
                     backToView();
                 }
                 else { alert(result['error']); }
@@ -1156,6 +1180,10 @@ function RecommenderXBlock(runtime, element, init_data) {
             $('.noResourceIntro', element).show().attr('aria-hidden', 'false');
             $('.descriptionText', element).hide().attr('aria-hidden', 'true');
         }
+
+        /* For accessibility of expandable resource list header */
+        $('.recommenderRowInner', element).attr('id', 'recommenderRowInner-' + $(element).attr('data-usage-id'));
+        $('.hideShow', element).attr('aria-controls', 'recommenderRowInner-' + $(element).attr('data-usage-id'));
     }
     initializeRecommender();
 }

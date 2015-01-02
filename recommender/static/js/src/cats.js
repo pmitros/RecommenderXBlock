@@ -89,6 +89,8 @@ var importResourceErrorText = {
 
 var problematicReasonsPrefix = '<br/>Here is a list of reasons why students think this resource problematic: <br/>&nbsp;&nbsp;&nbsp;&nbsp;';
 var endorsedReasonsPrefix = '<br/>The reason why it is endorsed is: <br/>&nbsp;&nbsp;&nbsp;&nbsp;';
+var recommenderResourceAriaPrefix = 'Resource: ';
+var recommenderVoteScorePostfix = ' votes';
 var reasonSeparator = '<br/>&nbsp;&nbsp;&nbsp;&nbsp;';
 
 var exportResourceFileInfo = {
@@ -105,6 +107,15 @@ var headerText = {
     '.flagResourcePage': 'Flag Resource',
     '.endorsePage': 'Endorse Resource',
     '.deendorsePage': 'Deendorse Resource'
+};
+
+var modifyPageTitle = {
+    '.importResourcePage': 'Upload resources in JSON format to the database.',
+    '.addResourcePage': 'Suggest a resource which can help other students with this problem. Please do not give the answer directly.',
+    '.editResourcePage': 'Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.',
+    '.flagResourcePage': 'Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently.',
+    '.endorsePage': 'Endorse this resource and give the reason why you do that.',
+    '.deendorsePage': 'Deendorse this resource and give the reason why you do that.'
 };
 
 var writeDatabaseEnum = {

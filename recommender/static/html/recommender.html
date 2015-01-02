@@ -14,19 +14,19 @@
             <div class="paginationPageNumber morePageIcon morePreviousPageIcon" style="visibility: hidden; cursor: default;" aria-hidden="true">...</div>
         {{/noMorePreviousPageIcon}}
         {{^noMorePreviousPageIcon}}
-            <div class="paginationPageNumber morePageIcon morePreviousPageIcon" style="cursor: default;" tabindex="0">...</div>
+            <div class="paginationPageNumber morePageIcon morePreviousPageIcon" style="cursor: default;">...</div>
         {{/noMorePreviousPageIcon}}
 
         {{#pageNumberIndexes}}
             {{#pageNumberIndexIsActive}}
-                <div class="paginationPageNumber highlightActivePageNumber" role="button" aria-label="current page: page " tabindex="0">{{pageNumberIndex}}</div>
+                <div class="paginationPageNumber highlightActivePageNumber" role="button" aria-label="current page: page {{pageNumberIndex}}" tabindex="0">{{pageNumberIndex}}</div>
             {{/pageNumberIndexIsActive}}
             {{^pageNumberIndexIsActive}}
                 {{#pageNumberIndexOutOfRange}}
                     <div class="paginationPageNumber" style="visibility: hidden;" aria-hidden="true">{{pageNumberIndex}}</div>
                 {{/pageNumberIndexOutOfRange}}
                 {{^pageNumberIndexOutOfRange}}
-                    <div class="paginationPageNumber" role="button" aria-label="page " tabindex="0">{{pageNumberIndex}}</div>
+                    <div class="paginationPageNumber" role="button" aria-label="page {{pageNumberIndex}}" tabindex="0">{{pageNumberIndex}}</div>
                 {{/pageNumberIndexOutOfRange}}
             {{/pageNumberIndexIsActive}}
         {{/pageNumberIndexes}}
@@ -35,7 +35,7 @@
             <div class="paginationPageNumber morePageIcon moreNextPageIcon" style="visibility: hidden; cursor: default;" aria-hidden="true">...</div>
         {{/noMoreNextPageIcon}}
         {{^noMoreNextPageIcon}}
-            <div class="paginationPageNumber morePageIcon moreNextPageIcon" style="cursor: default;" tabindex="0">...</div>
+            <div class="paginationPageNumber morePageIcon moreNextPageIcon" style="cursor: default;">...</div>
         {{/noMoreNextPageIcon}}
         {{#paginationItemIndexIsLast}}
             <div class="paginationPageNumber nextPageIcon" style="visibility: hidden;" aria-hidden="true"></div>
@@ -46,14 +46,14 @@
     </div>
 </script>
 <script type="x-tmpl-mustache" id="recommenderResourceTemplate">
-    <div class="recommenderResource">
+    <div class="recommenderResource" role="region" aria-label="Resource: {{resourceTitle}}" tabindex="0">
         <div class="recommenderVoteBox">
             <div class="recommenderVoteArrowUp" role="button" aria-label="upvote" tabindex="0"></div>
-            <div class="recommenderVoteScore" aria-label="Votes: ">0</div>
+            <div class="recommenderVoteScore" aria-label="{{resourceVotes}} votes" tabindex="0">{{resourceVotes}}</div>
             <div class="recommenderVoteArrowDown" role="button" aria-label="downvote" tabindex="0"></div>
         </div>
         <div class="recommenderBlurb">
-            <div class="recommenderTitle"><a href="{{resourceUrl}}" target="_blank" role="button" aria-label="Resource: " tabindex="0">{{resourceTitle}}</a></div>
+            <div class="recommenderTitle"><a href="{{resourceUrl}}" target="_blank" tabindex="0" aria-label="{{resourceText}}">{{resourceTitle}}</a></div>
             <div class="recommenderDescriptionText">{{resourceText}}</div>
             <div class="recommenderDescriptionImg">{{resourceImg}}</div>
             <div class="recommenderEntryId">{{resourceId}}</div>
@@ -72,14 +72,14 @@
 <div class="recommenderBlock">
     <div class="recommenderRecommendations">
         <div class="recommenderContent">
-            <div class="hideShow" role='button' tabindex='0' data-step="1" data-intro="This is a list of recommended resources. If you're stuck, curious, or want to learn more, please look around. If you find a useful resources, help your fellow classmates by adding it!">
+            <div class="hideShow" role='button' tabindex='0' data-step="1" aria-expanded='false' data-intro="This is a list of recommended resources. If you're stuck, curious, or want to learn more, please look around. If you find a useful resources, help your fellow classmates by adding it!">
                 Show related resources
                 <div class="expanded"><div class="upArrow"></div></div>
                 <div class="notExpanded"><div class="downArrow"></div></div>
             </div>
             <div class='recommenderRowInner' style='display: none;' aria-hidden="true">
                 <div class="recommenderRow">
-                    <div class="noResourceIntro" style='display: none;' aria-hidden="true">    
+                    <div class="noResourceIntro" style='display: none;' tabindex='0' aria-hidden="true">    
                         This will be a list of resources your fellow students
                         thought might be helpful, but it is empty currently.
                         If you find useful resources, either on edx.org or 
@@ -112,9 +112,9 @@
                       <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flag_mode,problematicReason=reason,voteMode=vote_mode,endorseMode=endorse_mode,endorsedReason=endorsed_reason" />
                     % endfor
                 </div>
-                <div class="resourceAddButton" tabindex="0">Add new resource &gt;&gt;</div>
-                <div class="resourceExportButton" tabindex="0">Download resources</div>
-                <div class="resourceImportButton" style='display: none;' tabindex="0" aria-hidden="true">Upload resources</div>
+                <div class="resourceAddButton" role="button" tabindex="0">Add new resource &gt;&gt;</div>
+                <div class="resourceExportButton" role="button" tabindex="0">Download resources</div>
+                <div class="resourceImportButton" role="button" style='display: none;' tabindex="0" aria-hidden="true">Upload resources</div>
                 <div class="clearFix"></div>
                 <div class="resourceRankingForDeendorsementButton" style='display: none;' aria-hidden="true">mode</div>
                 <div class="clearFix"></div>
@@ -138,77 +138,98 @@
                 </div>
             </div>
         </div>
-        <div class='recommenderModify' style='display: none;' aria-hidden="true">
+        <div class='recommenderModify' style='display: none;' tabindex="0" role='region' aria-hidden="true">
             <div class='recommenderModifyTitleContainer'>
-                <div class='backToViewButton' role='button' tabindex="0">&lt; Related resources</div>
+                <div class='backToViewButton' role='button' tabindex="0" aria-label='cancel and go back to resource list'>&lt; Related resources</div>
                 <div class='recommenderModifyTitle'></div>
             </div>
             <div class="importResourcePage" style='display: none;' aria-hidden="true">
-                <div class="importResourcePageTitle">Upload resources in JSON format to the database.</div>
+                <div class="modifyPageTitle"></div>
                 <form method="post" class="importResourceForm">
-                    Resources (in JSON format): <input type="file" name="file" class='importResourceFile'/><br/>
+                    Resources (in JSON format): <input type="file" name="file" aria-label='Provide a file of resource list in JSON format' class='importResourceFile'/><br/>
                     <input type="button" value="Upload resources" class="importResourceSubmit" disabled/>
                 </form>
             </div>
             <div class="deendorsePage" style='display: none;' aria-hidden="true">
-                <div class="deendorsePageTitle">Deendorse this resource and give the reason why you do that.</div>
-                <input type="text" 
-                    class="deendorseReason" 
-                    name="deendorseRationale"
-                    placeholder="Reason for why this resource should be removed"/><br/>
+                <div class="modifyPageTitle"></div>
+                <label>Reason&nbsp;
+                    <input type="text"
+                        aria-label='Provide reason for why this resource should be removed'
+                        class="deendorseReason" 
+                        name="deendorseRationale"
+                        placeholder="Reason for why this resource should be removed"/>
+                </label>
                 <input type="button" value="Deendorse resource" class="deendorseResource"/>
             </div>
             <div class="endorsePage" style='display: none;' aria-hidden="true">
-                <div class="endorsePageTitle">Endorse this resource and give the reason why you do that.</div>
-                <input type="text" 
-                    class="endorseReason" 
-                    name="endorseRationale"
-                    placeholder="Reason for why this resource should be endorsed"/><br/>
+                <div class="modifyPageTitle"></div>
+                <label>Reason&nbsp;
+                    <input type="text"
+                        aria-label='Provide reason for why this resource should be endorsed'
+                        class="endorseReason" 
+                        name="endorseRationale"
+                        placeholder="Reason for why this resource should be endorsed"/>
+                </label>
                 <input type="button" value="Endorse resource" class="endorseResource"/>
             </div>
             <div class="flagResourcePage" style='display: none;' aria-hidden="true">
-                <div class="flagResourcePageTitle">Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently. </div>
-                <input type="text" 
-                    class="flagReason" 
-                    name="flagRationale"
-                    placeholder="Reason for why this resource should be removed"/><br/>
+                <div class="modifyPageTitle"></div>
+                <label>Reason&nbsp;
+                    <input type="text"
+                        aria-label='Provide reason for why this resource should be flagged'
+                        class="flagReason" 
+                        name="flagRationale"
+                        placeholder="Reason for why this resource should be flagged"/>
+                </label>
                 <input type="button" value="Flag resource" class="flagReasonSubmit"/>
             </div>
             <div class="editResourcePage" style='display: none;' aria-hidden="true">
-                <div class="editResourcePageTitle">Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.</div>
-                <div style="float: left">Title&nbsp;</div><div class='redTxt' aria-label='required'>*</div>
+                <div class="modifyPageTitle"></div>
+                <label>Title&nbsp;<span class='redTxt'></span>
+                    <textarea
+                        aria-label='Provide a resource title, required'
+                        class="editTitle"
+                        placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea>
+                </label>
+                <label>Location&nbsp;<span class='redTxt'></span>
+                    <input type="text"
+                        aria-label='Provide a resource location in url, required'
+                        class="editUrl"
+                        placeholder="http://en.wikipedia.org/wiki/Edx"/>
+                </label>
+                <label>Description&nbsp;
                 <textarea
-                    class="editTitle"
-                    placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea><br/>
-                <div style="float: left">Location&nbsp;</div><div class='redTxt' aria-label='required'>*</div>
-                <input type="text"
-                    class="editUrl"
-                    placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
-                <div style="float: left">Description&nbsp;</div>
-                <textarea
+                    aria-label='Provide a resource description'
                     class="editDescriptionText" 
-                    placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
+                    placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea>
+                </label>
                 <form method="post" class="editResourceForm">
-                    Preview screenshot: <input type="file" name="file" class='editResourceScreenshot'/><br/>
+                    Preview screenshot: <input type="file" name="file" aria-label='Provide a resource screenshot' class='editResourceScreenshot'/><br/>
                     <input type="button" value="Save change" class="editSubmit" disabled/>
                 </form>
             </div>
             <div class="addResourcePage" style='display: none;' aria-hidden="true">
-                <div class="addResourcePageTitle">Suggest a resource which can help other students with this problem. Please do not give the answer directly.</div>
-                <div style="float: left">Title&nbsp;</div><div class='redTxt' aria-label='required'>*</div>
-                <textarea 
-                    class="inTitle" 
-                    placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea><br/>
-                <div style="float: left">Location&nbsp;</div><div class='redTxt' aria-label='required'>*</div>
-                <input type="text" 
-                    class="inUrl"
-                    placeholder="http://en.wikipedia.org/wiki/Edx"/><br/>
-                <div style="float: left">Description&nbsp;</div>
-                <textarea 
-                    class="inDescriptionText" 
-                    placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea><br/>
+                <div class="modifyPageTitle"></div>
+                <label>Title&nbsp;<span class='redTxt'></span>
+                    <textarea
+                        aria-label='Provide a resource title, required'
+                        class="inTitle" 
+                        placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea>
+                </label>
+                <label>Location&nbsp;<span class='redTxt'></span>
+                    <input type="text"
+                        aria-label='Provide a resource location in url, required'
+                        class="inUrl"
+                        placeholder="http://en.wikipedia.org/wiki/Edx"/>
+                </label>
+                <label>Description&nbsp;
+                    <textarea
+                        aria-label='Provide a resource description'
+                        class="inDescriptionText" 
+                        placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea>
+                </label>
                 <form method="post" class="addResourceForm">
-                    Preview screenshot: <input type="file" name="file" class='addResourceScreenshot'/><br/>
+                    Preview screenshot: <input type="file" name="file" aria-label='Provide a file of resource screenshot' class='addResourceScreenshot'/><br/>
                     <input type="button" value="Add resource" class="addSubmit" disabled/>
                 </form>
             </div>

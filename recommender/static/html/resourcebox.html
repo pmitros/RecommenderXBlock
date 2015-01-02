@@ -1,12 +1,12 @@
 <%page args="title,votes,url,description,descriptionText,id,isProblematic,problematicReason,voteMode,endorseMode,endorsedReason"/> 
-<div class="recommenderResource">
+<div class="recommenderResource" role="region" aria-label="Resource: ${title}" tabindex="0">
     <div class="recommenderVoteBox">
         <div class="recommenderVoteArrowUp ${voteMode}" role="button" aria-label="upvote" tabindex="0"></div>
-        <div class="recommenderVoteScore ${voteMode}" aria-label="Votes: ">${votes}</div>
+        <div class="recommenderVoteScore ${voteMode}" aria-label="${votes} votes" tabindex="0">${votes}</div>
         <div class="recommenderVoteArrowDown ${voteMode}" role="button" aria-label="downvote" tabindex="0"></div>
     </div>
     <div class="recommenderBlurb">
-        <div class="recommenderTitle"><a href="${url}" target="_blank" role="button" aria-label="Resource: " tabindex="0">${title}</a></div>
+        <div class="recommenderTitle"><a href="${url}" target="_blank" tabindex="0" aria-label="${descriptionText}">${title}</a></div>
         <div class="recommenderDescriptionText">${descriptionText}</div>
         <div class="recommenderDescriptionImg">${description}</div>
         <div class="recommenderEntryId">${id}</div>
