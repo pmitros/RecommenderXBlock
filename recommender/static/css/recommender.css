@@ -180,17 +180,14 @@
   width: 40px;
 }
 
-.redTxt {
-  color: #B4053D;
-}
+.redTxt { color: #B4053D; }
+.redTxt:before { content: '*'; }
 
 .recommenderVoteArrowDown, .recommenderVoteArrowUp, .resourceEditButton, .flagResource, .deendorse, .resourceImportButton, .resourceExportButton, .resourceAddButton, .paginationPageNumber, .backToViewButton, .endorse, .resourceRankingForDeendorsementButton { cursor: pointer; }
 
 .resourceAddButton, .resourceExportButton, .resourceImportButton { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em; margin-left: 1em;}
 .resourceEditButton { float: left; }
-.addResourcePageTitle, .editResourcePageTitle, .flagResourcePageTitle, .deendorsePageTitle, .endorsePageTitle, .importResourcePageTitle {
-	margin-bottom: 1em;
-}
+.modifyPageTitle { margin-bottom: 1em; }
 
 .editResourcePage, .addResourcePage, .flagResourcePage {
   padding-left: 1em;
@@ -279,3 +276,4 @@ input[type="button"]:not([DISABLED]){
 
 a:link, a:visited { color: black; }
 form { margin: 0em; }
+label { width: 100%; }
