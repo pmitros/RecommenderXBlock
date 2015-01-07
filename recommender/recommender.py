@@ -14,24 +14,29 @@ try:
     from eventtracking import tracker
 except ImportError:
     class tracker:
-        """ Define tracker if eventtracking cannot be imported """
+        """
+        Define tracker if eventtracking cannot be imported. This is a workaround
+        so that the code works in both edx-platform and XBlock workbench (the latter
+        of which does not support event emission). This should be replaced with XBlock's
+        emit(), but at present, emit() is broken.
+        """
         def __init__(self):
             """ Do nothing """
             pass
 
         @staticmethod
         def emit(param1, param2):
-            """ Define emit method if eventtracking cannot be imported """
+            """ In workbench, do nothing for event emission """
             pass
 
 from mako.lookup import TemplateLookup
-
+from urllib import unquote_plus
+from urlparse import urlparse, urlunparse
+from webob.response import Response
 from xblock.core import XBlock
 from xblock.fields import Scope, List, Dict, Boolean, String
 from xblock.fragment import Fragment
 from xblock.reference.plugins import Filesystem
-
-from webob.response import Response
 
 
 def stem_url(url):
@@ -39,13 +44,14 @@ def stem_url(url):
     Get the base form of url.
     This is not designed for security, just to check common errors/use-cases.
     """
-    return url.split('#')[0].split('%23')[0]
-
+    parsed_url = urlparse(unquote_plus(url))
+    return urlunparse(parsed_url._replace(fragment=''))
 
 def data_structure_upgrade(old_list):
     """
-    Upgrade the data structure.
-    Storing the resources with dictionary, instead of lists
+    This is a data migration from an earlier prototype.
+    We store the resources with dictionary, instead of lists
+    as before.
     """
     if isinstance(old_list, list):
         new_dict = {}
@@ -67,49 +73,47 @@ class RecommenderXBlock(XBlock):
     ones.
     """
     seen = Boolean(
-        help="Has the interacted with the XBlock before?",
+        help="Has the student interacted with the XBlock before? Used to show optional tutorial.",
         default=False,
         scope=Scope.user_info
     )
 
     recommender_version = String(
-        help="The version of this RecommenderXBlock",
+        help="The version of this RecommenderXBlock. Used to simplify migrations.",
         default="recommender.v1.0",
         scope=Scope.content
     )
 
     intro_enabled = Boolean(
-        help="Take users on a little tour the first time they see the XBlock?", default=True, scope=Scope.content
+        help="Should we show the users a short usage tutorial the first time they see the XBlock?", default=True, scope=Scope.content
     )
 
     default_recommendations = Dict(
-        help="Dict of default help resources", default={}, scope=Scope.content
+        help="Dict of instructor-supplied help resources to seed the resource list with.", default={}, scope=Scope.content
     )
-    # A dict of default recommendations, it is a JSON object across all users,
-    #    all runs of a course, for this xblock.
+    # A dict of default recommendations supplied by the instructors to seed the list with before students add new recommendations.
+    # Also, useful for testing.
     # Usage: default_recommendations[index] = {
-    #    "id": (String) id of a resource,
-    #    "title": (String) title of a resource; a 1-3 sentence summary
-    #            of a resource
+    #    "id": (String) A unique ID. The ID is currently derived from the URL, but this has changed and may change again
+    #    "title": (String) a 1-3 sentence summary description of a resource
     #    "upvotes" : (Integer) number of upvotes,
     #    "downvotes" : (Integer) number of downvotes,
-    #    "url" : (String) the url of a resource,
-    #    "description" : (String) the url of a resource's screenshot,
-    #    "descriptionText" : (String) a paragraph of
-    #            description/summary of a resource }
-    #    we use url as key (index) of resourcs
+    #    "url" : (String) link to resource,
+    #    "description" : (String) the url of a resource's screenshot. 'screenshot' would be a better name, but would require
+    #            a cumbersome data migration.
+    #    "descriptionText" : (String) a potentially longer overview of the resource }
+    #    we use url as key (index) of resource
     recommendations = Dict(
         help="Dict of help resources", default={}, scope=Scope.user_state_summary
     )
-    # A dict of recommendations provided by students, it is a JSON object
-    #    aggregated across many users of a single block.
+    # A dict of recommendations provided by students.
     # Usage: the same as default_recommendations
 
     deendorsed_recommendations = Dict(
         help="Dict of removed resources", default={}, scope=Scope.user_state_summary
     )
-    # A list of recommendations removed by course staff, it is a JSON object
-    #    aggregated across many users of a single block.
+    # A list of recommendations removed by course staff. This is used to filter out
+    # cheats, give-aways, spam, etc.
     # Usage: the same as default_recommendations plus
     #    deendorsed_recommendations[index]['reason'] = (String) the reason why
     #            course staff remove this resource
@@ -117,24 +121,21 @@ class RecommenderXBlock(XBlock):
     endorsed_recommendation_ids = List(
         help="List of endorsed resources' ID", default=[], scope=Scope.user_state_summary
     )
-    # A list of endorsed recommendations' ids, it is a JSON object aggregated
-    #    across many users of a single block.
+    # A list of endorsed recommendations' ids -- the recommendations the course staff marked as particularly helpful.
     # Usage: endorsed_recommendation_ids[index] = (String) id of a
     #    endorsed resource
 
     endorsed_recommendation_reasons = List(
         help="List of reasons why the resources are endorsed", default=[], scope=Scope.user_state_summary
     )
-    # A list of reasons why the resources are endorsed, it is a JSON object
-    #    aggregated across many users of a single block.
+    # A list of reasons why the resources were endorsed.
     # Usage: endorsed_recommendation_reasons[index] = (String) the reason
     #    why the resource (id = endorsed_recommendation_ids[index]) is endorsed
 
     flagged_accum_resources = Dict(
-        help="Dict of problematic resources which are flagged by users", default={}, scope=Scope.user_state_summary
+        help="Dict of potentially problematic resources which were flagged by users", default={}, scope=Scope.user_state_summary
     )
-    # A dict of problematic recommendations which are flagged by users;
-    #    it is a JSON object aggregated across many users of a single block.
+    # A dict of problematic recommendations which are flagged by users for review by instructors. Used to remove spam, etc.
     # Usage: flagged_accum_resources[userId] = {
     #    "problematic resource id": (String) reason why the resource is
     #            flagged as problematic by that user }
@@ -142,43 +143,38 @@ class RecommenderXBlock(XBlock):
     upvoted_ids = List(
         help="List of resources' ids which user upvoted to", default=[], scope=Scope.user_state
     )
-    # A list of recommendations' ids which user upvoted to; it is a JSON
-    #    object for one user, for one block, and for one run of a course.
+    # A list of recommendations' ids which a particular user upvoted, so users cannot vote twice
     # Usage: upvoted_ids[index] = (String) id of a resource which was
     #    upvoted by the current user
 
     downvoted_ids = List(
         help="List of resources' ids which user downvoted to", default=[], scope=Scope.user_state
     )
-    # A list of recommendations' ids which user downvoted to; it is a JSON
-    #    object for one user, for one block, and for one run of a course.
+    # A list of recommendations' ids which user downvoted, so users cannot vote twice.
     # Usage: downvoted_ids[index] = (String) id of a resource which was
     #    downvoted by the current user
 
-    flagged_ids = List(help="List of problematic resources' ids which user " +
-                       "flagged to", default=[], scope=Scope.user_state)
-    # A list of problematic recommendations' ids which user flagged to; it is
-    #    a JSON object for one user, for one block, and for one run of a
-    #    course.
+    flagged_ids = List(
+        help="List of problematic resources' ids which the user flagged", default=[], scope=Scope.user_state
+    )
+    # A list of problematic recommendations' ids which user flagged.
     # Usage: flagged_ids[index] = (String) id of a problematic resource which
     #    was flagged by the current user
 
     flagged_reasons = List(
-        help="List of reasons why the corresponding resources were flagged by user as problematic",
+        help="List of reasons why the corresponding resources were flagged",
         default=[],
         scope=Scope.user_state
     )
-    # A list of reasons why the corresponding resources were flagged by user as
-    #    problematic; it is a JSON object for one user, for one block, and for
-    #    one run of a course.
+    # A list of reasons why the resources corresponding to those in flagged_ids were flagged
     # Usage: flagged_reasons[index] = (String) reason why the resource
     #   'flagged_ids[index]' was flagged by the current user as problematic
 
-    fs = Filesystem(help="File system", scope=Scope.user_state_summary)
-    # The file system we used to store uploaded screenshot
+    fs = Filesystem(help="File system for screenshots", scope=Scope.user_state_summary)
+    # The file system we used to store uploaded screenshots
 
     client_side_settings = Dict(
-        help="Dict of parameters for client side initial setting",
+        help="Dict of customizable settings",
         default={
             'DISABLE_DEV_UX': True,
             'CURRENT_PAGE': 1,
@@ -187,7 +183,6 @@ class RecommenderXBlock(XBlock):
         },
         scope=Scope.content
     )
-    # A dict of parameters for client side initial setting
 
     template_lookup = None
 
@@ -238,7 +233,9 @@ class RecommenderXBlock(XBlock):
 
     def error_handler(self, error_msg, event, resource_id=None):
         """
-        Generate returned dictionary and log when error comes out
+        Generate an error dictionary if something unexpected happens, such as
+        a user upvoting a resource which no longer exists. We both log to this
+        to the event logs, and return to the browser.
         """
         result = {'error': error_msg, 'Success': False}
         if resource_id is not None:
@@ -248,14 +245,14 @@ class RecommenderXBlock(XBlock):
 
     def get_client_side_settings(self):
         """
-        Return the parameters for client side environment setting.
+        Return the parameters for client-side configuration settings.
 
         Returns:
-                DISABLE_DEV_UX: whether to disable the UX under development
-                CURRENT_PAGE: the default page of resources showed to students
+                DISABLE_DEV_UX: feature flag for any new UX under development which should not appear in prod
+                CURRENT_PAGE: the default page of resources showed to students. Should always be 1
                 ENTRIES_PER_PAGE: the number of resources in each page
                 PAGE_SPAN: page range in pagination control
-                INTRO: whether to take users on a little tour when they see the RecommenderXBlock first time
+                INTRO: whether to take users through a short usage tutorial the first time they see the RecommenderXBlock
                 IS_USER_STAFF: whether the user is staff
         """
         result = {}
@@ -272,11 +269,11 @@ class RecommenderXBlock(XBlock):
         Set the parameters for student-view, client side configurations.
 
         Args:
-                data: dict in JSON format
-                data['DISABLE_DEV_UX']: whether to disable the UX under development
-                data['ENTRIES_PER_PAGE']: the number of resources in each page
-                data['PAGE_SPAN']: page range in pagination control
-                data['INTRO']: whether to take users on a little tour when they see the RecommenderXBlock first time
+                data: dict in JSON format. Keys in data:
+                  DISABLE_DEV_UX: feature flag for any new UX under development which should not appear in prod
+                  ENTRIES_PER_PAGE: the number of resources in each page
+                  PAGE_SPAN: page range in pagination control
+                  INTRO: whether to take users through a short usage tutorial the first time they see the RecommenderXBlock
         """
         if data['DISABLE_DEV_UX'].lower() == 'false':
             self.client_side_settings['DISABLE_DEV_UX'] = False
@@ -297,7 +294,7 @@ class RecommenderXBlock(XBlock):
     @XBlock.json_handler
     def handle_vote(self, data, _suffix=''):
         """
-        Add/Subtract one vote to an entry of resource.
+        Add/Subtract a vote to a resource entry.
 
         Args:
                 data: dict in JSON format
@@ -305,15 +302,15 @@ class RecommenderXBlock(XBlock):
                 data['event']: recommender_upvote or recommender_downvote
         Returns:
                 result: dict in JSON format
-                result['Success']: the boolean indicator for whether the process of this voting action is complete
-                result['error']: the error message generated when the process fails
-                result['oldVotes']: the original votes
-                result['newVotes']: the votes after this action
-                result['toggle']: the boolean indicator for whether the resource was switched from downvoted to upvoted
+                result['Success']: boolean indicator for whether the process of this voting action is complete
+                result['error']: error message generated if the process fails
+                result['oldVotes']: original # of votes
+                result['newVotes']: votes after this action
+                result['toggle']: boolean indicator for whether the resource was switched from downvoted to upvoted
         """
         resource_id = stem_url(data['id'])
         if resource_id not in self.recommendations:
-            msg = 'The selected resource is not existing'
+            msg = 'The selected resource does not exist'
             return self.error_handler(msg, data['event'], resource_id)
 
         result = {}
@@ -364,7 +361,7 @@ class RecommenderXBlock(XBlock):
     @XBlock.handler
     def upload_screenshot(self, request, _suffix=''):
         """
-        Upload a screenshot for an entry of resource as a preview, to S3.
+        Upload a screenshot for an entry of resource as a preview (typically to S3 or filesystem).
 
         Args:
                 request: HTTP POST request
@@ -372,10 +369,6 @@ class RecommenderXBlock(XBlock):
         Returns:
                 response: HTTP response
                 response.body (response.responseText): name of the uploaded file
-        Env variables:
-                aws_access_key: s3 access key
-                aws_secret_key: s3 secret key
-                bucket: name of the s3 bucket
         """
         # Check invalid file types
         image_types = {
@@ -458,15 +451,15 @@ class RecommenderXBlock(XBlock):
     @XBlock.json_handler
     def add_resource(self, data, _suffix=''):
         """
-        Add an entry of new resource.
+        Add a new resource entry.
 
         Args:
                 data: dict in JSON format
-                data[resource_content_field]: the content of the resource to be added
+                data[resource_content_field]: the resource to be added. Dictionary of description, etc. as defined above
         Returns:
                 result: dict in JSON format
-                result['Success']: the boolean indicator for whether the addition is complete
-                result['error']: the error message generated when the addition fails
+                result['Success']: boolean indicator for whether the addition is complete
+                result['error']: error message generated if the addition fails
                 result[resource_content_field]: the content of the added resource
         """
         # Construct new resource
@@ -478,7 +471,7 @@ class RecommenderXBlock(XBlock):
         # check url for redundancy
         if resource_id in self.recommendations:
             result['error'] = ('The resource you are attempting to ' +
-                               'provide has already existed')
+                               'provide already exists')
             for field in self.resource_content_fields:
                 result['dup_' + field] = self.recommendations[resource_id][field]
             result['dup_id'] = self.recommendations[resource_id]['id']
@@ -486,11 +479,11 @@ class RecommenderXBlock(XBlock):
             tracker.emit('add_resource', result)
             return result
 
-        # check url for de-endorsed resources
+        # check url for removed resources
         if resource_id in self.deendorsed_recommendations:
             result['error'] = ('The resource you are attempting to ' +
-                               'provide has been removed by staff, ' +
-                               'because: ' + self.deendorsed_recommendations[resource_id]['reason'])
+                               'provide has been disallowed by the staff. ' +
+                               'Reason: ' + self.deendorsed_recommendations[resource_id]['reason'])
             for field in self.resource_content_fields:
                 result['dup_' + field] = self.deendorsed_recommendations[resource_id][field]
             result['dup_id'] = self.deendorsed_recommendations[resource_id]['id']
@@ -553,11 +546,11 @@ class RecommenderXBlock(XBlock):
                 tracker.emit('edit_resource', result)
                 return result
 
-            # check url for de-endorsed resources
+            # check url for removed resources
             if edited_resource_id in self.deendorsed_recommendations:
                 result['error'] = ('The resource you are attempting to ' +
-                                   'provide has been removed by ' +
-                                   'staff, because: ' +
+                                   'provide has been disallowed by ' +
+                                   'staff. Reason: ' +
                                    self.deendorsed_recommendations[edited_resource_id]['reason'])
                 for field in self.resource_content_fields:
                     result['dup_' + field] = self.deendorsed_recommendations[edited_resource_id][field]
@@ -585,7 +578,7 @@ class RecommenderXBlock(XBlock):
     @XBlock.json_handler
     def flag_resource(self, data, _suffix=''):
         """
-        Flag (or unflag) an entry of problematic resource and give the reason.
+        Flag (or unflag) an entry of problematic resource and give the reason. This shows in a list for staff to review.
 
         Args:
                 data: dict in JSON format
@@ -636,7 +629,7 @@ class RecommenderXBlock(XBlock):
     @XBlock.json_handler
     def endorse_resource(self, data, _suffix=''):
         """
-        Endorse an entry of resource.
+        Endorse an entry of resource. This shows the students the resource has the staff seal of approval.
 
         Args:
                 data: dict in JSON format
@@ -678,7 +671,7 @@ class RecommenderXBlock(XBlock):
     @XBlock.json_handler
     def deendorse_resource(self, data, _suffix=''):
         """
-        Remove an entry of resource.
+        Remove an entry of resource. This removes it from the student view, and prevents students from being able to add it back.
 
         Args:
                 data: dict in JSON format
@@ -779,7 +772,7 @@ class RecommenderXBlock(XBlock):
         Accumulate the flagged resource ids and reasons from all students
         """
         if not self.get_user_is_staff():
-            msg = 'Get accumulated flagged resource without permission'
+            msg = 'Tried to access flagged resources without staff permission'
             return self.error_handler(msg, 'get_accum_flagged_resource')
         result = {
             'Success': True,
@@ -887,7 +880,7 @@ class RecommenderXBlock(XBlock):
     @staticmethod
     def workbench_scenarios():
         """
-        A canned scenario for display in the workbench.
+        A test sample scenario for display in the workbench.
         """
         return [
             (
@@ -911,10 +904,7 @@ class RecommenderXBlock(XBlock):
     @classmethod
     def parse_xml(cls, node, runtime, keys, _id_generator):
         """
-        Parse the XML for an HTML block.
-
-        The entire subtree under `node` is re-serialized, and set as the
-        content of the XBlock.
+        Parse the XML for the XBlock. It is a list of dictionaries of default recommendations.
 
         """
         block = runtime.construct_xblock_from_class(cls, keys)
