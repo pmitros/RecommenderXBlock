@@ -188,7 +188,7 @@ function RecommenderXBlock(runtime, element, init_data) {
 
     /**
      * Hide resource list and show pages for modifying
-     * (i.e., add/edit/endorse/deendorse/import/flag) recommender
+     * (i.e., add/edit/endorse/remove/import/flag) recommender
      * @param {string} page The string indicating the page we are going to show. 
      */
     function showModifyingPage(page) {
@@ -298,7 +298,7 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
 
     /**
-     * Interrupt a submission (resource add, edit, flag, endorse, deendorse,
+     * Interrupt a submission (resource add, edit, flag, endorse, remove,
      * import, etc.). First, log the typed information for an incomplete
      * submission. Second, go back from pages for resource addition, edit,
      * flag, etc. to pages for viewing resources.
@@ -893,9 +893,9 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
     
     /**
-     * This is a function restricted to course staff, where we can toggle between viewing mode for deendorsement and
+     * This is a function restricted to course staff, where we can toggle between viewing mode for removal and
      * ordinary browsing
-     * Deendorsement mode:
+     * Removal mode:
      *      Re-rank resources by first showing flagged resource, then non-flagged one in the order of increasing votes
      *      Show the reason and accumulated flagged result
      * Ordinary mode:
@@ -1036,13 +1036,13 @@ function RecommenderXBlock(runtime, element, init_data) {
 
     /**
      * Bind the event for deendorsing a resource and submitting the
-     * reason why the staff think the resource should be deendorsed.
+     * reason why the staff think the resource should be removed.
      * @param {element} ele The recommenderResource element the event will be bound to.
      */
     function bindResourceDeendorseEvent(ele) {
         if ($('.deendorse', ele).length == 0) { $('.recommenderEdit', ele).append(deendorseIcon); }
                     
-        /* Enter deendorse mode */
+        /* Enter removal mode */
         $('.deendorse', ele).click(function() {
             showModifyingPage('.deendorsePage')
             $('.deendorsePage', element).find('input[type="text"]').val('');
@@ -1050,7 +1050,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
             
             $('.deendorseResource', element).unbind();
-            /* Deendorse a selected resource */
+            /* Remove a selected resource */
             $('.deendorseResource', element).click(function() {
                 data['reason'] = $('.deendorseReason', element).val();
                 Logger.log('mit.recommender.deendorseResource', generateLog(loggerStatus['deendorseResource']['deendorseResource'], data));
@@ -1062,7 +1062,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                         if (result['Success']) {
                             var deletedResourceIdx = findResourceDiv(result['id']);
                             $('.recommenderResource:eq(' + deletedResourceIdx.toString() + ')', element).remove();
-                            /* Deendorse (remove) last resource */
+                            /* Remove last resource */
                             if ($('.recommenderResource', element).length == deletedResourceIdx) { deletedResourceIdx--; }
                             CURRENT_PAGE = Math.ceil((deletedResourceIdx + 1)/ENTRIES_PER_PAGE); 
                             paginationItem();
@@ -1116,7 +1116,7 @@ function RecommenderXBlock(runtime, element, init_data) {
     }
 
     /**
-     * Set the text of endorse/deendorse buttons for accessibility, these
+     * Set the text of endorse/remove buttons for accessibility, these
      * buttons are limited to staff.
      * @param {element} ele The recommenderResource element the buttons attached to.
      */

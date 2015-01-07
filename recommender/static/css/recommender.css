@@ -248,7 +248,7 @@ input[type="button"]:not([DISABLED]){
   color: white;
 }
 .resourceRankingForDeendorsementButton:not(deendorsementMode):before { content: 'Ordinary '; }
-.resourceRankingForDeendorsementButton.deendorsementMode:before { content: 'De-endorsement '; }
+.resourceRankingForDeendorsementButton.deendorsementMode:before { content: 'Removal '; }
 
 .endorse:not(.endorsed) { color: #DFD3D3; display: none; }
 .endorse.endorsed { color: rgb(69, 194, 10); }
@@ -259,7 +259,6 @@ input[type="button"]:not([DISABLED]){
 .plusIcon:before { content: '+'; }
 .nextPageIcon:before { content: '►'; }
 .previousPageIcon:before { content: '◄'; }
-/*.morePageIcon:before { content: '...'; }*/
 .highlightActivePageNumber { background-color: #948f8f; }
 
 .my-custom-theme {

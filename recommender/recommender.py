@@ -106,13 +106,13 @@ class RecommenderXBlock(XBlock):
     # Usage: the same as default_recommendations
 
     deendorsed_recommendations = Dict(
-        help="Dict of deendorsed resources", default={}, scope=Scope.user_state_summary
+        help="Dict of removed resources", default={}, scope=Scope.user_state_summary
     )
-    # A list of recommendations deendorsed by course staff, it is a JSON object
+    # A list of recommendations removed by course staff, it is a JSON object
     #    aggregated across many users of a single block.
     # Usage: the same as default_recommendations plus
     #    deendorsed_recommendations[index]['reason'] = (String) the reason why
-    #            course staff deendorse this resource
+    #            course staff remove this resource
 
     endorsed_recommendation_ids = List(
         help="List of endorsed resources' ID", default=[], scope=Scope.user_state_summary
@@ -489,7 +489,7 @@ class RecommenderXBlock(XBlock):
         # check url for de-endorsed resources
         if resource_id in self.deendorsed_recommendations:
             result['error'] = ('The resource you are attempting to ' +
-                               'provide has been de-endorsed by staff, ' +
+                               'provide has been removed by staff, ' +
                                'because: ' + self.deendorsed_recommendations[resource_id]['reason'])
             for field in self.resource_content_fields:
                 result['dup_' + field] = self.deendorsed_recommendations[resource_id][field]
@@ -556,7 +556,7 @@ class RecommenderXBlock(XBlock):
             # check url for de-endorsed resources
             if edited_resource_id in self.deendorsed_recommendations:
                 result['error'] = ('The resource you are attempting to ' +
-                                   'provide has been de-endorsed by ' +
+                                   'provide has been removed by ' +
                                    'staff, because: ' +
                                    self.deendorsed_recommendations[edited_resource_id]['reason'])
                 for field in self.resource_content_fields:
@@ -678,21 +678,21 @@ class RecommenderXBlock(XBlock):
     @XBlock.json_handler
     def deendorse_resource(self, data, _suffix=''):
         """
-        Deendorse an entry of resource.
+        Remove an entry of resource.
 
         Args:
                 data: dict in JSON format
-                data['id']: the ID of the resouce to be deendorsed
-                data['reason']: the reason why the resouce was deendorsed
+                data['id']: the ID of the resouce to be removed
+                data['reason']: the reason why the resouce was removed
         Returns:
                 result: dict in JSON format
-                result['Success']: the boolean indicator for whether the deendorsement is complete
-                result['error']: the error message generated when the deendorsement fails
-                result['recommendation']: (Dict) the deendorsed resource
-                result['recommendation']['reason']: the reason why the resouce was deendorsed
+                result['Success']: the boolean indicator for whether the removal is complete
+                result['error']: the error message generated when the removal fails
+                result['recommendation']: (Dict) the removed resource
+                result['recommendation']['reason']: the reason why the resouce was removed
         """
         if not self.get_user_is_staff():
-            msg = 'Deendorse resource without permission'
+            msg = 'Remove resource without permission'
             return self.error_handler(msg, 'deendorse_resource')
 
         resource_id = stem_url(data['id'])
