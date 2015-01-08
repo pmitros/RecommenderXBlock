@@ -15,7 +15,7 @@ function RecommenderXBlock(runtime, element, init_data) {
     var uploadScreenshotUrl = runtime.handlerUrl(element, 'upload_screenshot');
     var deendorseResourceUrl = runtime.handlerUrl(element, 'deendorse_resource');
     var endorseResourceUrl = runtime.handlerUrl(element, 'endorse_resource');
-    var getAccumFlaggedResourceUrl = runtime.handlerUrl(element, 'get_accum_flagged_resource');
+    var accumFlaggedResourceUrl = runtime.handlerUrl(element, 'accum_flagged_resource');
 
     /* Define global configuration variables */
     var DISABLE_DEV_UX, CURRENT_PAGE, ENTRIES_PER_PAGE, PAGE_SPAN, IS_USER_STAFF, FLAGGED_RESOURCE_REASONS;
@@ -160,20 +160,18 @@ function RecommenderXBlock(runtime, element, init_data) {
             url: exportResourceUrl,
             data: JSON.stringify({}),
             success: function(result) {
-                if (result['Success'] == true) {
-                    var resourceContent = exportResourceFileInfo['fileType'];
-                    resourceContent += JSON.stringify(result['export']);
+                var resourceContent = exportResourceFileInfo['fileType'];
+                resourceContent += JSON.stringify(result['export']);
 
-                    var encodedUri = encodeURI(resourceContent);
-                    var link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", exportResourceFileInfo['fileName']);
-                    link.click();
+                var encodedUri = encodeURI(resourceContent);
+                var link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", exportResourceFileInfo['fileName']);
+                link.click();
 
-                    Logger.log('mit.recommender.exportResource', generateLog(
-                        loggerStatus['exportResource']['exportResource'], result
-                    ));
-                }
+                Logger.log('mit.recommender.exportResource', generateLog(
+                    loggerStatus['exportResource']['exportResource'], result
+                ));
             }
         });
     }
@@ -221,30 +219,26 @@ function RecommenderXBlock(runtime, element, init_data) {
                 cache: false,
                 processData: false,
                 async: false,
-                complete: function(result) {
-                    for (var key in importResourceError) {
-                        if (result.responseText.indexOf(importResourceError[key]) == 0) {
-                            alert(importResourceErrorText[importResourceError[key]]);
-                            resetImportResourcePage();
-                            return;
-                        }
-                    }
+                success: function(result) {
                     /* Rendering new resources */
-                    data = JSON.parse(result.responseText);
                     $('.recommenderResource', element).remove();
-                    for (var resource_id in data['recommendations']) {
-                        item = data['recommendations'][resource_id];
+                    for (var resource_id in result['recommendations']) {
+                        item = result['recommendations'][resource_id];
                         var newResourceDiv = showResourceEntry(item['upvotes'] - item['downvotes'], item);
 
-                        if (data['endorsed_recommendation_ids'].indexOf(resource_id) != -1){
+                        if (result['endorsed_recommendation_ids'].indexOf(resource_id) != -1){
                             $('.endorse', newResourceDiv).addClass('endorsed');
-                            $('.recommenderEndorseReason', newResourceDiv).text(data['endorsed_recommendation_reasons'][data['endorsed_recommendation_ids'].indexOf(resource_id)]);
+                            $('.recommenderEndorseReason', newResourceDiv).text(result['endorsed_recommendation_reasons'][result['endorsed_recommendation_ids'].indexOf(resource_id)]);
                         }
                     }
                     paginationItem();
                     pagination();
                     backToView();
-                    Logger.log('mit.recommender.importResource', generateLog(loggerStatus['importResource']['complete'], data));
+                    Logger.log('mit.recommender.importResource', generateLog(loggerStatus['importResource']['complete'], result));
+                },
+                error: function(result, status) {
+                    alert(importResourceErrorText[result.status]);
+                    resetImportResourcePage();
                 },
             });
         });
@@ -416,15 +410,16 @@ function RecommenderXBlock(runtime, element, init_data) {
             url: addResourceUrl,
             data: JSON.stringify(data),
             success: function(result) {
-                if (result['Success'] == true) {
-                    showResourceEntry(0, result);
-                    
-                    resetAddResourcePage();
-                    paginationItem();
-                    pagination();
-                    backToView();
-                }
-                else { alert(result['error']); }
+                showResourceEntry(0, result);
+                
+                resetAddResourcePage();
+                paginationItem();
+                pagination();
+                backToView();
+            },
+            error: function (request) {
+                response = JSON.parse(request.responseText);
+                alert(response['error']);
             }
         });
     }
@@ -446,26 +441,23 @@ function RecommenderXBlock(runtime, element, init_data) {
             cache: false,
             processData: false,
             async: false,
-            complete: function(result) {
-                /**
-                 * File uploading error:
-                 * 1. The provided file is in wrong file type: accept files only in jpg, png, and gif.
-                 * 2. The filesystem (e.g., Amazon S3) is not properly set
-                 * 3. Size of uploaded file exceeds threshold
-                 */
-                for (var key in uploadFileError) {
-                    if (result.responseText.indexOf(uploadFileError[key]) == 0) {
-                        alert(uploadFileErrorText[uploadFileError[key]]);
-                        $("input[name='file']", formDiv).val('');
-                        if (writeType == writeDatabaseEnum.ADD) { enableAddSubmit(); }
-                        else if (writeType == writeDatabaseEnum.EDIT) { enableEditSubmit(); }
-                        return;
-                    }
-                }
+            success: function(result) {
                 /* Writing the resource to database */
-                data['description'] = result.responseText;
+                data['description'] = result;
                 if (writeType == writeDatabaseEnum.ADD) { addResource(data); }
                 else if (writeType == writeDatabaseEnum.EDIT) { editResource(data); }
+            },
+            error: function(result) {
+                /**
+                 * File uploading error:
+                 * 415: The provided file is in wrong file type: accept files only in jpg, png, and gif.
+                 * 404: The filesystem (e.g., Amazon S3) is not properly set
+                 * 413: Size of uploaded file exceeds threshold
+                 */
+                alert(uploadFileErrorText[result.status]);
+                $("input[name='file']", formDiv).val('');
+                if (writeType == writeDatabaseEnum.ADD) { enableAddSubmit(); }
+                else if (writeType == writeDatabaseEnum.EDIT) { enableEditSubmit(); }
             },
         });
     }
@@ -529,19 +521,20 @@ function RecommenderXBlock(runtime, element, init_data) {
                 url: handleVoteUrl,
                 data: JSON.stringify(data),
                 success: function(result) {
-                    if (result['Success'] == true) {
-                        var resource = $('.recommenderResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
-                        var newVotes = result['newVotes'].toString();
+                    var resource = $('.recommenderResource:eq(' + findResourceDiv(result['id']).toString() + ')', element);
+                    var newVotes = result['newVotes'].toString();
+                    $('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore', resource)
+                        .toggleClass(voteConfig['voteClassName']);
+                    if (toggleVoteFlag in result) {
                         $('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore', resource)
-                            .toggleClass(voteConfig['voteClassName']);
-                        if (toggleVoteFlag in result) {
-                            $('.recommenderVoteArrowUp, .recommenderVoteArrowDown, .recommenderVoteScore', resource)
-                                .toggleClass(voteConfig['previousVoteClassName']);
-                        }
-                        setVoteAriaParam(resource);
-                        $('.recommenderVoteScore', resource).html(newVotes).attr('aria-label', newVotes + recommenderVoteScorePostfix);
+                            .toggleClass(voteConfig['previousVoteClassName']);
                     }
-                    else { alert(result['error']); }
+                    setVoteAriaParam(resource);
+                    $('.recommenderVoteScore', resource).html(newVotes).attr('aria-label', newVotes + recommenderVoteScorePostfix);
+                },
+                error: function (request) {
+                    response = JSON.parse(request.responseText);
+                    alert(response['error']);
                 }
             });
         });
@@ -619,19 +612,20 @@ function RecommenderXBlock(runtime, element, init_data) {
             url: editResourceUrl,
             data: JSON.stringify(data),
             success: function(result) {
-                if (result['Success'] == true) {
-                    var resourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['old_id']).toString() + ')', element);
-                    /* Update the edited resource */
-                    $('.recommenderTitle', resourceDiv).find('a').text(result['title']);
-                    resourceDiv.attr('aria-label', recommenderResourceAriaPrefix + result['title']);
-                    $('.recommenderTitle', resourceDiv).find('a').attr('href', result['url']);
-                    $('.recommenderEntryId', resourceDiv).text(result['id']);
-                    if (data["description"] != "") { $('.recommenderDescriptionImg', resourceDiv).text(result['description']); }
-                    if (data["descriptionText"] != "") { $('.recommenderDescriptionText', resourceDiv).text(result['descriptionText']); }
-                    $('.recommenderTitle', resourceDiv).find('a').attr('aria-label', $('.recommenderDescriptionText', resourceDiv).text());
-                    backToView();
-                }
-                else { alert(result['error']); }
+                var resourceDiv = $('.recommenderResource:eq(' + findResourceDiv(result['old_id']).toString() + ')', element);
+                /* Update the edited resource */
+                $('.recommenderTitle', resourceDiv).find('a').text(result['title']);
+                resourceDiv.attr('aria-label', recommenderResourceAriaPrefix + result['title']);
+                $('.recommenderTitle', resourceDiv).find('a').attr('href', result['url']);
+                $('.recommenderEntryId', resourceDiv).text(result['id']);
+                if (data["description"] != "") { $('.recommenderDescriptionImg', resourceDiv).text(result['description']); }
+                if (data["descriptionText"] != "") { $('.recommenderDescriptionText', resourceDiv).text(result['descriptionText']); }
+                $('.recommenderTitle', resourceDiv).find('a').attr('aria-label', $('.recommenderDescriptionText', resourceDiv).text());
+                backToView();
+            },
+            error: function (request) {
+                response = JSON.parse(request.responseText);
+                alert(response['error']);
             }
         });
     }
@@ -909,25 +903,26 @@ function RecommenderXBlock(runtime, element, init_data) {
             if ($(this).hasClass('deendorsementMode')) {
                 $.ajax({
                     type: "POST",
-                    url: getAccumFlaggedResourceUrl,
+                    url: accumFlaggedResourceUrl,
                     data: JSON.stringify({}),
                     success: function(result) {
-                        if (result['Success']) {
-                            FLAGGED_RESOURCE_REASONS = result['flagged_resources'];
-                            var startEntryIndex = 0;
-                            for (var key in FLAGGED_RESOURCE_REASONS) {
-                                var resourcePos = findResourceDiv(key);
-                                if (startEntryIndex != resourcePos) {
-                                    $('.recommenderResource:eq(' + startEntryIndex + ')', element).before($('.recommenderResource:eq(' + resourcePos + ')', element));
-                                }
-                                startEntryIndex++;
+                        FLAGGED_RESOURCE_REASONS = result['flagged_resources'];
+                        var startEntryIndex = 0;
+                        for (var key in FLAGGED_RESOURCE_REASONS) {
+                            var resourcePos = findResourceDiv(key);
+                            if (startEntryIndex != resourcePos) {
+                                $('.recommenderResource:eq(' + startEntryIndex + ')', element).before($('.recommenderResource:eq(' + resourcePos + ')', element));
                             }
-
-                            sortResource(sortResourceEnum.INCREASE, startEntryIndex);
-                            paginationItem();
-                            pagination();
+                            startEntryIndex++;
                         }
-                        else { alert(result['error']); }
+
+                        sortResource(sortResourceEnum.INCREASE, startEntryIndex);
+                        paginationItem();
+                        pagination();
+                    },
+                    error: function (request) {
+                        response = JSON.parse(request.responseText);
+                        alert(response['error']);
                     }
                 });
             }
@@ -1017,19 +1012,20 @@ function RecommenderXBlock(runtime, element, init_data) {
             url: endorseResourceUrl,
             data: JSON.stringify(data),
             success: function(result) {
-                if (result['Success']) {
-                    var endorsedResourceIdx = findResourceDiv(result['id']);
-                    var endorsedDiv = $('.recommenderResource:eq(' + endorsedResourceIdx.toString() + ')', element);
-                    $('.endorse', endorsedDiv).toggleClass('endorsed').show().attr('aria-hidden', 'false');
-                    addResourceDependentTooltip(endorsedDiv);
-                    setEndorseDeendorseAriaParam(endorsedDiv);
-                    if (endorseFlag in result) {
-                        $('.recommenderEndorseReason', endorsedDiv).text(result['reason']);
-                        backToView();
-                    }
-                    else { $('.recommenderEndorseReason', endorsedDiv).text(''); }
+                var endorsedResourceIdx = findResourceDiv(result['id']);
+                var endorsedDiv = $('.recommenderResource:eq(' + endorsedResourceIdx.toString() + ')', element);
+                $('.endorse', endorsedDiv).toggleClass('endorsed').show().attr('aria-hidden', 'false');
+                addResourceDependentTooltip(endorsedDiv);
+                setEndorseDeendorseAriaParam(endorsedDiv);
+                if (endorseFlag in result) {
+                    $('.recommenderEndorseReason', endorsedDiv).text(result['reason']);
+                    backToView();
                 }
-                else { alert(result['error']); }
+                else { $('.recommenderEndorseReason', endorsedDiv).text(''); }
+            },
+            error: function (request) {
+                response = JSON.parse(request.responseText);
+                alert(response['error']);
             }
         });
     }
@@ -1059,17 +1055,18 @@ function RecommenderXBlock(runtime, element, init_data) {
                     url: deendorseResourceUrl,
                     data: JSON.stringify(data),
                     success: function(result) {
-                        if (result['Success']) {
-                            var deletedResourceIdx = findResourceDiv(result['id']);
-                            $('.recommenderResource:eq(' + deletedResourceIdx.toString() + ')', element).remove();
-                            /* Remove last resource */
-                            if ($('.recommenderResource', element).length == deletedResourceIdx) { deletedResourceIdx--; }
-                            CURRENT_PAGE = Math.ceil((deletedResourceIdx + 1)/ENTRIES_PER_PAGE); 
-                            paginationItem();
-                            pagination();
-                            backToView();
-                        }
-                        else { alert(result['error']); }
+                        var deletedResourceIdx = findResourceDiv(result['id']);
+                        $('.recommenderResource:eq(' + deletedResourceIdx.toString() + ')', element).remove();
+                        /* Remove last resource */
+                        if ($('.recommenderResource', element).length == deletedResourceIdx) { deletedResourceIdx--; }
+                        CURRENT_PAGE = Math.ceil((deletedResourceIdx + 1)/ENTRIES_PER_PAGE); 
+                        paginationItem();
+                        pagination();
+                        backToView();
+                    },
+                    error: function (request) {
+                        response = JSON.parse(request.responseText);
+                        alert(response['error']);
                     }
                 });
             });
@@ -1133,8 +1130,9 @@ function RecommenderXBlock(runtime, element, init_data) {
     function initializeRecommender() {
         /* Set configuration variables */
         FLAGGED_RESOURCE_REASONS = {};
+        /* the default page of resources showed to students. Should always be 1 */
+        CURRENT_PAGE = 1;
         DISABLE_DEV_UX = init_data['DISABLE_DEV_UX'];
-        CURRENT_PAGE = init_data['CURRENT_PAGE'];
         ENTRIES_PER_PAGE = init_data['ENTRIES_PER_PAGE'];
         PAGE_SPAN = init_data['PAGE_SPAN'];
         IS_USER_STAFF = init_data['IS_USER_STAFF'];

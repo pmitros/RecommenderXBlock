@@ -8,17 +8,17 @@ function RecommenderXBlock(runtime, element) {
     function bindConfigSettingEvent() {
         $('.configSubmit').click(function() {
             var data = {};
-            data['DISABLE_DEV_UX'] = $('.developedUXDisable').val();
-            data['ENTRIES_PER_PAGE'] = $('.entriesPerPage').val();
-            data['PAGE_SPAN'] = $('.pageSpan').val();
-            data['INTRO'] = $('.introEnable').val();
+            data['DISABLE_DEV_UX'] = $('.developedUXDisable').val() == 'true';
+            data['ENTRIES_PER_PAGE'] = parseInt($('.entriesPerPage').val());
+            data['PAGE_SPAN'] = parseInt($('.pageSpan').val());
+            data['INTRO_ENABLE'] = $('.introEnable').val() == 'true';
 
             $.ajax({
                 type: "POST",
                 url: setConfigUrl,
                 data: JSON.stringify(data),
                 success: function(result) {
-                    if (result['Success'] == true) { alert('The configurations have been updated'); }
+                    alert('The configurations have been updated');
                 }
             });
         });
