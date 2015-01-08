@@ -88,9 +88,6 @@ class RecommenderXBlock(XBlock):
         help="Should we show the users a short usage tutorial the first time they see the XBlock?", default=True, scope=Scope.content
     )
 
-    default_recommendations = Dict(
-        help="Dict of instructor-supplied help resources to seed the resource list with.", default={}, scope=Scope.content
-    )
     # A dict of default recommendations supplied by the instructors to seed the list with before students add new recommendations.
     # Also, useful for testing.
     # Usage: default_recommendations[index] = {
@@ -103,81 +100,84 @@ class RecommenderXBlock(XBlock):
     #            a cumbersome data migration.
     #    "descriptionText" : (String) a potentially longer overview of the resource }
     #    we use url as key (index) of resource
+    default_recommendations = Dict(
+        help="Dict of instructor-supplied help resources to seed the resource list with.", default={}, scope=Scope.content
+    )
+
+    # A dict of recommendations provided by students.
+    # Usage: the same as default_recommendations
     recommendations = Dict(
         help="Dict of help resources", default={}, scope=Scope.user_state_summary
     )
-    # A dict of recommendations provided by students.
-    # Usage: the same as default_recommendations
 
-    deendorsed_recommendations = Dict(
-        help="Dict of removed resources", default={}, scope=Scope.user_state_summary
-    )
     # A list of recommendations removed by course staff. This is used to filter out
     # cheats, give-aways, spam, etc.
     # Usage: the same as default_recommendations plus
     #    deendorsed_recommendations[index]['reason'] = (String) the reason why
     #            course staff remove this resource
-
-    endorsed_recommendation_ids = List(
-        help="List of endorsed resources' ID", default=[], scope=Scope.user_state_summary
+    deendorsed_recommendations = Dict(
+        help="Dict of removed resources", default={}, scope=Scope.user_state_summary
     )
+
     # A list of endorsed recommendations' ids -- the recommendations the course staff marked as particularly helpful.
     # Usage: endorsed_recommendation_ids[index] = (String) id of a
     #    endorsed resource
-
-    endorsed_recommendation_reasons = List(
-        help="List of reasons why the resources are endorsed", default=[], scope=Scope.user_state_summary
+    endorsed_recommendation_ids = List(
+        help="List of endorsed resources' ID", default=[], scope=Scope.user_state_summary
     )
+
     # A list of reasons why the resources were endorsed.
     # Usage: endorsed_recommendation_reasons[index] = (String) the reason
     #    why the resource (id = endorsed_recommendation_ids[index]) is endorsed
-
-    flagged_accum_resources = Dict(
-        help="Dict of potentially problematic resources which were flagged by users", default={}, scope=Scope.user_state_summary
+    endorsed_recommendation_reasons = List(
+        help="List of reasons why the resources are endorsed", default=[], scope=Scope.user_state_summary
     )
+
     # A dict of problematic recommendations which are flagged by users for review by instructors. Used to remove spam, etc.
     # Usage: flagged_accum_resources[userId] = {
     #    "problematic resource id": (String) reason why the resource is
     #            flagged as problematic by that user }
-
-    upvoted_ids = List(
-        help="List of resources' ids which user upvoted to", default=[], scope=Scope.user_state
+    flagged_accum_resources = Dict(
+        help="Dict of potentially problematic resources which were flagged by users", default={}, scope=Scope.user_state_summary
     )
+
     # A list of recommendations' ids which a particular user upvoted, so users cannot vote twice
     # Usage: upvoted_ids[index] = (String) id of a resource which was
     #    upvoted by the current user
-
-    downvoted_ids = List(
-        help="List of resources' ids which user downvoted to", default=[], scope=Scope.user_state
+    upvoted_ids = List(
+        help="List of resources' ids which user upvoted to", default=[], scope=Scope.user_state
     )
+
     # A list of recommendations' ids which user downvoted, so users cannot vote twice.
     # Usage: downvoted_ids[index] = (String) id of a resource which was
     #    downvoted by the current user
-
-    flagged_ids = List(
-        help="List of problematic resources' ids which the user flagged", default=[], scope=Scope.user_state
+    downvoted_ids = List(
+        help="List of resources' ids which user downvoted to", default=[], scope=Scope.user_state
     )
+
     # A list of problematic recommendations' ids which user flagged.
     # Usage: flagged_ids[index] = (String) id of a problematic resource which
     #    was flagged by the current user
+    flagged_ids = List(
+        help="List of problematic resources' ids which the user flagged", default=[], scope=Scope.user_state
+    )
 
+    # A list of reasons why the resources corresponding to those in flagged_ids were flagged
+    # Usage: flagged_reasons[index] = (String) reason why the resource
+    #   'flagged_ids[index]' was flagged by the current user as problematic
     flagged_reasons = List(
         help="List of reasons why the corresponding resources were flagged",
         default=[],
         scope=Scope.user_state
     )
-    # A list of reasons why the resources corresponding to those in flagged_ids were flagged
-    # Usage: flagged_reasons[index] = (String) reason why the resource
-    #   'flagged_ids[index]' was flagged by the current user as problematic
 
-    fs = Filesystem(help="File system for screenshots", scope=Scope.user_state_summary)
     # The file system we used to store uploaded screenshots
+    fs = Filesystem(help="File system for screenshots", scope=Scope.user_state_summary)
 
     client_side_settings = Dict(
         help="Dict of customizable settings",
         default={
             'DISABLE_DEV_UX': True,
-            'CURRENT_PAGE': 1,
             'ENTRIES_PER_PAGE': 5,
             'PAGE_SPAN': 2
         },
@@ -186,10 +186,10 @@ class RecommenderXBlock(XBlock):
 
     template_lookup = None
 
+    # the dictionary keys for storing the content of a recommendation
     resource_content_fields = [
         'url', 'title', 'description', 'descriptionText'
     ]
-    # the dictionary keys for storing the content of a recommendation
 
     def get_user_is_staff(self):
         """
@@ -198,6 +198,11 @@ class RecommenderXBlock(XBlock):
         being defined. However, It's the only way to get the data right now.
         TODO: Should be proper handled in future
         """
+        # This is a workaround so that the code works in both edx-platform
+        # and XBlock workbench (the latter of which does not have the
+        # information of users). This should be replaced with XBlock's
+        # xmodule_runtime.user_is_staff, but at present,
+        # xmodule_runtime.user_is_staff is broken.
         if "workbench" in str(type(self.runtime)):
             return True
         return self.xmodule_runtime.user_is_staff
@@ -209,6 +214,11 @@ class RecommenderXBlock(XBlock):
         being defined. However, It's the only way to get the data right now.
         TODO: Should be proper handled in future
         """
+        # This is a workaround so that the code works in both edx-platform
+        # and XBlock workbench (the latter of which does not have the
+        # information of users). This should be replaced with XBlock's
+        # xmodule_runtime.anonymous_student_id, but at present,
+        # xmodule_runtime.anonymous_student_id is broken.
         if "workbench" in str(type(self.runtime)):
             return 'user1'
         return self.xmodule_runtime.anonymous_student_id
@@ -249,15 +259,12 @@ class RecommenderXBlock(XBlock):
 
         Returns:
                 DISABLE_DEV_UX: feature flag for any new UX under development which should not appear in prod
-                CURRENT_PAGE: the default page of resources showed to students. Should always be 1
                 ENTRIES_PER_PAGE: the number of resources in each page
                 PAGE_SPAN: page range in pagination control
                 INTRO: whether to take users through a short usage tutorial the first time they see the RecommenderXBlock
                 IS_USER_STAFF: whether the user is staff
         """
-        result = {}
-        for parameter in self.client_side_settings:
-            result[parameter] = self.client_side_settings[parameter]
+        result = self.client_side_settings.copy()
         result['IS_USER_STAFF'] = self.get_user_is_staff()
         result['INTRO'] = not self.seen and self.intro_enabled
         tracker.emit('get_client_side_settings', result)
@@ -273,20 +280,11 @@ class RecommenderXBlock(XBlock):
                   DISABLE_DEV_UX: feature flag for any new UX under development which should not appear in prod
                   ENTRIES_PER_PAGE: the number of resources in each page
                   PAGE_SPAN: page range in pagination control
-                  INTRO: whether to take users through a short usage tutorial the first time they see the RecommenderXBlock
+                  INTRO_ENABLE: Should we show the users a short usage tutorial the first time they see the XBlock?
         """
-        if data['DISABLE_DEV_UX'].lower() == 'false':
-            self.client_side_settings['DISABLE_DEV_UX'] = False
-        else:
-            self.client_side_settings['DISABLE_DEV_UX'] = True
-
-        if data['INTRO'].lower() == 'false':
-            self.intro_enabled = False
-        else:
-            self.intro_enabled = True
-
-        for key in ['PAGE_SPAN', 'ENTRIES_PER_PAGE']:
-            self.client_side_settings[key] = int(data[key])
+        self.intro_enabled = data['INTRO_ENABLE']
+        for key in ['DISABLE_DEV_UX', 'PAGE_SPAN', 'ENTRIES_PER_PAGE']:
+            self.client_side_settings[key] = data[key]
 
         tracker.emit('set_client_side_settings', data)
         return {'Success': True}
@@ -321,13 +319,13 @@ class RecommenderXBlock(XBlock):
 
         if is_event_upvote:
             if resource_id in self.upvoted_ids:
-                del self.upvoted_ids[self.upvoted_ids.index(resource_id)]
+                self.upvoted_ids.remove(resource_id)
                 self.recommendations[resource_id]['upvotes'] -= 1
                 result['newVotes'] = (self.recommendations[resource_id]['upvotes'] -
                                       self.recommendations[resource_id]['downvotes'])
         else:
             if resource_id in self.downvoted_ids:
-                del self.downvoted_ids[self.downvoted_ids.index(resource_id)]
+                self.downvoted_ids.remove(resource_id)
                 self.recommendations[resource_id]['downvotes'] -= 1
                 result['newVotes'] = (self.recommendations[resource_id]['upvotes'] -
                                       self.recommendations[resource_id]['downvotes'])
@@ -339,14 +337,14 @@ class RecommenderXBlock(XBlock):
 
         if is_event_upvote:
             if resource_id in self.downvoted_ids:
-                del self.downvoted_ids[self.downvoted_ids.index(resource_id)]
+                self.downvoted_ids.remove(resource_id)
                 self.recommendations[resource_id]['downvotes'] -= 1
                 result['toggle'] = True
             self.upvoted_ids.append(resource_id)
             self.recommendations[resource_id]['upvotes'] += 1
         else:
             if resource_id in self.upvoted_ids:
-                del self.upvoted_ids[self.upvoted_ids.index(resource_id)]
+                self.upvoted_ids.remove(resource_id)
                 self.recommendations[resource_id]['upvotes'] -= 1
                 result['toggle'] = True
             self.downvoted_ids.append(resource_id)

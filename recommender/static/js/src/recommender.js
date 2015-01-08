@@ -1133,8 +1133,9 @@ function RecommenderXBlock(runtime, element, init_data) {
     function initializeRecommender() {
         /* Set configuration variables */
         FLAGGED_RESOURCE_REASONS = {};
+        /* the default page of resources showed to students. Should always be 1 */
+        CURRENT_PAGE = 1;
         DISABLE_DEV_UX = init_data['DISABLE_DEV_UX'];
-        CURRENT_PAGE = init_data['CURRENT_PAGE'];
         ENTRIES_PER_PAGE = init_data['ENTRIES_PER_PAGE'];
         PAGE_SPAN = init_data['PAGE_SPAN'];
         IS_USER_STAFF = init_data['IS_USER_STAFF'];
