@@ -13,7 +13,7 @@ function RecommenderXBlock(runtime, element, init_data) {
     var exportResourceUrl = runtime.handlerUrl(element, 'export_resources');
     var importResourceUrl = runtime.handlerUrl(element, 'import_resources');
     var uploadScreenshotUrl = runtime.handlerUrl(element, 'upload_screenshot');
-    var deendorseResourceUrl = runtime.handlerUrl(element, 'deendorse_resource');
+    var removeResourceUrl = runtime.handlerUrl(element, 'remove_resource');
     var endorseResourceUrl = runtime.handlerUrl(element, 'endorse_resource');
     var accumFlaggedResourceUrl = runtime.handlerUrl(element, 'accum_flagged_resource');
 
@@ -253,7 +253,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             '.flagResourcePage',
             '.editResourcePage',
             '.addResourcePage',
-            '.deendorsePage',
+            '.removePage',
             '.endorsePage',
             '.importResourcePage'
         ]
@@ -296,7 +296,7 @@ function RecommenderXBlock(runtime, element, init_data) {
      * flag, etc. to pages for viewing resources.
      */
     function bindInterruptSubmissionEvent() {
-        var divs = $('.flagResourcePage, .editResourcePage, .addResourcePage, .deendorsePage, .endorsePage, .importResourcePage', element);
+        var divs = $('.flagResourcePage, .editResourcePage, .addResourcePage, .removePage, .endorsePage, .importResourcePage', element);
         var activePage;
         var logStudentInput = {};
 
@@ -875,7 +875,7 @@ function RecommenderXBlock(runtime, element, init_data) {
      */
     function bindStaffLimitedEvent() {
         if (IS_USER_STAFF) {
-            if (!DISABLE_DEV_UX) { toggleDeendorseMode(); }
+            if (!DISABLE_DEV_UX) { toggleRemoveMode(); }
             $('.recommenderResource', element).each(function(index, ele) {
                 bindStaffLimitedResourceDependentEvent(ele);
                 addResourceDependentTooltip(ele);
@@ -893,12 +893,12 @@ function RecommenderXBlock(runtime, element, init_data) {
      * Ordinary mode:
      *      Rank resources in the order of decreasing votes
      */
-    function toggleDeendorseMode() {
-        $('.resourceRankingForDeendorsementButton', element).show().attr('aria-hidden', 'false');
-        $('.resourceRankingForDeendorsementButton', element).click(function() {
-            $(this).toggleClass('deendorsementMode');
+    function toggleRemoveMode() {
+        $('.resourceRankingForRemovalButton', element).show().attr('aria-hidden', 'false');
+        $('.resourceRankingForRemovalButton', element).click(function() {
+            $(this).toggleClass('removeMode');
             addTooltip();
-            if ($(this).hasClass('deendorsementMode')) {
+            if ($(this).hasClass('removeMode')) {
                 $.ajax({
                     type: "POST",
                     url: accumFlaggedResourceUrl,
@@ -1014,7 +1014,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 var endorsedDiv = $('.recommenderResource:eq(' + endorsedResourceIdx.toString() + ')', element);
                 $('.endorse', endorsedDiv).toggleClass('endorsed').show().attr('aria-hidden', 'false');
                 addResourceDependentTooltip(endorsedDiv);
-                setEndorseDeendorseAriaParam(endorsedDiv);
+                setEndorseRemoveAriaParam(endorsedDiv);
                 if (endorseFlag in result) {
                     $('.recommenderEndorseReason', endorsedDiv).text(result['reason']);
                     backToView();
@@ -1033,24 +1033,24 @@ function RecommenderXBlock(runtime, element, init_data) {
      * reason why the staff think the resource should be removed.
      * @param {element} ele The recommenderResource element the event will be bound to.
      */
-    function bindResourceDeendorseEvent(ele) {
-        if ($('.deendorse', ele).length === 0) { $('.recommenderEdit', ele).append(deendorseIcon); }
+    function bindResourceRemoveEvent(ele) {
+        if ($('.remove', ele).length === 0) { $('.recommenderEdit', ele).append(removeIcon); }
                     
         /* Enter removal mode */
-        $('.deendorse', ele).click(function() {
-            showModifyingPage('.deendorsePage')
-            $('.deendorsePage', element).find('input[type="text"]').val('');
+        $('.remove', ele).click(function() {
+            showModifyingPage('.removePage')
+            $('.removePage', element).find('input[type="text"]').val('');
             var data = {};
             data['id'] = $(this).parent().parent().find('.recommenderEntryId').text();
             
-            $('.deendorseResource', element).unbind();
+            $('.removeResource', element).unbind();
             /* Remove a selected resource */
-            $('.deendorseResource', element).click(function() {
-                data['reason'] = $('.deendorseReason', element).val();
-                Logger.log('mit.recommender.deendorseResource', generateLog(loggerStatus['deendorseResource']['deendorseResource'], data));
+            $('.removeResource', element).click(function() {
+                data['reason'] = $('.removeReason', element).val();
+                Logger.log('mit.recommender.removeResource', generateLog(loggerStatus['removeResource']['removeResource'], data));
                 $.ajax({
                     type: "POST",
-                    url: deendorseResourceUrl,
+                    url: removeResourceUrl,
                     data: JSON.stringify(data),
                     success: function(result) {
                         var deletedResourceIdx = findResourceDiv(result['id']);
@@ -1077,8 +1077,8 @@ function RecommenderXBlock(runtime, element, init_data) {
      */
     function bindStaffLimitedResourceDependentEvent(ele) {
         bindResourceEndorseEvent(ele);
-        bindResourceDeendorseEvent(ele);
-        setEndorseDeendorseAriaParam(ele);
+        bindResourceRemoveEvent(ele);
+        setEndorseRemoveAriaParam(ele);
     }
 
     /**
@@ -1115,9 +1115,9 @@ function RecommenderXBlock(runtime, element, init_data) {
      * buttons are limited to staff.
      * @param {element} ele The recommenderResource element the buttons attached to.
      */
-    function setEndorseDeendorseAriaParam(ele) {
+    function setEndorseRemoveAriaParam(ele) {
         $('.endorse', ele).attr('role', 'button').attr('tabindex', '0');
-        $('.deendorse', ele).attr('role', 'button').attr('tabindex', '0').attr('aria-label', ariaLabelText['deendorseResource']);;
+        $('.remove', ele).attr('role', 'button').attr('tabindex', '0').attr('aria-label', ariaLabelText['removeResource']);;
         $('.endorse:not(.endorsed)', ele).attr('aria-label', ariaLabelText['endorseResource']);
         $('.endorse.endorsed', ele).attr('aria-label', ariaLabelText['undoEndorseResource']);
     }

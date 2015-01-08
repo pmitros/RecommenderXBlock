@@ -5,7 +5,7 @@ var tooltipsCatsPerResource = [
     '.recommenderVoteScore',
     'a',
     '.flagResource',
-    '.deendorse',
+    '.remove',
     '.checkIcon.endorsed'
 ];
 
@@ -24,7 +24,7 @@ var tooltipsCats = [
     '.uploadedFileDir',
     '.deleteResource',
     '.hideShow.resourceListExpanded',
-    '.resourceRankingForDeendorsementButton.deendorsementMode'
+    '.resourceRankingForRemovalButton.removeMode'
 ];
 
 var tooltipsEditCats = [
@@ -41,7 +41,7 @@ var tooltipsCatsText = {
     '.recommenderVoteArrowDown': '<span>Downvote if the resource is not helpful</span>',
     '.recommenderVoteScore': '<span>Votes</span>', // 
     'a': '<span>Resource title</span>', // TODO: I would suggest making the description be the tooltip.
-    '.deendorse': '<span>Remove this resource and give the reason why you do that</span>',
+    '.remove': '<span>Remove this resource and give the reason why you do that</span>',
     '.previewingImg': '<span>Preview image (typically, a screenshot)</span>',
     '.inTitle': '<span>Give a short (1-3 sentence) summary of the resource; ideally, this should be concise, but give enough detail to let students know whether this resources is useful to them</span>',
     '.inUrl': '<span>Cut-and-paste the URL of the resource.</span>',
@@ -59,8 +59,8 @@ var tooltipsCatsText = {
     '.hideShow.resourceListExpanded': '<span>Hide the recommendations list</span>',
     '.checkIcon': '<span>Check the icon to endorse this resource</span>',
     '.checkIcon.endorsed': '<span>This resource is endorsed by staff</span>',
-    '.resourceRankingForDeendorsementButton': '<span>Click to view resources for removal</span>',
-    '.resourceRankingForDeendorsementButton.deendorsementMode': '<span>Click to view resources in ordinary decreasing-vote order</span>'
+    '.resourceRankingForRemovalButton': '<span>Click to view resources for removal</span>',
+    '.resourceRankingForRemovalButton.removeMode': '<span>Click to view resources in ordinary decreasing-vote order</span>'
 };
 
 var uploadFileErrorText = {
@@ -93,7 +93,7 @@ var headerText = {
     '.editResourcePage': 'Edit existing resource',
     '.flagResourcePage': 'Flag Resource',
     '.endorsePage': 'Endorse Resource',
-    '.deendorsePage': 'Remove Resource'
+    '.removePage': 'Remove Resource'
 };
 
 var modifyPageTitle = {
@@ -102,7 +102,7 @@ var modifyPageTitle = {
     '.editResourcePage': 'Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.',
     '.flagResourcePage': 'Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently.',
     '.endorsePage': 'Endorse this resource and give the reason why you do that.',
-    '.deendorsePage': 'Remove this resource and give the reason why you do that.'
+    '.removePage': 'Remove this resource and give the reason why you do that.'
 };
 
 var writeDatabaseEnum = {
@@ -151,12 +151,12 @@ var ariaLabelText = {
     'endorsedResource': 'endorsed resource',
     'endorseResource': 'endorse resource',
     'undoEndorseResource': 'undo endorse resource',
-    'deendorseResource': 'remove resource'
+    'removeResource': 'remove resource'
 }
 
 var toggleVoteFlag = 'toggle';
 var endorseFlag = 'reason';
-var deendorseIcon = '<span class="ui-icon ui-icon-gear deendorse"></span>';
+var removeIcon = '<span class="ui-icon ui-icon-gear remove"></span>';
 
 var loggerStatus = {
     'hideShow': {
@@ -195,7 +195,7 @@ var loggerStatus = {
         'endorse': 'Endorse resource',
         'unendorse': 'Unendorse resource'
     },
-    'deendorseResource': {'deendorseResource': 'Remove resource'},
+    'removeResource': {'removeResource': 'Remove resource'},
     'hover': {'hover': 'Hovering resource'},
     'clickResource': {'clickResource': 'A resource was clicked'},
     'backToView': {'backToView': 'Back to resource list mode'}
