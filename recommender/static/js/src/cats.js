@@ -63,28 +63,15 @@ var tooltipsCatsText = {
     '.resourceRankingForDeendorsementButton.deendorsementMode': '<span>Click to view resources in ordinary decreasing-vote order</span>'
 };
 
-var uploadFileError = [
-    'FILE_TYPE_ERROR',
-    'IMPROPER_S3_SETUP',
-    '{"success": "Submission aborted!',
-    'FILE_SIZE_ERROR'
-];
-
 var uploadFileErrorText = {
-    'FILE_TYPE_ERROR': 'Please upload an image in GIF/JPG/PNG',
-    'IMPROPER_S3_SETUP': 'The configuration of Amazon S3 is not properly set',
-    '{"success": "Submission aborted!': 'Size of uploaded file exceeds threshold',
-    'FILE_SIZE_ERROR': 'Size of uploaded file exceeds threshold'
+    415: 'Please upload an image in GIF/JPG/PNG',
+    404: 'The configuration of Amazon S3 is not properly set',
+    413: 'Size of uploaded file exceeds threshold'
 };
 
-var importResourceError = [
-    'NOT_A_STAFF',
-    'FILE_FORMAT_ERROR'
-];
-
 var importResourceErrorText = {
-    'NOT_A_STAFF': 'Only staff can import resources',
-    'FILE_FORMAT_ERROR': 'Please submit the JSON file obtained with the download resources button'
+    403: 'Only staff can import resources',
+    415: 'Please submit the JSON file obtained with the download resources button'
 };
 
 var problematicReasonsPrefix = '<br/>Here is a list of reasons why students think this resource problematic: <br/>&nbsp;&nbsp;&nbsp;&nbsp;';

@@ -18,7 +18,7 @@ function RecommenderXBlock(runtime, element) {
                 url: setConfigUrl,
                 data: JSON.stringify(data),
                 success: function(result) {
-                    if (result['Success'] == true) { alert('The configurations have been updated'); }
+                    alert('The configurations have been updated');
                 }
             });
         });
