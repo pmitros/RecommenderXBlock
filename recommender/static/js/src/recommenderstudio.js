@@ -9,8 +9,8 @@ function RecommenderXBlock(runtime, element) {
         $('.configSubmit').click(function() {
             var data = {};
             data['DISABLE_DEV_UX'] = $('.developedUXDisable').val() == 'true';
-            data['ENTRIES_PER_PAGE'] = parseInt($('.entriesPerPage').val());
-            data['PAGE_SPAN'] = parseInt($('.pageSpan').val());
+            data['ENTRIES_PER_PAGE'] = parseInt($('.entriesPerPage').val(), 10);
+            data['PAGE_SPAN'] = parseInt($('.pageSpan').val(), 10);
             data['INTRO_ENABLE'] = $('.introEnable').val() == 'true';
 
             $.ajax({

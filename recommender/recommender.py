@@ -727,8 +727,8 @@ class RecommenderXBlock(XBlock):
             data['recommendations'] = self.recommendations
 
             tracker.emit('import_resources', {'Status': 'SUCCESS', 'data': data})
-            response.body = json.dumps(data, sort_keys=True)
             response.headers['Content-Type'] = 'application/json'
+            response.body = json.dumps(data, sort_keys=True)
             response.status = 200
             return response
         except:
