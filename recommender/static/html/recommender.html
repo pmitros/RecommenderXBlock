@@ -86,30 +86,30 @@
                         elsewhere, please add it.
                     </div>
                     % for elem in resources:
-                      <%
-                        if elem['id'] in endorsed_recommendation_ids:
-                          endorse_mode = 'endorsed'
-                          endorsed_index = endorsed_recommendation_ids.index(elem['id'])
-                          endorsed_reason = endorsed_recommendation_reasons[endorsed_index]
-                        else:
-                          endorse_mode = ''
-                          endorsed_reason = ''
-                             
-                        if elem['id'] in downvoted_ids:
-                          vote_mode = "downvoting"
-                        elif elem['id'] in upvoted_ids:
-                          vote_mode = 'upvoting'
-                        else:
-                          vote_mode = ''
+                        <%
+                            if elem['id'] in endorsed_recommendation_ids:
+                                endorse_mode = 'endorsed'
+                                endorsed_index = endorsed_recommendation_ids.index(elem['id'])
+                                endorsed_reason = endorsed_recommendation_reasons[endorsed_index]
+                            else:
+                                endorse_mode = ''
+                                endorsed_reason = ''
 
-                        if elem['id'] in flagged_ids:
-                          flag_mode = 'problematic'
-                          reason = flagged_reasons[flagged_ids.index(elem['id'])]
-                        else:
-                          flag_mode = ''
-                          reason = ''
-                      %>
-                      <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flag_mode,problematicReason=reason,voteMode=vote_mode,endorseMode=endorse_mode,endorsedReason=endorsed_reason" />
+                            if elem['id'] in downvoted_ids:
+                                vote_mode = "downvoting"
+                            elif elem['id'] in upvoted_ids:
+                                vote_mode = 'upvoting'
+                            else:
+                                vote_mode = ''
+
+                            if elem['id'] in flagged_ids:
+                                flag_mode = 'problematic'
+                                reason = flagged_reasons[flagged_ids.index(elem['id'])]
+                            else:
+                                flag_mode = ''
+                                reason = ''
+                        %>
+                        <%include file="resourcebox.html" args="id=elem['id'],title=elem['title'],votes=elem['votes'],url=elem['url'],description=elem['description'],descriptionText=elem['descriptionText'],isProblematic=flag_mode,problematicReason=reason,voteMode=vote_mode,endorseMode=endorse_mode,endorsedReason=endorsed_reason" />
                     % endfor
                 </div>
                 <div class="resourceAddButton" role="button" tabindex="0">Add new resource &gt;&gt;</div>
