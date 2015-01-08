@@ -114,9 +114,9 @@ class RecommenderXBlock(XBlock):
     # A list of recommendations removed by course staff. This is used to filter out
     # cheats, give-aways, spam, etc.
     # Usage: the same as default_recommendations plus
-    #    deendorsed_recommendations[index]['reason'] = (String) the reason why
+    #    removed_recommendations[index]['reason'] = (String) the reason why
     #            course staff remove this resource
-    deendorsed_recommendations = Dict(
+    removed_recommendations = Dict(
         help="Dict of removed resources", default={}, scope=Scope.user_state_summary
     )
 
@@ -270,13 +270,13 @@ class RecommenderXBlock(XBlock):
             raise JsonHandlerError(409, result['error'])
 
         # check url for removed resources
-        if resource_id in self.deendorsed_recommendations:
+        if resource_id in self.removed_recommendations:
             result['error'] = ('The resource you are attempting to ' +
                                'provide has been disallowed by the staff. ' +
-                               'Reason: ' + self.deendorsed_recommendations[resource_id]['reason'])
+                               'Reason: ' + self.removed_recommendations[resource_id]['reason'])
             for field in self.resource_content_fields:
-                result['dup_' + field] = self.deendorsed_recommendations[resource_id][field]
-            result['dup_id'] = self.deendorsed_recommendations[resource_id]['id']
+                result['dup_' + field] = self.removed_recommendations[resource_id][field]
+            result['dup_id'] = self.removed_recommendations[resource_id]['id']
             tracker.emit(event_name, result)
             raise JsonHandlerError(405, result['error'])
 
@@ -645,7 +645,7 @@ class RecommenderXBlock(XBlock):
         return result
 
     @XBlock.json_handler
-    def deendorse_resource(self, data, _suffix=''):
+    def remove_resource(self, data, _suffix=''):
         """
         Remove an entry of resource. This removes it from the student view, and prevents students from being able to add it back.
 
@@ -661,22 +661,22 @@ class RecommenderXBlock(XBlock):
         """
         if not self.get_user_is_staff():
             msg = "You don't have the permission to remove this resource"
-            self.error_handler(msg, 'deendorse_resource')
+            self.error_handler(msg, 'remove_resource')
 
         resource_id = stem_url(data['id'])
         if resource_id not in self.recommendations:
             msg = 'The selected resource does not exist'
-            self.error_handler(msg, 'deendorse_resource', resource_id)
+            self.error_handler(msg, 'remove_resource', resource_id)
 
         result = {}
         result['id'] = resource_id
-        deendorsed_resource = deepcopy(self.recommendations[resource_id])
+        removed_resource = deepcopy(self.recommendations[resource_id])
         del self.recommendations[resource_id]
 
-        deendorsed_resource['reason'] = data['reason']
-        self.deendorsed_recommendations[resource_id] = deendorsed_resource
-        result['recommendation'] = deendorsed_resource
-        tracker.emit('deendorse_resource', result)
+        removed_resource['reason'] = data['reason']
+        self.removed_recommendations[resource_id] = removed_resource
+        result['recommendation'] = removed_resource
+        tracker.emit('remove_resource', result)
         return result
 
     @XBlock.json_handler
@@ -690,7 +690,7 @@ class RecommenderXBlock(XBlock):
         result = {}
         result['export'] = {
             'recommendations': self.recommendations,
-            'deendorsed_recommendations': self.deendorsed_recommendations,
+            'removed_recommendations': self.removed_recommendations,
             'endorsed_recommendation_ids': self.endorsed_recommendation_ids,
             'endorsed_recommendation_reasons': self.endorsed_recommendation_reasons,
         }
@@ -720,9 +720,9 @@ class RecommenderXBlock(XBlock):
             self.endorsed_recommendation_reasons = data['endorsed_recommendation_reasons']
             self.endorsed_recommendation_ids = data['endorsed_recommendation_ids']
 
-            if 'deendorsed_recommendations' in data:
-                self.deendorsed_recommendations = data_structure_upgrade(data['deendorsed_recommendations'])
-                data['deendorsed_recommendations'] = self.deendorsed_recommendations
+            if 'removed_recommendations' in data:
+                self.removed_recommendations = data_structure_upgrade(data['removed_recommendations'])
+                data['removed_recommendations'] = self.removed_recommendations
             self.recommendations = data_structure_upgrade(data['recommendations'])
             data['recommendations'] = self.recommendations
 
@@ -749,7 +749,7 @@ class RecommenderXBlock(XBlock):
         }
         for _, flagged_accum_resource_map in self.flagged_accum_resources.iteritems():
             for resource_id in flagged_accum_resource_map:
-                if resource_id in self.deendorsed_recommendations:
+                if resource_id in self.removed_recommendations:
                     continue
                 if resource_id not in result['flagged_resources']:
                     result['flagged_resources'][resource_id] = []
@@ -820,7 +820,7 @@ class RecommenderXBlock(XBlock):
         frag.add_javascript_url('//cdnjs.cloudflare.com/ajax/libs/intro.js/0.5.0/intro.min.js')
         frag.add_css(self.resource_string("static/css/tooltipster.css"))
         frag.add_css(self.resource_string("static/css/recommender.css"))
-        frag.add_css_url("http://usablica.github.io/intro.js/introjs.css")
+        frag.add_css(self.resource_string("static/css/introjs.css"))
         frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))

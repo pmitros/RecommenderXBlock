@@ -2,13 +2,13 @@
 .clearFix {clear: both; height: 0.5em;}
 
 .hideShow {
-  -webkit-transition:background-color 0.2s; color 0.2s;
-  transition:background-color 0.2s; color 0.2s;
+    -webkit-transition:background-color 0.2s; color 0.2s;
+    transition:background-color 0.2s; color 0.2s;
 }
 
 .hideShow:hover {
-  background-color:rgb(137, 183, 205);
-  color:rgb(11, 11, 11);
+    background-color:rgb(137, 183, 205);
+    color:rgb(11, 11, 11);
 }
 
 .recommenderBlock .count {
@@ -22,21 +22,21 @@
 .hidden { display: none; }
 
 .recommenderBlock {
-  width : 100%;
+    width : 100%;
 }
 
 .recommenderContent {
-  width: 700px;
-  float: left;
+    width: 700px;
+    float: left;
 }
 
 .hideShow, .recommenderModifyTitleContainer { 
-  font-size: 14px;
-  padding-top: 0.5em;
-  padding-left: 0.5em;
-  background-color: rgba(0,0,0,0.05);
-  height: 28px;
-  color: #948f8f;
+    font-size: 14px;
+    padding-top: 0.5em;
+    padding-left: 0.5em;
+    background-color: rgba(0,0,0,0.05);
+    height: 28px;
+    color: #948f8f;
 }
 
 .hideShow.resourceListExpanded { cursor: n-resize; }
@@ -47,183 +47,183 @@
 .notExpanded {display: block; }
 
 .recommenderRow { 
-  height: 380px;
+    height: 380px;
 }
 
 .recommenderTitle {
-  flex-grow : 1;
-  max-height: 65px;
-  overflow-y: auto;
+    flex-grow : 1;
+    max-height: 65px;
+    overflow-y: auto;
 }
 
 .question {
-  width:700px;
+    width:700px;
 }
 
 .recommenderResource {
-  padding-top : 0.25em;
-  padding-bottom : 0.25em;
-  float:left;
-  width : 100%;
+    padding-top : 0.25em;
+    padding-bottom : 0.25em;
+    float:left;
+    width : 100%;
 }
 
 .expanded, .notExpanded {
-  float: right;
-  width: 50px;
+    float: right;
+    width: 50px;
 }
 
 .recommenderModify {
-  width: 700px;
+    width: 700px;
 }
 
 .descriptionImg {
-  max-height: 1020px;
-  max-width: 700px;
-  margin-top: 2em;
+    max-height: 1020px;
+    max-width: 700px;
+    margin-top: 2em;
 }
 
 .descriptionText {
-  max-height: 200px;
-  overflow: auto;
-  padding: 0.5em;
-  background-color: rgba(0,0,0,0.05);
-  color: #948f8f;
+    max-height: 200px;
+    overflow: auto;
+    padding: 0.5em;
+    background-color: rgba(0,0,0,0.05);
+    color: #948f8f;
 }
 
 .showProblematicReasons {
-  max-height: 200px;
-  overflow: auto;
-  padding: 0.5em;
-  background-color: #B4053D;
-  color: white;
+    max-height: 200px;
+    overflow: auto;
+    padding: 0.5em;
+    background-color: #B4053D;
+    color: white;
 }
 
 .showEndorsedReasons {
-  max-height: 200px;
-  overflow: auto;
-  padding: 0.5em;
-  background-color: rgb(69, 194, 10);
-  color: white;
+    max-height: 200px;
+    overflow: auto;
+    padding: 0.5em;
+    background-color: rgb(69, 194, 10);
+    color: white;
 }
 
 .showProblematicReasons:before { content: 'This resource was flagged problematic by students.'; }
 .showEndorsedReasons:before { content: 'This resource was endorsed by course staff.'; }
 
 .previewingImg {
-  margin-top: 1em;
-  max-width: 700px;
-  max-height: 600px;
+    margin-top: 1em;
+    max-width: 700px;
+    max-height: 600px;
 }
 
 .recommenderVoteArrowDown {
-  width: 100%;
-  margin-left:auto;
-  margin-right:auto;
-  text-align:center;
+    width: 100%;
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
 }
 
 .recommenderVoteArrowDown:before {
-  content: '↓';
-  font-weight: bold;
+    content: '↓';
+    font-weight: bold;
 }
 
 .recommenderVoteArrowUp {
-  width: 100%; 
-  margin-left:auto;
-  margin-right:auto;
-  text-align:center;
+    width: 100%; 
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
 }
 
 .recommenderVoteArrowUp:before {
-  content: '↑';
-  font-weight: bold;
+    content: '↑';
+    font-weight: bold;
 }
 
 .recommenderVoteScore {
-  width: 100%; 
-  text-align: center;
-  cursor: default;
-  font-weight: 900;
+    width: 100%; 
+    text-align: center;
+    cursor: default;
+    font-weight: 900;
 }
 
 .recommenderRecommendations { display: table; }
 
 .pagination {
-  display: table;
-  margin: 0 auto;
+    display: table;
+    margin: 0 auto;
 }
 
 .recommenderBlurb {
-  display:inline-block;
-  vertical-align: middle;
-  width:570px;
-  overflow:hidden;
-  word-wrap: break-word;
+    display:inline-block;
+    vertical-align: middle;
+    width:570px;
+    overflow:hidden;
+    word-wrap: break-word;
 }
 
 .recommenderEndorse { width:15px; display: inline-block; }
 
 .recommenderEntryId, .recommenderDescriptionImg, .recommenderProblematicReason, .recommenderDescriptionText, .recommenderEndorseReason {
-  display:none;
+    display:none;
 }
 
 .recommenderVoteBox {
-  display:inline-block;
-  vertical-align: middle;
-  width:50px;
+    display:inline-block;
+    vertical-align: middle;
+    width:50px;
 }
 
 .recommenderEdit {
-  display:inline-block;
-  vertical-align: top;
-  float: right;
-  width: 40px;
+    display:inline-block;
+    vertical-align: top;
+    float: right;
+    width: 40px;
 }
 
 .redTxt { color: #B4053D; }
 .redTxt:before { content: '*'; }
 
-.recommenderVoteArrowDown, .recommenderVoteArrowUp, .resourceEditButton, .flagResource, .deendorse, .resourceImportButton, .resourceExportButton, .resourceAddButton, .paginationPageNumber, .backToViewButton, .endorse, .resourceRankingForDeendorsementButton { cursor: pointer; }
+.recommenderVoteArrowDown, .recommenderVoteArrowUp, .resourceEditButton, .flagResource, .remove, .resourceImportButton, .resourceExportButton, .resourceAddButton, .paginationPageNumber, .backToViewButton, .endorse, .resourceRankingForRemovalButton { cursor: pointer; }
 
 .resourceAddButton, .resourceExportButton, .resourceImportButton { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em; margin-left: 1em;}
 .resourceEditButton { float: left; }
 .modifyPageTitle { margin-bottom: 1em; }
 
 .editResourcePage, .addResourcePage, .flagResourcePage {
-  padding-left: 1em;
+    padding-left: 1em;
 }
 
 .paginationPageNumber {
-  display:table-cell;
-  text-align:center;
-  vertical-align: middle;
-  width:25px;
+    display:table-cell;
+    text-align:center;
+    vertical-align: middle;
+    width:25px;
 }
 
 .backToViewButton { color: #1d9dd9; float: left; }
 
-.flagReasonSubmit, .editSubmit, .addSubmit, .deendorseResource, .endorseResource, .importResourceSubmit { margin-top: 0.5em; }
+.flagReasonSubmit, .editSubmit, .addSubmit, .removeResource, .endorseResource, .importResourceSubmit { margin-top: 0.5em; }
 
 input[type="button"]:not([DISABLED]){
-  background-image: linear-gradient(#1d9dd9,#1d9dd9);
-  color: white;
+    background-image: linear-gradient(#1d9dd9,#1d9dd9);
+    color: white;
 }
 
-.endorseResource, .deendorseResource { margin-top: 0.5em; float:left; }
+.endorseResource, .removeResource { margin-top: 0.5em; float:left; }
 
 .ui-icon.problematic {
 	background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
 }
 
 .inTitle, .editTitle, .inDescriptionText, .editDescriptionText { 
-  height: 75px;
-  margin-left: 0.5em;
-  width:100%;
+    height: 75px;
+    margin-left: 0.5em;
+    width:100%;
 }
-.inUrl, .editUrl, .flagReason, .deendorseReason, .endorseReason, .awsAccessKey, .awsSecretKey, .bucketName, .uploadedFileUrl, .uploadedFileDir {
-  height: 25px;
-  margin-left: 0.5em;
-  width:100%;
+.inUrl, .editUrl, .flagReason, .removeReason, .endorseReason, .awsAccessKey, .awsSecretKey, .bucketName, .uploadedFileUrl, .uploadedFileDir {
+    height: 25px;
+    margin-left: 0.5em;
+    width:100%;
 }
 
 .resourceHovered { background-color:#F2F7FA }
@@ -235,20 +235,20 @@ input[type="button"]:not([DISABLED]){
 .recommenderVoteScore.downvoting, .recommenderVoteArrowDown.downvoting { color: #B4053D; }
 .recommenderVoteArrowUp.downvoting, .recommenderVoteArrowDown.upvoting { color: #948f8f; }
 
-.resourceRankingForDeendorsementButton:not(.deendorsementMode) {
-  float: right;
-  background-color: rgba(0,0,0,0.05);
-  padding: 0.3em 1em 0.3em 1em;
-  color: black;
+.resourceRankingForRemovalButton:not(.removeMode) {
+    float: right;
+    background-color: rgba(0,0,0,0.05);
+    padding: 0.3em 1em 0.3em 1em;
+    color: black;
 }
-.resourceRankingForDeendorsementButton.deendorsementMode {
-  float: right;
-  background-color: #B4053D;
-  padding: 0.3em 1em 0.3em 1em;
-  color: white;
+.resourceRankingForRemovalButton.removeMode {
+    float: right;
+    background-color: #B4053D;
+    padding: 0.3em 1em 0.3em 1em;
+    color: white;
 }
-.resourceRankingForDeendorsementButton:not(deendorsementMode):before { content: 'Ordinary '; }
-.resourceRankingForDeendorsementButton.deendorsementMode:before { content: 'Removal '; }
+.resourceRankingForRemovalButton:not(removeMode):before { content: 'Ordinary '; }
+.resourceRankingForRemovalButton.removeMode:before { content: 'Removal '; }
 
 .endorse:not(.endorsed) { color: #DFD3D3; display: none; }
 .endorse.endorsed { color: rgb(69, 194, 10); }
