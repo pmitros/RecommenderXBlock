@@ -54,11 +54,11 @@
         </div>
         <div class="recommenderBlurb">
             <div class="recommenderTitle"><a href="{{resourceUrl}}" target="_blank" tabindex="0" aria-label="{{resourceText}}">{{resourceTitle}}</a></div>
-            <div class="recommenderDescriptionText">{{resourceText}}</div>
-            <div class="recommenderDescriptionImg">{{resourceImg}}</div>
-            <div class="recommenderEntryId">{{resourceId}}</div>
-            <div class="recommenderProblematicReason"></div>
-            <div class="recommenderEndorseReason"></div>
+            <div class="recommenderDescriptionText" aria-hidden="true">{{resourceText}}</div>
+            <div class="recommenderDescriptionImg" aria-hidden="true">{{resourceImg}}</div>
+            <div class="recommenderEntryId" aria-hidden="true">{{resourceId}}</div>
+            <div class="recommenderProblematicReason" aria-hidden="true"></div>
+            <div class="recommenderEndorseReason" aria-hidden="true"></div>
         </div>
         <div class="recommenderEndorse">
             <div class="endorse"></div>
@@ -69,13 +69,17 @@
         </div>
     </div>
 </script>
+<script type="x-tmpl-mustache" id="hideShowTemplate">
+    <div class="expanded" aria-hidden="true"><div class="upArrow"></div></div>
+    <div class="notExpanded" aria-hidden="true"><div class="downArrow"></div></div>
+</script>
 <div class="recommenderBlock">
     <div class="recommenderRecommendations">
         <div class="recommenderContent">
             <div class="hideShow" role='button' tabindex='0' data-step="1" aria-expanded='false' data-intro="This is a list of recommended resources. If you're stuck, curious, or want to learn more, please look around. If you find a useful resources, help your fellow classmates by adding it!">
                 Show related resources
-                <div class="expanded"><div class="upArrow"></div></div>
-                <div class="notExpanded"><div class="downArrow"></div></div>
+                <div class="expanded" aria-hidden="true"><div class="upArrow"></div></div>
+                <div class="notExpanded" aria-hidden="true"><div class="downArrow"></div></div>
             </div>
             <div class='recommenderRowInner' style='display: none;' aria-hidden="true">
                 <div class="recommenderRow">
@@ -154,7 +158,6 @@
                 <div class="modifyPageTitle"></div>
                 <label>Reason&nbsp;
                     <input type="text"
-                        aria-label='Provide reason for why this resource should be removed'
                         class="removeReason" 
                         name="removeRationale"
                         placeholder="Reason for why this resource should be removed"/>
@@ -165,8 +168,7 @@
                 <div class="modifyPageTitle"></div>
                 <label>Reason&nbsp;
                     <input type="text"
-                        aria-label='Provide reason for why this resource should be endorsed'
-                        class="endorseReason" 
+\                        class="endorseReason" 
                         name="endorseRationale"
                         placeholder="Reason for why this resource should be endorsed"/>
                 </label>
@@ -176,7 +178,6 @@
                 <div class="modifyPageTitle"></div>
                 <label>Reason&nbsp;
                     <input type="text"
-                        aria-label='Provide reason for why this resource should be flagged'
                         class="flagReason" 
                         name="flagRationale"
                         placeholder="Reason for why this resource should be flagged"/>
@@ -185,23 +186,23 @@
             </div>
             <div class="editResourcePage" style='display: none;' aria-hidden="true">
                 <div class="modifyPageTitle"></div>
-                <label>Title&nbsp;<span class='redTxt'></span>
+                <label>Title&nbsp;<span class='redTxt' aria-hidden="true"></span>
                     <textarea
                         aria-label='Provide a resource title, required'
                         class="editTitle"
                         placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea>
                 </label>
-                <label>Location&nbsp;<span class='redTxt'></span>
+                <label>Location&nbsp;<span class='redTxt' aria-hidden="true"></span>
                     <input type="text"
                         aria-label='Provide a resource location in url, required'
                         class="editUrl"
                         placeholder="http://en.wikipedia.org/wiki/Edx"/>
                 </label>
                 <label>Description&nbsp;
-                <textarea
-                    aria-label='Provide a resource description'
-                    class="editDescriptionText" 
-                    placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea>
+                    <textarea
+                        aria-label='Provide a resource description'
+                        class="editDescriptionText" 
+                        placeholder="Provide a meaningful description so other students know whether this is useful to them"></textarea>
                 </label>
                 <form method="post" class="editResourceForm">
                     Preview screenshot: <input type="file" name="file" aria-label='Provide a resource screenshot' class='editResourceScreenshot'/><br/>
@@ -210,13 +211,13 @@
             </div>
             <div class="addResourcePage" style='display: none;' aria-hidden="true">
                 <div class="modifyPageTitle"></div>
-                <label>Title&nbsp;<span class='redTxt'></span>
+                <label>Title&nbsp;<span class='redTxt' aria-hidden="true"></span>
                     <textarea
                         aria-label='Provide a resource title, required'
                         class="inTitle" 
                         placeholder="Provide a meaningful title so other students know whether this is useful to them"></textarea>
                 </label>
-                <label>Location&nbsp;<span class='redTxt'></span>
+                <label>Location&nbsp;<span class='redTxt' aria-hidden="true"></span>
                     <input type="text"
                         aria-label='Provide a resource location in url, required'
                         class="inUrl"

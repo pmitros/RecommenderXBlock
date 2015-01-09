@@ -62,14 +62,16 @@ function RecommenderXBlock(runtime, element, init_data) {
         if ($(this).hasClass('resourceListExpanded')) {
             Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['hide']));
             $(".recommenderRowInner", element).slideUp('fast').attr('aria-hidden', 'true');
-            $(this).text(resourceListHeader['show']).attr('aria-expanded', 'false');
-
-
+            $(this).text(resourceListHeader['show'])
+                   .append($(Mustache.render($("#hideShowTemplate").html(), {})))
+                   .attr('aria-expanded', 'false');
         }
         else {
             Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['show']));
             $(".recommenderRowInner", element).slideDown('fast').attr('aria-hidden', 'false');
-            $(this).text(resourceListHeader['hide']).attr('aria-expanded', 'true');
+            $(this).text(resourceListHeader['hide'])
+                   .append($(Mustache.render($("#hideShowTemplate").html(), {})))
+                   .attr('aria-expanded', 'true');
             focusFirstResource();
         }
         $(this).toggleClass('resourceListExpanded');
@@ -193,7 +195,7 @@ function RecommenderXBlock(runtime, element, init_data) {
         $(page, element).show().attr('aria-hidden', 'false');
         $(page, element).find('.modifyPageTitle').text(modifyPageTitle[page]);
         $('.recommenderContent', element).hide().attr('aria-hidden', 'true');
-        $('.recommenderModify', element).show().attr('aria-hidden', 'false').attr('aria-label', modifyPageTitle[page]).focus();
+        $('.recommenderModify', element).show().attr('aria-hidden', 'false').attr('aria-label', headerText[page]).focus();
         $('.recommenderModifyTitle', element).text(headerText[page]);
     }
 
