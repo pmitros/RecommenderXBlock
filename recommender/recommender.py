@@ -362,8 +362,6 @@ class RecommenderXBlock(XBlock):
             # Return new vote
             result['newVotes'] = (self.recommendations[resource_id]['upvotes'] -
                                   self.recommendations[resource_id]['downvotes'])
-
-        if 'newVotes' in result:
             tracker.emit(data['event'], result)
             return result
 
@@ -522,7 +520,7 @@ class RecommenderXBlock(XBlock):
         """
         resource_id = stem_url(data['id'])
         if resource_id not in self.recommendations:
-            msg = 'The selected resource is not existing'
+            msg = 'The selected resource does not exist'
             self.error_handler(msg, 'edit_resource', resource_id)
 
         result = {}
