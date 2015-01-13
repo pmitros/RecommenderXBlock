@@ -79,7 +79,7 @@ class RecommenderXBlock(XBlock):
         scope=Scope.user_info
     )
 
-    recommender_version = String(
+    version = String(
         help="The version of this RecommenderXBlock. Used to simplify migrations.",
         default="recommender.v1.0",
         scope=Scope.content
