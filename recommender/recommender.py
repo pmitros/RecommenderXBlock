@@ -108,7 +108,7 @@ class RecommenderXBlock(XBlock):
     # A dict of recommendations provided by students.
     # Usage: the same as default_recommendations
     recommendations = Dict(
-        help="Dict of help resources", default={}, scope=Scope.user_state_summary
+        help="Current set of recommended resources", default={}, scope=Scope.user_state_summary
     )
 
     # A list of recommendations removed by course staff. This is used to filter out
@@ -146,14 +146,14 @@ class RecommenderXBlock(XBlock):
     # Usage: upvoted_ids[index] = (String) id of a resource which was
     #    upvoted by the current user
     upvoted_ids = List(
-        help="List of resources' ids which user upvoted to", default=[], scope=Scope.user_state
+        help="List of resources' ids which user upvoted", default=[], scope=Scope.user_state
     )
 
     # A list of recommendations' ids which user downvoted, so users cannot vote twice.
     # Usage: downvoted_ids[index] = (String) id of a resource which was
     #    downvoted by the current user
     downvoted_ids = List(
-        help="List of resources' ids which user downvoted to", default=[], scope=Scope.user_state
+        help="List of resources' ids which user downvoted", default=[], scope=Scope.user_state
     )
 
     # A list of problematic recommendations' ids which user flagged.
