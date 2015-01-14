@@ -20,6 +20,9 @@ function RecommenderXBlock(runtime, element) {
                 success: function(result) {
                     alert('The configurations have been updated');
                 }
+                error: function(result) {
+                    alert('An internal error happened. We cannot set the configurations right now. Please try again later.');
+                }
             });
         });
     }

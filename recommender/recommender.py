@@ -440,6 +440,7 @@ class RecommenderXBlock(XBlock):
             tracker.emit('upload_screenshot',
                          {'uploadedFileName': 'FILE_TYPE_ERROR'})
             response.status = 415
+            response.body = json.dumps({'error': 'Please upload an image in GIF/JPG/PNG'})
             return response
 
         # Check whether file size exceeds threshold (30MB)
@@ -448,6 +449,7 @@ class RecommenderXBlock(XBlock):
             tracker.emit('upload_screenshot',
                          {'uploadedFileName': 'FILE_SIZE_ERROR'})
             response.status = 413
+            response.body = json.dumps({'error': 'Size of uploaded file exceeds threshold'})
             return response
 
         try:
@@ -463,6 +465,7 @@ class RecommenderXBlock(XBlock):
             tracker.emit('upload_screenshot',
                          {'uploadedFileName': 'IMPROPER_S3_SETUP'})
             response.status = 404
+            response.body = json.dumps({'error': 'The configuration of Amazon S3 is not properly set'})
             return response
 
         response = Response()
@@ -707,6 +710,7 @@ class RecommenderXBlock(XBlock):
         response.headers['Content-Type'] = 'text/plain'
         if not self.get_user_is_staff():
             response.status = 403
+            response.body = json.dumps({'error': 'Only staff can import resources'})
             tracker.emit('import_resources', {'Status': 'NOT_A_STAFF'})
             return response
 
@@ -731,6 +735,7 @@ class RecommenderXBlock(XBlock):
             return response
         except:
             response.status = 415
+            response.body = json.dumps({'error': 'Please submit the JSON file obtained with the download resources button'})
             tracker.emit('import_resources', {'Status': 'FILE_FORMAT_ERROR', 'data': raw_data})
             return response
 
@@ -819,6 +824,7 @@ class RecommenderXBlock(XBlock):
         frag.add_css(self.resource_string("static/css/tooltipster.css"))
         frag.add_css(self.resource_string("static/css/recommender.css"))
         frag.add_css(self.resource_string("static/css/introjs.css"))
+        frag.add_javascript(self.resource_string("static/js/src/underscore-min.js"))
         frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
