@@ -1,6 +1,6 @@
 if (typeof Logger === 'undefined') {
     var Logger = {
-        log: function(a) { return; }
+        log: function(a, b) { return; }
     }
 }
 
@@ -27,16 +27,10 @@ function RecommenderXBlock(runtime, element, init_data) {
      * @returns {dictionary} The dictionary for logging an event.
      */
     function generateLog(status, information) {
-        if (!information) {
-            return { 'status': status, 'element': $(element).attr('data-usage-id') };
-        }
-        else {
-            return {
-                'status': status,
-                'information': information,
-                'element': $(element).attr('data-usage-id')
-            }
-        }
+        return _.find([
+            {'status': status, 'element': $(element).attr('data-usage-id')},
+            {'status': status, 'element': $(element).attr('data-usage-id'), 'information': information}
+        ], function(log) { return information === log.information; });
     }
 
     /**
@@ -238,8 +232,9 @@ function RecommenderXBlock(runtime, element, init_data) {
                     backToView();
                     Logger.log('mit.recommender.importResource', generateLog(loggerStatus['importResource']['complete'], result));
                 },
-                error: function(result, status) {
-                    alert(importResourceErrorText[result.status]);
+                error: function(result) {
+                    var data = JSON.parse(result.responseText)
+                    if (data.error) { alert(data.error); }
                     resetImportResourcePage();
                 },
             });
@@ -454,7 +449,8 @@ function RecommenderXBlock(runtime, element, init_data) {
                  * 404: The filesystem (e.g., Amazon S3) is not properly set
                  * 413: Size of uploaded file exceeds threshold
                  */
-                alert(uploadFileErrorText[result.status]);
+                var data = JSON.parse(result.responseText)
+                if (data.error) { alert(data.error); }
                 $("input[name='file']", formDiv).val('');
                 if (writeType === writeDatabaseEnum.ADD) { enableAddSubmit(); }
                 else if (writeType === writeDatabaseEnum.EDIT) { enableEditSubmit(); }
@@ -671,7 +667,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 data['title'] = $('.editTitle', element).val();
                 data['descriptionText'] = $('.editDescriptionText', element).val();
                 data['description'] = ''
-                if (data['url'] === '' || data['title'] === '') { return; }
+                if (!data.url || data.title) { return; }
                 var formDiv = $('.editResourceForm', element);
                 var file = new FormData($(formDiv)[0]);
 
