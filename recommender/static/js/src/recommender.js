@@ -666,8 +666,8 @@ function RecommenderXBlock(runtime, element, init_data) {
                 data['url'] = $('.editUrl', element).val();
                 data['title'] = $('.editTitle', element).val();
                 data['descriptionText'] = $('.editDescriptionText', element).val();
-                data['description'] = ''
-                if (!data.url || data.title) { return; }
+                data['description'] = '';
+                if (!data.url || !data.title) { return; }
                 var formDiv = $('.editResourceForm', element);
                 var file = new FormData($(formDiv)[0]);
 
