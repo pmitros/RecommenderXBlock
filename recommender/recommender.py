@@ -35,7 +35,7 @@ from urlparse import urlparse, urlunparse
 from webob.response import Response
 from xblock.core import XBlock
 from xblock.exceptions import JsonHandlerError
-from xblock.fields import Scope, List, Dict, Boolean, String
+from xblock.fields import Scope, List, Dict, Boolean, String, JSONField
 from xblock.fragment import Fragment
 from xblock.reference.plugins import Filesystem
 
@@ -101,13 +101,13 @@ class RecommenderXBlock(XBlock):
     #            a cumbersome data migration.
     #    "descriptionText" : (String) a potentially longer overview of the resource }
     #    we use url as key (index) of resource
-    default_recommendations = Dict(
+    default_recommendations = JSONField(
         help="Dict of instructor-supplied help resources to seed the resource list with.", default={}, scope=Scope.content
     )
 
     # A dict of recommendations provided by students.
     # Usage: the same as default_recommendations
-    recommendations = Dict(
+    recommendations = JSONField(
         help="Current set of recommended resources", default={}, scope=Scope.user_state_summary
     )
 
@@ -768,8 +768,8 @@ class RecommenderXBlock(XBlock):
         when viewing courses.
         """
         self.recommendations = (
-            self.recommendations or
-            self.default_recommendations or
+            data_structure_upgrade(self.recommendations) or
+            data_structure_upgrade(self.default_recommendations) or
             {}
         )
 
