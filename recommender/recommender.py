@@ -2,18 +2,29 @@
 This XBlock will show a set of recommended resources which may be helpful to
 students solving a given problem.
 """
-import json
 import hashlib
+import json
 import pkg_resources
+
 from copy import deepcopy
 
+from mako.lookup import TemplateLookup
+from urllib import unquote_plus
+from urlparse import urlparse, urlunparse
+from webob.response import Response
+
+from xblock.core import XBlock
+from xblock.exceptions import JsonHandlerError
+from xblock.fields import Scope, List, Dict, Boolean, String, JSONField
+from xblock.fragment import Fragment
+from xblock.reference.plugins import Filesystem
 
 # TODO: Should be updated once XBlocks and tracking logs have finalized APIs
 # and documentation.
 try:
     from eventtracking import tracker
 except ImportError:
-    class tracker:
+    class tracker(object):  # pylint: disable=invalid-name
         """
         Define tracker if eventtracking cannot be imported. This is a workaround
         so that the code works in both edx-platform and XBlock workbench (the latter
@@ -29,16 +40,6 @@ except ImportError:
             """ In workbench, do nothing for event emission """
             pass
 
-from mako.lookup import TemplateLookup
-from urllib import unquote_plus
-from urlparse import urlparse, urlunparse
-from webob.response import Response
-from xblock.core import XBlock
-from xblock.exceptions import JsonHandlerError
-from xblock.fields import Scope, List, Dict, Boolean, String, JSONField
-from xblock.fragment import Fragment
-from xblock.reference.plugins import Filesystem
-
 
 def stem_url(url):
     """
@@ -47,6 +48,7 @@ def stem_url(url):
     """
     parsed_url = urlparse(unquote_plus(url))
     return urlunparse(parsed_url._replace(fragment=''))
+
 
 def data_structure_upgrade(old_list):
     """
@@ -65,133 +67,8 @@ def data_structure_upgrade(old_list):
         return old_list
 
 
-@XBlock.needs('fs')
-class RecommenderXBlock(XBlock):
-    """
-    This XBlock will show a set of recommended resources which may be helpful
-    to students solving a given problem. The resources are provided and edited
-    by students; they can also vote for useful resources and flag problematic
-    ones.
-    """
-    seen = Boolean(
-        help="Has the student interacted with the XBlock before? Used to show optional tutorial.",
-        default=False,
-        scope=Scope.user_info
-    )
-
-    version = String(
-        help="The version of this RecommenderXBlock. Used to simplify migrations.",
-        default="recommender.v1.0",
-        scope=Scope.content
-    )
-
-    intro_enabled = Boolean(
-        help="Should we show the users a short usage tutorial the first time they see the XBlock?", default=True, scope=Scope.content
-    )
-
-    # A dict of default recommendations supplied by the instructors to seed the list with before students add new recommendations.
-    # Also, useful for testing.
-    # Usage: default_recommendations[index] = {
-    #    "id": (String) A unique ID. The ID is currently derived from the URL, but this has changed and may change again
-    #    "title": (String) a 1-3 sentence summary description of a resource
-    #    "upvotes" : (Integer) number of upvotes,
-    #    "downvotes" : (Integer) number of downvotes,
-    #    "url" : (String) link to resource,
-    #    "description" : (String) the url of a resource's screenshot. 'screenshot' would be a better name, but would require
-    #            a cumbersome data migration.
-    #    "descriptionText" : (String) a potentially longer overview of the resource }
-    #    we use url as key (index) of resource
-    default_recommendations = JSONField(
-        help="Dict of instructor-supplied help resources to seed the resource list with.", default={}, scope=Scope.content
-    )
-
-    # A dict of recommendations provided by students.
-    # Usage: the same as default_recommendations
-    recommendations = JSONField(
-        help="Current set of recommended resources", default={}, scope=Scope.user_state_summary
-    )
-
-    # A list of recommendations removed by course staff. This is used to filter out
-    # cheats, give-aways, spam, etc.
-    # Usage: the same as default_recommendations plus
-    #    removed_recommendations[index]['reason'] = (String) the reason why
-    #            course staff remove this resource
-    removed_recommendations = Dict(
-        help="Dict of removed resources", default={}, scope=Scope.user_state_summary
-    )
-
-    # A list of endorsed recommendations' ids -- the recommendations the course staff marked as particularly helpful.
-    # Usage: endorsed_recommendation_ids[index] = (String) id of a
-    #    endorsed resource
-    endorsed_recommendation_ids = List(
-        help="List of endorsed resources' ID", default=[], scope=Scope.user_state_summary
-    )
-
-    # A list of reasons why the resources were endorsed.
-    # Usage: endorsed_recommendation_reasons[index] = (String) the reason
-    #    why the resource (id = endorsed_recommendation_ids[index]) is endorsed
-    endorsed_recommendation_reasons = List(
-        help="List of reasons why the resources are endorsed", default=[], scope=Scope.user_state_summary
-    )
-
-    # A dict of problematic recommendations which are flagged by users for review by instructors. Used to remove spam, etc.
-    # Usage: flagged_accum_resources[userId] = {
-    #    "problematic resource id": (String) reason why the resource is
-    #            flagged as problematic by that user }
-    flagged_accum_resources = Dict(
-        help="Dict of potentially problematic resources which were flagged by users", default={}, scope=Scope.user_state_summary
-    )
-
-    # A list of recommendations' ids which a particular user upvoted, so users cannot vote twice
-    # Usage: upvoted_ids[index] = (String) id of a resource which was
-    #    upvoted by the current user
-    upvoted_ids = List(
-        help="List of resources' ids which user upvoted", default=[], scope=Scope.user_state
-    )
-
-    # A list of recommendations' ids which user downvoted, so users cannot vote twice.
-    # Usage: downvoted_ids[index] = (String) id of a resource which was
-    #    downvoted by the current user
-    downvoted_ids = List(
-        help="List of resources' ids which user downvoted", default=[], scope=Scope.user_state
-    )
-
-    # A list of problematic recommendations' ids which user flagged.
-    # Usage: flagged_ids[index] = (String) id of a problematic resource which
-    #    was flagged by the current user
-    flagged_ids = List(
-        help="List of problematic resources' ids which the user flagged", default=[], scope=Scope.user_state
-    )
-
-    # A list of reasons why the resources corresponding to those in flagged_ids were flagged
-    # Usage: flagged_reasons[index] = (String) reason why the resource
-    #   'flagged_ids[index]' was flagged by the current user as problematic
-    flagged_reasons = List(
-        help="List of reasons why the corresponding resources were flagged",
-        default=[],
-        scope=Scope.user_state
-    )
-
-    # The file system we used to store uploaded screenshots
-    fs = Filesystem(help="File system for screenshots", scope=Scope.user_state_summary)
-
-    client_side_settings = Dict(
-        help="Dict of customizable settings",
-        default={
-            'DISABLE_DEV_UX': True,
-            'ENTRIES_PER_PAGE': 5,
-            'PAGE_SPAN': 2
-        },
-        scope=Scope.content
-    )
-
-    template_lookup = None
-
-    # the dictionary keys for storing the content of a recommendation
-    resource_content_fields = [
-        'url', 'title', 'description', 'descriptionText'
-    ]
-
+class HelperXBlock(XBlock):
+    ''' Generic functionality usable across XBlocks but not yet in the platform '''
     def get_user_is_staff(self):
         """
         Return self.xmodule_runtime.user_is_staff
@@ -231,7 +108,162 @@ class RecommenderXBlock(XBlock):
         data = pkg_resources.resource_string(__name__, path)
         return data.decode("utf8")
 
-    def get_onetime_url(self, filename):
+
+@XBlock.needs('fs')
+class RecommenderXBlock(HelperXBlock):
+    """
+    This XBlock will show a set of recommended resources which may be helpful
+    to students solving a given problem. The resources are provided and edited
+    by students; they can also vote for useful resources and flag problematic
+    ones.
+    """
+    seen = Boolean(
+        help="Has the student interacted with the XBlock before? Used to show optional tutorial.",
+        default=False,
+        scope=Scope.user_info
+    )
+
+    version = String(
+        help="The version of this RecommenderXBlock. Used to simplify migrations.",
+        default="recommender.v1.0",
+        scope=Scope.content
+    )
+
+    intro_enabled = Boolean(
+        help="Should we show the users a short usage tutorial the first time they see the XBlock?",
+        default=True,
+        scope=Scope.content
+    )
+
+    # A dict of default recommendations supplied by the instructors to
+    # seed the list with before students add new recommendations.
+
+    # Also, useful for testing.
+    # Usage: default_recommendations[index] = {
+    #    "id": (String) A unique ID. The ID is currently derived from
+    #          the URL, but this has changed and may change again
+    #    "title": (String) a 1-3 sentence summary description of a resource
+    #    "upvotes" : (Integer) number of upvotes,
+    #    "downvotes" : (Integer) number of downvotes,
+    #    "url" : (String) link to resource,
+    #    "description" : (String) the url of a resource's screenshot.
+    #                    'screenshot' would be a better name, but would
+    #                    require a cumbersome data migration.
+    #    "descriptionText" : (String) a potentially longer overview of the resource }
+    #    we use url as key (index) of resource
+    default_recommendations = JSONField(
+        help="Dict of instructor-supplied help resources to seed the resource list with.",
+        default={},
+        scope=Scope.content
+    )
+
+    # A dict of recommendations provided by students.
+    # Usage: the same as default_recommendations
+    recommendations = JSONField(
+        help="Current set of recommended resources",
+        default={},
+        scope=Scope.user_state_summary
+    )
+
+    # A list of recommendations removed by course staff. This is used to filter out
+    # cheats, give-aways, spam, etc.
+    # Usage: the same as default_recommendations plus
+    #    removed_recommendations[index]['reason'] = (String) the reason why
+    #            course staff remove this resource
+    removed_recommendations = Dict(
+        help="Dict of removed resources",
+        default={},
+        scope=Scope.user_state_summary
+    )
+
+    # A list of endorsed recommendations' ids -- the recommendations the course
+    # staff marked as particularly helpful.
+    # Usage: endorsed_recommendation_ids[index] = (String) id of a
+    #    endorsed resource
+    endorsed_recommendation_ids = List(
+        help="List of endorsed resources' ID",
+        default=[],
+        scope=Scope.user_state_summary
+    )
+
+    # A list of reasons why the resources were endorsed.
+    # Usage: endorsed_recommendation_reasons[index] = (String) the reason
+    #    why the resource (id = endorsed_recommendation_ids[index]) is endorsed
+    endorsed_recommendation_reasons = List(
+        help="List of reasons why the resources are endorsed",
+        default=[],
+        scope=Scope.user_state_summary
+    )
+
+    # A dict of problematic recommendations which are flagged by users for review
+    # by instructors. Used to remove spam, etc.
+    # Usage: flagged_accum_resources[userId] = {
+    #    "problematic resource id": (String) reason why the resource is
+    #            flagged as problematic by that user }
+    flagged_accum_resources = Dict(
+        help="Dict of potentially problematic resources which were flagged by users",
+        default={},
+        scope=Scope.user_state_summary
+    )
+
+    # A list of recommendations' ids which a particular user upvoted, so users
+    # cannot vote twice
+    # Usage: upvoted_ids[index] = (String) id of a resource which was
+    #    upvoted by the current user
+    upvoted_ids = List(
+        help="List of resources' ids which user upvoted",
+        default=[],
+        scope=Scope.user_state
+    )
+
+    # A list of recommendations' ids which user downvoted, so users cannot vote twice.
+    # Usage: downvoted_ids[index] = (String) id of a resource which was
+    #    downvoted by the current user
+    downvoted_ids = List(
+        help="List of resources' ids which user downvoted",
+        default=[],
+        scope=Scope.user_state
+    )
+
+    # A list of problematic recommendations' ids which user flagged.
+    # Usage: flagged_ids[index] = (String) id of a problematic resource which
+    #    was flagged by the current user
+    flagged_ids = List(
+        help="List of problematic resources' ids which the user flagged",
+        default=[],
+        scope=Scope.user_state
+    )
+
+    # A list of reasons why the resources corresponding to those in flagged_ids were flagged
+    # Usage: flagged_reasons[index] = (String) reason why the resource
+    #   'flagged_ids[index]' was flagged by the current user as problematic
+    flagged_reasons = List(
+        help="List of reasons why the corresponding resources were flagged",
+        default=[],
+        scope=Scope.user_state
+    )
+
+    # The file system we used to store uploaded screenshots
+    fs = Filesystem(help="File system for screenshots", scope=Scope.user_state_summary)
+
+    client_side_settings = Dict(
+        help="Dict of customizable settings",
+        default={
+            'DISABLE_DEV_UX': True,
+            'ENTRIES_PER_PAGE': 5,
+            'PAGE_SPAN': 2
+        },
+        scope=Scope.content
+    )
+
+    template_lookup = None
+
+    # the dictionary keys for storing the content of a recommendation
+    resource_content_fields = [
+        'url', 'title', 'description', 'descriptionText'
+    ]
+
+    def _get_onetime_url(self, filename):
         """
         Return one time url for uploaded screenshot
 
@@ -242,7 +274,7 @@ class RecommenderXBlock(XBlock):
         else:
             return filename
 
-    def error_handler(self, error_msg, event, resource_id=None):
+    def _error_handler(self, error_msg, event, resource_id=None):
         """
         Generate an error dictionary if something unexpected happens, such as
         a user upvoting a resource which no longer exists. We both log to this
@@ -254,7 +286,7 @@ class RecommenderXBlock(XBlock):
         tracker.emit(event, result)
         raise JsonHandlerError(400, result['error'])
 
-    def check_redundant_resource(self, resource_id, event_name, result):
+    def _check_redundant_resource(self, resource_id, event_name, result):
         """
         Check whether the submitted resource is redundant. If true, raise an
         exception and return a HTTP status code for the error.
@@ -269,7 +301,11 @@ class RecommenderXBlock(XBlock):
             tracker.emit(event_name, result)
             raise JsonHandlerError(409, result['error'])
 
-        # check url for removed resources
+    def _check_removed_resource(self, resource_id, event_name, result):
+        """
+        Check whether the submitted resource is removed. If true, raise an
+        exception and return a HTTP status code for the error.
+        """
         if resource_id in self.removed_recommendations:
             result['error'] = ('The resource you are attempting to ' +
                                'provide has been disallowed by the staff. ' +
@@ -285,10 +321,12 @@ class RecommenderXBlock(XBlock):
         Return the parameters for client-side configuration settings.
 
         Returns:
-                DISABLE_DEV_UX: feature flag for any new UX under development which should not appear in prod
+                DISABLE_DEV_UX: feature flag for any new UX under development
+                                which should not appear in prod
                 ENTRIES_PER_PAGE: the number of resources in each page
                 PAGE_SPAN: page range in pagination control
-                INTRO: whether to take users through a short usage tutorial the first time they see the RecommenderXBlock
+                INTRO: whether to take users through a short usage tutorial
+                       the first time they see the RecommenderXBlock
                 IS_USER_STAFF: whether the user is staff
         """
         result = self.client_side_settings.copy()
@@ -302,16 +340,18 @@ class RecommenderXBlock(XBlock):
         return result
 
     @XBlock.json_handler
-    def set_client_side_settings(self, data, _suffix=''):
+    def set_client_side_settings(self, data, _suffix=''):  # pylint: disable=unused-argument
         """
         Set the parameters for student-view, client side configurations.
 
         Args:
                 data: dict in JSON format. Keys in data:
-                  DISABLE_DEV_UX: feature flag for any new UX under development which should not appear in prod
+                  DISABLE_DEV_UX: feature flag for any new UX under development
+                                  which should not appear in prod
                   ENTRIES_PER_PAGE: the number of resources in each page
                   PAGE_SPAN: page range in pagination control
-                  INTRO_ENABLE: Should we show the users a short usage tutorial the first time they see the XBlock?
+                  INTRO_ENABLE: Should we show the users a short usage tutorial
+                                the first time they see the XBlock?
         """
         self.intro_enabled = data['INTRO_ENABLE']
         for key in ['DISABLE_DEV_UX', 'PAGE_SPAN', 'ENTRIES_PER_PAGE']:
@@ -321,7 +361,7 @@ class RecommenderXBlock(XBlock):
         return {}
 
     @XBlock.json_handler
-    def handle_vote(self, data, _suffix=''):
+    def handle_vote(self, data, _suffix=''):  # pylint: disable=unused-argument
         """
         Add/Subtract a vote to a resource entry.
 
@@ -334,12 +374,13 @@ class RecommenderXBlock(XBlock):
                 result['error']: error message generated if the process fails
                 result['oldVotes']: original # of votes
                 result['newVotes']: votes after this action
-                result['toggle']: boolean indicator for whether the resource was switched from downvoted to upvoted
+                result['toggle']: boolean indicator for whether the resource
+                                  was switched from downvoted to upvoted
         """
         resource_id = stem_url(data['id'])
         if resource_id not in self.recommendations:
             msg = 'The selected resource does not exist'
-            self.error_handler(msg, data['event'], resource_id)
+            self._error_handler(msg, data['event'], resource_id)
 
         result = {}
         result['id'] = resource_id
@@ -347,32 +388,27 @@ class RecommenderXBlock(XBlock):
         result['oldVotes'] = (self.recommendations[resource_id]['upvotes'] -
                               self.recommendations[resource_id]['downvotes'])
 
-        if ((is_event_upvote and resource_id in self.upvoted_ids) or
-            (not is_event_upvote and resource_id in self.downvoted_ids)):
-            if is_event_upvote:
-                # While the user is trying to upvote a resource which has been
-                # upvoted, we restore the resource to unvoted
-                self.upvoted_ids.remove(resource_id)
-                self.recommendations[resource_id]['upvotes'] -= 1
-            else:
-                # While the user is trying to downvote a resource which has
-                # been downvoted, we restore the resource to unvoted
-                self.downvoted_ids.remove(resource_id)
-                self.recommendations[resource_id]['downvotes'] -= 1
-            # Return new vote
-            result['newVotes'] = (self.recommendations[resource_id]['upvotes'] -
-                                  self.recommendations[resource_id]['downvotes'])
-            tracker.emit(data['event'], result)
-            return result
+        upvoting_existing_upvote = is_event_upvote and resource_id in self.upvoted_ids
+        downvoting_existing_downvote = not is_event_upvote and resource_id in self.downvoted_ids
 
-        if is_event_upvote:
+        if upvoting_existing_upvote:
+            # While the user is trying to upvote a resource which has been
+            # upvoted, we restore the resource to unvoted
+            self.upvoted_ids.remove(resource_id)
+            self.recommendations[resource_id]['upvotes'] -= 1
+        elif downvoting_existing_downvote:
+            # While the user is trying to downvote a resource which has
+            # been downvoted, we restore the resource to unvoted
+            self.downvoted_ids.remove(resource_id)
+            self.recommendations[resource_id]['downvotes'] -= 1
+        elif is_event_upvote:  # New upvote
             if resource_id in self.downvoted_ids:
                 self.downvoted_ids.remove(resource_id)
                 self.recommendations[resource_id]['downvotes'] -= 1
                 result['toggle'] = True
             self.upvoted_ids.append(resource_id)
             self.recommendations[resource_id]['upvotes'] += 1
-        else:
+        else:  # New downvote
             if resource_id in self.upvoted_ids:
                 self.upvoted_ids.remove(resource_id)
                 self.recommendations[resource_id]['upvotes'] -= 1
@@ -386,7 +422,7 @@ class RecommenderXBlock(XBlock):
         return result
 
     @XBlock.handler
-    def upload_screenshot(self, request, _suffix=''):
+    def upload_screenshot(self, request, _suffix=''):  # pylint: disable=unused-argument
         """
         Upload a screenshot for an entry of resource as a preview (typically to S3 or filesystem).
 
@@ -396,6 +432,12 @@ class RecommenderXBlock(XBlock):
         Returns:
                 response: HTTP response
                 response.body (response.responseText): name of the uploaded file
+
+        We validate that this is a valid JPG, GIF, or PNG by checking magic number, mimetype, 
+        and extension all correspond. We also limit to 30MB. We save the file under its MD5
+        hash to (1) avoid name conflicts, (2) avoid race conditions and (3) save space.
+
+        TODO: Move core validation code out of this class. It is generic functionality.
         """
         # Check invalid file types
         image_types = {
@@ -460,12 +502,13 @@ class RecommenderXBlock(XBlock):
             fhwrite = self.fs.open(file_name, "wb")
             fhwrite.write(content)
             fhwrite.close()
-        except BaseException:
+        except BaseException:  # TODO: More specific exception
             response = Response()
+            error = 'The configuration of pyfs is not properly set'
             tracker.emit('upload_screenshot',
-                         {'uploadedFileName': 'IMPROPER_S3_SETUP'})
+                         {'uploadedFileName': 'IMPROPER_FS_SETUP'})
             response.status = 404
-            response.body = json.dumps({'error': 'The configuration of Amazon S3 is not properly set'})
+            response.body = json.dumps({'error': error})
             return response
 
         response = Response()
@@ -477,13 +520,14 @@ class RecommenderXBlock(XBlock):
         return response
 
     @XBlock.json_handler
-    def add_resource(self, data, _suffix=''):
+    def add_resource(self, data, _suffix=''):  # pylint: disable=unused-argument
         """
         Add a new resource entry.
 
         Args:
                 data: dict in JSON format
-                data[resource_content_field]: the resource to be added. Dictionary of description, etc. as defined above
+                data[resource_content_field]: the resource to be added. Dictionary of
+                                              description, etc. as defined above
         Returns:
                 result: dict in JSON format
                 result['error']: error message generated if the addition fails
@@ -495,7 +539,8 @@ class RecommenderXBlock(XBlock):
             result[field] = data[field]
 
         resource_id = stem_url(data['url'])
-        self.check_redundant_resource(resource_id, 'add_resource', result)
+        self._check_redundant_resource(resource_id, 'add_resource', result)
+        self._check_removed_resource(resource_id, 'add_resource', result)
 
         result['id'] = resource_id
 
@@ -503,11 +548,11 @@ class RecommenderXBlock(XBlock):
         result['downvotes'] = 0
         self.recommendations[resource_id] = dict(result)
         tracker.emit('add_resource', result)
-        result["description"] = self.get_onetime_url(result["description"])
+        result["description"] = self._get_onetime_url(result["description"])
         return result
 
     @XBlock.json_handler
-    def edit_resource(self, data, _suffix=''):
+    def edit_resource(self, data, _suffix=''):  # pylint: disable=unused-argument
         """
         Edit an entry of existing resource.
 
@@ -521,15 +566,16 @@ class RecommenderXBlock(XBlock):
                 result[old_resource_content_field]: the content of the resource before edited
                 result[resource_content_field]: the content of the resource after edited
         """
-        resource_id = stem_url(data['id'])
+        resource_id = stem_url(data['id'])  ## TODO: Abstract out into a common validate_resource
         if resource_id not in self.recommendations:
             msg = 'The selected resource does not exist'
-            self.error_handler(msg, 'edit_resource', resource_id)
+            self._error_handler(msg, 'edit_resource', resource_id)
 
         result = {}
         result['id'] = resource_id
         result['old_id'] = resource_id
 
+        ## TODO: Comment giving human-readable explantion of loop below
         for field in self.resource_content_fields:
             result['old_' + field] = self.recommendations[resource_id][field]
             if data[field] == "":
@@ -537,41 +583,48 @@ class RecommenderXBlock(XBlock):
             else:
                 result[field] = data[field]
 
+        ## Handle resource ID changes
         edited_resource_id = stem_url(data['url'])
         if edited_resource_id != resource_id:
-            self.check_redundant_resource(edited_resource_id, 'edit_resource', result)
+            self._check_redundant_resource(edited_resource_id, 'edit_resource', result)
+            self._check_removed_resource(edited_resource_id, 'edit_resource', result)
 
             self.recommendations[edited_resource_id] = deepcopy(self.recommendations[resource_id])
             self.recommendations[edited_resource_id]['id'] = edited_resource_id
             result['id'] = edited_resource_id
             del self.recommendations[resource_id]
 
+        # Handle all other changes
         for field in data:
             if field == 'id':
                 continue
             if data[field] == "":
                 continue
             self.recommendations[edited_resource_id][field] = data[field]
+
         tracker.emit('edit_resource', result)
-        result["description"] = self.get_onetime_url(result["description"])
+        result["description"] = self._get_onetime_url(result["description"])
         return result
 
     @XBlock.json_handler
-    def flag_resource(self, data, _suffix=''):
+    def flag_resource(self, data, _suffix=''):  # pylint: disable=unused-argument
         """
-        Flag (or unflag) an entry of problematic resource and give the reason. This shows in a list for staff to review.
+        Flag (or unflag) an entry of problematic resource and give the reason. This shows in a
+        list for staff to review.
 
         Args:
                 data: dict in JSON format
                 data['id']: the ID of the problematic resouce
-                data['isProblematic']: the boolean indicator for whether the resource is problematic
+                data['isProblematic']: the boolean indicator for whether the resource is being
+                                       flagged or unflagged. Only flagging works.
                 data['reason']: the reason why the user believes the resource is problematic
         Returns:
                 result: dict in JSON format
                 result['reason']: the new reason
                 result['oldReason']: the old reason
                 result['id']: the ID of the problematic resouce
-                result['isProblematic']: the boolean indicator for whether the resource is problematic
+                result['isProblematic']: the boolean indicator for whether the resource
+                                         is now flagged
         """
         result = {}
         result['id'] = data['id']
@@ -579,12 +632,16 @@ class RecommenderXBlock(XBlock):
         result['reason'] = data['reason']
 
         user_id = self.get_user_id()
+
+        # If already flagged, update the reason for the flag
         if data['isProblematic']:
+            # If already flagged, update the reason
             if data['id'] in self.flagged_ids:
                 result['oldReason'] = self.flagged_reasons[
                     self.flagged_ids.index(data['id'])]
                 self.flagged_reasons[
                     self.flagged_ids.index(data['id'])] = data['reason']
+            # Otherwise, flag it.
             else:
                 self.flagged_ids.append(data['id'])
                 self.flagged_reasons.append(data['reason'])
@@ -592,6 +649,7 @@ class RecommenderXBlock(XBlock):
                 if user_id not in self.flagged_accum_resources:
                     self.flagged_accum_resources[user_id] = {}
             self.flagged_accum_resources[user_id][data['id']] = data['reason']
+        # Unflag resource. Currently unsupported.
         else:
             if data['id'] in self.flagged_ids:
                 result['oldReason'] = self.flagged_reasons[
@@ -606,9 +664,10 @@ class RecommenderXBlock(XBlock):
         return result
 
     @XBlock.json_handler
-    def endorse_resource(self, data, _suffix=''):
+    def endorse_resource(self, data, _suffix=''):  # pylint: disable=unused-argument
         """
-        Endorse an entry of resource. This shows the students the resource has the staff seal of approval.
+        Endorse an entry of resource. This shows the students the
+        resource has the staff seal of approval.
 
         Args:
                 data: dict in JSON format
@@ -619,23 +678,27 @@ class RecommenderXBlock(XBlock):
                 result['id']: the ID of the resouce to be endorsed
                 result['status']: endorse the resource or undo it
         """
+        # Auth+auth
         if not self.get_user_is_staff():
             msg = 'Endorse resource without permission'
-            self.error_handler(msg, 'endorse_resource')
+            self._error_handler(msg, 'endorse_resource')
 
+        # Validate it exists (TODO: abstract out)
         resource_id = stem_url(data['id'])
         if resource_id not in self.recommendations:
             msg = 'The selected resource does not exist'
-            self.error_handler(msg, 'endorse_resource', resource_id)
+            self._error_handler(msg, 'endorse_resource', resource_id)
 
         result = {}
         result['id'] = resource_id
 
+        # Unendorse previously endorsed resource
         if resource_id in self.endorsed_recommendation_ids:
             result['status'] = 'undo endorsement'
             endorsed_index = self.endorsed_recommendation_ids.index(resource_id)
             del self.endorsed_recommendation_ids[endorsed_index]
             del self.endorsed_recommendation_reasons[endorsed_index]
+        # Endorse new resource
         else:
             result['reason'] = data['reason']
             result['status'] = 'endorsement'
@@ -648,7 +711,8 @@ class RecommenderXBlock(XBlock):
     @XBlock.json_handler
     def remove_resource(self, data, _suffix=''):
         """
-        Remove an entry of resource. This removes it from the student view, and prevents students from being able to add it back.
+        Remove an entry of resource. This removes it from the student
+        view, and prevents students from being able to add it back.
 
         Args:
                 data: dict in JSON format
@@ -659,29 +723,37 @@ class RecommenderXBlock(XBlock):
                 result['error']: the error message generated when the removal fails
                 result['recommendation']: (Dict) the removed resource
                 result['recommendation']['reason']: the reason why the resouce was removed
+
         """
+        # Auth+auth
         if not self.get_user_is_staff():
             msg = "You don't have the permission to remove this resource"
-            self.error_handler(msg, 'remove_resource')
+            self._error_handler(msg, 'remove_resource')
 
+        # Find+validate resource (TODO)
         resource_id = stem_url(data['id'])
         if resource_id not in self.recommendations:
             msg = 'The selected resource does not exist'
-            self.error_handler(msg, 'remove_resource', resource_id)
+            self._error_handler(msg, 'remove_resource', resource_id)
 
+        # Grab a copy of the resource for the removed list
+        # (swli: I reorganized the code a bit. First copy, then delete. This is more fault-tolerant)
         result = {}
         result['id'] = resource_id
         removed_resource = deepcopy(self.recommendations[resource_id])
+        removed_resource['reason'] = data['reason']
+
+        # Add it to removed resources and remove it from main resource list.
+        self.removed_recommendations[resource_id] = removed_resource
         del self.recommendations[resource_id]
 
-        removed_resource['reason'] = data['reason']
-        self.removed_recommendations[resource_id] = removed_resource
+        # And return
         result['recommendation'] = removed_resource
         tracker.emit('remove_resource', result)
         return result
 
     @XBlock.json_handler
-    def export_resources(self, _data, _suffix):
+    def export_resources(self, _data, _suffix):  # pylint: disable=unused-argument
         """
         Export all resources from the Recommender. This is intentionally not limited to staff
         members (community contributions do not belong to the course staff). Sensitive
@@ -718,6 +790,8 @@ class RecommenderXBlock(XBlock):
         try:
             data = json.load(request.POST['file'].file)
 
+            # TODO: Validate imported data. This could corrupt out system.
+
             self.flagged_accum_resources = data['flagged_accum_resources']
             self.endorsed_recommendation_reasons = data['endorsed_recommendation_reasons']
             self.endorsed_recommendation_ids = data['endorsed_recommendation_ids']
@@ -733,20 +807,22 @@ class RecommenderXBlock(XBlock):
             response.body = json.dumps(data, sort_keys=True)
             response.status = 200
             return response
-        except:
+        except:  # TODO: More specific exception. This is a must-fix.
             response.status = 415
-            response.body = json.dumps({'error': 'Please submit the JSON file obtained with the download resources button'})
+            response.body = json.dumps(
+                {'error': 'Please submit the JSON file obtained with the download resources button'}
+            )
             tracker.emit('import_resources', {'Status': 'FILE_FORMAT_ERROR', 'data': raw_data})
             return response
 
     @XBlock.json_handler
-    def accum_flagged_resource(self, _data, _suffix=''):
+    def accum_flagged_resource(self, _data, _suffix=''):  # pylint: disable=unused-argument
         """
         Accumulate the flagged resource ids and reasons from all students
         """
         if not self.get_user_is_staff():
             msg = 'Tried to access flagged resources without staff permission'
-            self.error_handler(msg, 'accum_flagged_resource')
+            self._error_handler(msg, 'accum_flagged_resource')
         result = {
             'flagged_resources': {}
         }
@@ -758,11 +834,11 @@ class RecommenderXBlock(XBlock):
                     result['flagged_resources'][resource_id] = []
                 if flagged_accum_resource_map[resource_id] != '':
                     result['flagged_resources'][resource_id].append(flagged_accum_resource_map[resource_id])
-                print result
+
         tracker.emit('accum_flagged_resource', result)
         return result
 
-    def student_view(self, _context=None):
+    def student_view(self, _context=None):  # pylint: disable=unused-argument
         """
         The primary view of the RecommenderXBlock, shown to students
         when viewing courses.
@@ -776,9 +852,13 @@ class RecommenderXBlock(XBlock):
         # Transition between two versions. In the previous version, there is
         # no endorsed_recommendation_reasons. Thus, we add empty reasons to
         # make the length of the two lists equal
+        #
+        # TODO: Go through old lists of resources in course, and remove this 
+        # code. The migration should be done.
         while len(self.endorsed_recommendation_ids) > len(self.endorsed_recommendation_reasons):
             self.endorsed_recommendation_reasons.append('')
 
+        # TODO: This would be better as a global variable
         if not self.template_lookup:
             self.template_lookup = TemplateLookup()
             self.template_lookup.put_string(
@@ -801,7 +881,7 @@ class RecommenderXBlock(XBlock):
                       'title': r['title'],
                       "votes": r['upvotes'] - r['downvotes'],
                       'url': r['url'],
-                      'description': self.get_onetime_url(r['description']),
+                      'description': self._get_onetime_url(r['description']),
                       'descriptionText': r['descriptionText']}
                      for r in self.recommendations.values()]
         resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
@@ -831,7 +911,7 @@ class RecommenderXBlock(XBlock):
         frag.initialize_js('RecommenderXBlock', self.get_client_side_settings())
         return frag
 
-    def studio_view(self, _context=None):
+    def studio_view(self, _context=None):  # pylint: disable=unused-argument
         """
         The primary view of the RecommenderXBlock in studio. This is shown to
         course staff when editing a course in studio.
@@ -873,7 +953,7 @@ class RecommenderXBlock(XBlock):
         ]
 
     @classmethod
-    def parse_xml(cls, node, runtime, keys, _id_generator):
+    def parse_xml(cls, node, runtime, keys, _id_generator):  # pylint: disable=unused-argument
         """
         Parse the XML for the XBlock. It is a list of dictionaries of default recommendations.
 
