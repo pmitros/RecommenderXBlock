@@ -1,7 +1,7 @@
 /* CSS for studio view of RecommenderXBlock */
-.clearFix {clear: both; height: 0.5em;}
+.recommender_clearFix {clear: both; height: 0.5em;}
 
-.recommenderModifyTitleContainer { 
+.recommender_recommenderModifyTitleContainer { 
   font-size: 14px;
   padding-top: 0.5em;
   padding-left: 0.5em;
@@ -10,14 +10,14 @@
   color: #948f8f;
 }
 
-.recommenderModify {
+.recommender_recommenderModify {
   width: 700px;
 }
 
-.recommenderModifyTitle { float: right; padding-right: 2em; overflow: auto; }
+.recommender_recommenderModifyTitle { float: right; padding-right: 2em; overflow: auto; }
 
-.setRecommenderConfig, .setRecommenderConfigTitle {
+.recommender_setRecommenderConfig, .recommender_setRecommenderConfigTitle {
   padding-left: 1em;
 }
 
-.configSubmit { margin-top: 0.5em; }
+.recommender_configSubmit { margin-top: 0.5em; }

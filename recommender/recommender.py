@@ -68,6 +68,7 @@ def data_structure_upgrade(old_list):
 
 template_lookup = None
 
+
 class HelperXBlock(XBlock):
     ''' Generic functionality usable across XBlocks but not yet in the platform '''
     def get_user_is_staff(self):
@@ -529,7 +530,7 @@ class RecommenderXBlock(HelperXBlock):
         try:
             content = request.POST['file'].file.read()
             file_id = hashlib.md5(content).hexdigest()
-            file_name = (file_id + '.' + result)            
+            file_name = (file_id + '.' + result)
 
             fhwrite = self.fs.open(file_name, "wb")
             fhwrite.write(content)

@@ -1,66 +1,62 @@
 var tooltipsCatsPerResource = [
-    '.resourceEditButton',
+    '.recommender_resourceEditButton',
     '.recommenderVoteArrowUp',
     '.recommenderVoteArrowDown',
     '.recommenderVoteScore',
     'a',
-    '.flagResource',
-    '.remove',
-    '.checkIcon.endorsed'
+    '.recommender_flagResource',
+    '.recommender_remove',
+    '.recommender_endorse.recommender_endorsed'
 ];
 
 var tooltipsCats = [
-    '.resourceAddButton',
-    '.previewingImg',
-    '.inTitle',
-    '.inUrl',
-    '.inDescriptionText',
+    '.recommender_resourceAddButton',
+    '.recommender_previewingImg',
+    '.recommender_inTitle',
+    '.recommender_inUrl',
+    '.recommender_inDescriptionText',
     '.addResourceScreenshot',
-    '.backToViewButton',
-    '.flagReason',
-    '.awsAccessKey',
-    '.awsSecretKey',
-    '.bucketName',
-    '.uploadedFileDir',
+    '.recommender_backToViewButton',
+    '.recommender_flagReason',
     '.deleteResource',
-    '.hideShow.resourceListExpanded',
-    '.resourceRankingForRemovalButton.removeMode'
+    '.recommender_hideShow.recommender_resourceListExpanded',
+    '.recommender_resourceRankingForRemovalButton.recommender_removeMode'
 ];
 
 var tooltipsEditCats = [
-    '.editTitle',
-    '.editUrl',
-    '.editDescriptionText',
+    '.recommender_editTitle',
+    '.recommender_editUrl',
+    '.recommender_editDescriptionText',
     '.editResourceScreenshot'
 ];
 
 var tooltipsCatsText = {
-    '.resourceAddButton': '<span>Recommend a new resource which may be helpful to other students solving this problem</span>',
-    '.resourceEditButton': '<span>Edit this resource</span>',
+    '.recommender_resourceAddButton': '<span>Recommend a new resource which may be helpful to other students solving this problem</span>',
+    '.recommender_resourceEditButton': '<span>Edit this resource</span>',
     '.recommenderVoteArrowUp': '<span>Upvote if the resource is helpful</span>',
     '.recommenderVoteArrowDown': '<span>Downvote if the resource is not helpful</span>',
     '.recommenderVoteScore': '<span>Votes</span>', // 
     'a': '<span>Resource title</span>', // TODO: I would suggest making the description be the tooltip.
-    '.remove': '<span>Remove this resource and give the reason why you do that</span>',
-    '.previewingImg': '<span>Preview image (typically, a screenshot)</span>',
-    '.inTitle': '<span>Give a short (1-3 sentence) summary of the resource; ideally, this should be concise, but give enough detail to let students know whether this resources is useful to them</span>',
-    '.inUrl': '<span>Cut-and-paste the URL of the resource.</span>',
-    '.inDescriptionText': '<span>Give a paragraph of summary of the resource; the summary should be more detailed than you gave in Title</span>',
+    '.recommender_remove': '<span>Remove this resource and give the reason why you do that</span>',
+    '.recommender_previewingImg': '<span>Preview image (typically, a screenshot)</span>',
+    '.recommender_inTitle': '<span>Give a short (1-3 sentence) summary of the resource; ideally, this should be concise, but give enough detail to let students know whether this resources is useful to them</span>',
+    '.recommender_inUrl': '<span>Cut-and-paste the URL of the resource.</span>',
+    '.recommender_inDescriptionText': '<span>Give a paragraph of summary of the resource; the summary should be more detailed than you gave in Title</span>',
     '.addResourceScreenshot': '<span>Upload a preview screenshot (in GIF/PNG/JPG) of the resource; ideally, this should let students know whether this resources is useful to them</span>',
-    '.editTitle': '<span>Give a short (1-3 sentence) summary of the resource; ideally, this should be concise, but give enough detail to let students know whether this resources is useful to them</span>',
-    '.editUrl': '<span>Cut-and-paste the URL of the resource.</span>', // TODO: Give instructions to go to element of learning sequence, or time in video
-    '.editDescriptionText': '<span>Give a paragraph of summary of the resource; the summary should be more detailed than you gave in Title</span>',
+    '.recommender_editTitle': '<span>Give a short (1-3 sentence) summary of the resource; ideally, this should be concise, but give enough detail to let students know whether this resources is useful to them</span>',
+    '.recommender_editUrl': '<span>Cut-and-paste the URL of the resource.</span>', // TODO: Give instructions to go to element of learning sequence, or time in video
+    '.recommender_editDescriptionText': '<span>Give a paragraph of summary of the resource; the summary should be more detailed than you gave in Title</span>',
     '.editResourceScreenshot': '<span>Upload a preview screenshot (in GIF/PNG/JPG) of the resource; ideally, this should let students know whether this resources is useful to them</span>',
-    '.backToViewButton': '<span>Go back to the main list</span>',
-    '.flagReason': '<span>Give a meaningful reason for why this resource should be removed</span>',
-    '.flagResource': '<span>Flag this resource as problematic and give your reason</span>',
+    '.recommender_backToViewButton': '<span>Go back to the main list</span>',
+    '.recommender_flagReason': '<span>Give a meaningful reason for why this resource should be removed</span>',
+    '.recommender_flagResource': '<span>Flag this resource as problematic and give your reason</span>',
     '.deleteResource': '<span>Delete this resource</span>',
-    '.hideShow': '<span>Show a list of student-recommented related resources</span>',
-    '.hideShow.resourceListExpanded': '<span>Hide the recommendations list</span>',
-    '.checkIcon': '<span>Check the icon to endorse this resource</span>',
-    '.checkIcon.endorsed': '<span>This resource is endorsed by staff</span>',
-    '.resourceRankingForRemovalButton': '<span>Click to view resources for removal</span>',
-    '.resourceRankingForRemovalButton.removeMode': '<span>Click to view resources in ordinary decreasing-vote order</span>'
+    '.recommender_hideShow': '<span>Show a list of student-recommented related resources</span>',
+    '.recommender_hideShow.recommender_resourceListExpanded': '<span>Hide the recommendations list</span>',
+    '.recommender_endorse': '<span>Check the icon to endorse this resource</span>',
+    '.recommender_endorse.recommender_endorsed': '<span>This resource is endorsed by staff</span>',
+    '.recommender_resourceRankingForRemovalButton': '<span>Click to view resources for removal</span>',
+    '.recommender_resourceRankingForRemovalButton.recommender_removeMode': '<span>Click to view resources in ordinary decreasing-vote order</span>'
 };
 
 var problematicReasonsPrefix = '<br/>Here is a list of reasons why students think this resource problematic: <br/>&nbsp;&nbsp;&nbsp;&nbsp;';
@@ -77,21 +73,21 @@ var exportResourceFileInfo = {
 var confirmInterruptSubmission = 'The content you typed has not been submitted yet. Are you sure to go back?';
 
 var headerText = {
-    '.importResourcePage': 'Import resources',
-    '.addResourcePage': 'Suggest resource',
-    '.editResourcePage': 'Edit existing resource',
-    '.flagResourcePage': 'Flag Resource',
-    '.endorsePage': 'Endorse Resource',
-    '.removePage': 'Remove Resource'
+    '.recommender_importResourcePage': 'Import resources',
+    '.recommender_addResourcePage': 'Suggest resource',
+    '.recommender_editResourcePage': 'Edit existing resource',
+    '.recommender_flagResourcePage': 'Flag Resource',
+    '.recommender_endorsePage': 'Endorse Resource',
+    '.recommender_removePage': 'Remove Resource'
 };
 
 var modifyPageTitle = {
-    '.importResourcePage': 'Upload resources in JSON format to the database.',
-    '.addResourcePage': 'Suggest a resource which can help other students with this problem. Please do not give the answer directly.',
-    '.editResourcePage': 'Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.',
-    '.flagResourcePage': 'Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently.',
-    '.endorsePage': 'Endorse this resource and give the reason why you do that.',
-    '.removePage': 'Remove this resource and give the reason why you do that.'
+    '.recommender_importResourcePage': 'Upload resources in JSON format to the database.',
+    '.recommender_addResourcePage': 'Suggest a resource which can help other students with this problem. Please do not give the answer directly.',
+    '.recommender_editResourcePage': 'Edit the resource and make it more helpful for other students with this problem. Please do not give the answer directly.',
+    '.recommender_flagResourcePage': 'Why would you like to flag this resource? The staff will review all flagged resources, and remove inappropriate ones (spam, incorrect, abusive, etc.). Giving a clear reason will help us do this efficiently.',
+    '.recommender_endorsePage': 'Endorse this resource and give the reason why you do that.',
+    '.recommender_removePage': 'Remove this resource and give the reason why you do that.'
 };
 
 var writeDatabaseEnum = {
@@ -114,15 +110,15 @@ var voteConfigs = {
         'buttonClassName': 'recommenderVoteArrowUp',
         'eventName': 'arrowUp',
         'serverEventName': 'recommender_upvote',
-        'voteClassName': 'upvoting',
-        'previousVoteClassName': 'downvoting'
+        'voteClassName': 'recommender_upvoting',
+        'previousVoteClassName': 'recommender_downvoting'
     },
     'downvote': {
         'buttonClassName': 'recommenderVoteArrowDown',
         'eventName': 'arrowDown',
         'serverEventName': 'recommender_downvote',
-        'voteClassName': 'downvoting',
-        'previousVoteClassName': 'upvoting'
+        'voteClassName': 'recommender_downvoting',
+        'previousVoteClassName': 'recommender_upvoting'
     }
 };
 
@@ -145,7 +141,7 @@ var ariaLabelText = {
 
 var toggleVoteFlag = 'toggle';
 var endorseFlag = 'reason';
-var removeIcon = '<span class="ui-icon ui-icon-gear remove"></span>';
+var removeIcon = '<span class="ui-icon ui-icon-gear recommender_remove"></span>';
 
 var loggerStatus = {
     'hideShow': {
