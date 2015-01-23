@@ -1,12 +1,12 @@
 /* CSS for RecommenderXBlock */
-.clearFix {clear: both; height: 0.5em;}
+.recommender_clearFix {clear: both; height: 0.5em;}
 
-.hideShow {
+.recommender_hideShow {
     -webkit-transition:background-color 0.2s; color 0.2s;
     transition:background-color 0.2s; color 0.2s;
 }
 
-.hideShow:hover {
+.recommender_hideShow:hover {
     background-color:rgb(137, 183, 205);
     color:rgb(11, 11, 11);
 }
@@ -19,7 +19,7 @@
 	cursor: pointer;
 }
 
-.hidden { display: none; }
+.recommender_hidden { display: none; }
 
 .recommenderBlock {
     width : 100%;
@@ -30,7 +30,7 @@
     float: left;
 }
 
-.hideShow, .recommenderModifyTitleContainer { 
+.recommender_hideShow, .recommenderModifyTitleContainer { 
     font-size: 14px;
     padding-top: 0.5em;
     padding-left: 0.5em;
@@ -39,12 +39,12 @@
     color: #948f8f;
 }
 
-.hideShow.resourceListExpanded { cursor: n-resize; }
-.hideShow:not(.resourceListExpanded) { cursor: s-resize; }
-.resourceListExpanded .expanded { display: block; }
-.resourceListExpanded .notExpanded {display: none; }
-.expanded { display: none; }
-.notExpanded {display: block; }
+.recommender_hideShow.recommender_resourceListExpanded { cursor: n-resize; }
+.recommender_hideShow:not(.recommender_resourceListExpanded) { cursor: s-resize; }
+.recommender_resourceListExpanded .recommender_expanded { display: block; }
+.recommender_resourceListExpanded .recommender_notExpanded {display: none; }
+.recommender_expanded { display: none; }
+.recommender_notExpanded {display: block; }
 
 .recommenderRow { 
     height: 380px;
@@ -56,7 +56,7 @@
     overflow-y: auto;
 }
 
-.question {
+.recommender_question {
     width:700px;
 }
 
@@ -67,7 +67,7 @@
     width : 100%;
 }
 
-.expanded, .notExpanded {
+.recommender_expanded, .recommender_notExpanded {
     float: right;
     width: 50px;
 }
@@ -76,13 +76,13 @@
     width: 700px;
 }
 
-.descriptionImg {
+.recommender_descriptionImg {
     max-height: 1020px;
     max-width: 700px;
     margin-top: 2em;
 }
 
-.descriptionText {
+.recommender_descriptionText {
     max-height: 200px;
     overflow: auto;
     padding: 0.5em;
@@ -90,7 +90,7 @@
     color: #948f8f;
 }
 
-.showProblematicReasons {
+.recommender_showProblematicReasons {
     max-height: 200px;
     overflow: auto;
     padding: 0.5em;
@@ -98,7 +98,7 @@
     color: white;
 }
 
-.showEndorsedReasons {
+.recommender_showEndorsedReasons {
     max-height: 200px;
     overflow: auto;
     padding: 0.5em;
@@ -106,10 +106,10 @@
     color: white;
 }
 
-.showProblematicReasons:before { content: 'This resource was flagged problematic by students.'; }
-.showEndorsedReasons:before { content: 'This resource was endorsed by course staff.'; }
+.recommender_showProblematicReasons:before { content: 'This resource was flagged problematic by students.'; }
+.recommender_showEndorsedReasons:before { content: 'This resource was endorsed by course staff.'; }
 
-.previewingImg {
+.recommender_previewingImg {
     margin-top: 1em;
     max-width: 700px;
     max-height: 600px;
@@ -148,7 +148,7 @@
 
 .recommenderRecommendations { display: table; }
 
-.pagination {
+.recommender_pagination {
     display: table;
     margin: 0 auto;
 }
@@ -180,86 +180,85 @@
     width: 40px;
 }
 
-.redTxt { color: #B4053D; }
-.redTxt:before { content: '*'; }
+.recommender_redTxt { color: #B4053D; }
+.recommender_redTxt:before { content: '*'; }
 
-.recommenderVoteArrowDown, .recommenderVoteArrowUp, .resourceEditButton, .flagResource, .remove, .resourceImportButton, .resourceExportButton, .resourceAddButton, .paginationPageNumber, .backToViewButton, .endorse, .resourceRankingForRemovalButton { cursor: pointer; }
+.recommenderVoteArrowDown, .recommenderVoteArrowUp, .recommender_resourceEditButton, .recommender_flagResource, .recommender_remove, .recommender_resourceImportButton, .recommender_resourceExportButton, .recommender_resourceAddButton, .recommender_paginationPageNumber, .recommender_backToViewButton, .recommender_endorse, .recommender_resourceRankingForRemovalButton { cursor: pointer; }
 
-.resourceAddButton, .resourceExportButton, .resourceImportButton { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em; margin-left: 1em;}
-.resourceEditButton { float: left; }
-.modifyPageTitle { margin-bottom: 1em; }
+.recommender_resourceAddButton, .recommender_resourceExportButton, .recommender_resourceImportButton { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em; margin-left: 1em;}
+.recommender_resourceEditButton { float: left; }
+.recommender_modifyPageTitle { margin-bottom: 1em; }
 
-.editResourcePage, .addResourcePage, .flagResourcePage {
+.recommender_flagResourcePage, .recommender_editResourcePage, .recommender_addResourcePage, .recommender_removePage, .recommender_endorsePage, .recommender_importResourcePage {
     padding-left: 1em;
 }
 
-.paginationPageNumber {
+.recommender_paginationPageNumber {
     display:table-cell;
     text-align:center;
     vertical-align: middle;
     width:25px;
 }
 
-.backToViewButton { color: #1d9dd9; float: left; }
+.recommender_backToViewButton { color: #1d9dd9; float: left; }
 
-.flagReasonSubmit, .editSubmit, .addSubmit, .removeResource, .endorseResource, .importResourceSubmit { margin-top: 0.5em; }
+.recommender_flagReasonSubmit, .recommender_editSubmit, .recommender_addSubmit, .recommender_removeResource, .recommender_endorseResource, .recommender_importResourceSubmit { margin-top: 0.5em; }
 
-input[type="button"]:not([DISABLED]){
+.recommenderBlock input[type="button"]:not([DISABLED]){
     background-image: linear-gradient(#1d9dd9,#1d9dd9);
     color: white;
 }
 
-.endorseResource, .removeResource { margin-top: 0.5em; float:left; }
+.recommender_endorseResource, .recommender_removeResource { margin-top: 0.5em; float:left; }
 
-.ui-icon.problematic {
+.ui-icon.recommender_problematic {
 	background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
 }
 
-.inTitle, .editTitle, .inDescriptionText, .editDescriptionText { 
+.recommender_inTitle, .recommender_editTitle, .recommender_inDescriptionText, .recommender_editDescriptionText { 
     height: 75px;
     margin-left: 0.5em;
     width:100%;
 }
-.inUrl, .editUrl, .flagReason, .removeReason, .endorseReason, .awsAccessKey, .awsSecretKey, .bucketName, .uploadedFileUrl, .uploadedFileDir {
+.recommender_inUrl, .recommender_editUrl, .recommender_flagReason, .recommender_removeReason, .recommender_endorseReason {
     height: 25px;
     margin-left: 0.5em;
     width:100%;
 }
 
-.resourceHovered { background-color:#F2F7FA }
+.recommender_resourceHovered { background-color:#F2F7FA }
 
 .recommenderModifyTitle { float: right; padding-right: 2em; overflow: auto; }
 
 .recommenderVoteScore, .recommenderVoteArrowUp, .recommenderVoteArrowDown { color: #948f8f; }
-.recommenderVoteScore.upvoting, .recommenderVoteArrowUp.upvoting { color: rgb(69, 194, 10); }
-.recommenderVoteScore.downvoting, .recommenderVoteArrowDown.downvoting { color: #B4053D; }
-.recommenderVoteArrowUp.downvoting, .recommenderVoteArrowDown.upvoting { color: #948f8f; }
+.recommenderVoteScore.recommender_upvoting, .recommenderVoteArrowUp.recommender_upvoting { color: rgb(69, 194, 10); }
+.recommenderVoteScore.recommender_downvoting, .recommenderVoteArrowDown.recommender_downvoting { color: #B4053D; }
+.recommenderVoteArrowUp.recommender_downvoting, .recommenderVoteArrowDown.recommender_upvoting { color: #948f8f; }
 
-.resourceRankingForRemovalButton:not(.removeMode) {
+.recommender_resourceRankingForRemovalButton:not(.recommender_removeMode) {
     float: right;
     background-color: rgba(0,0,0,0.05);
     padding: 0.3em 1em 0.3em 1em;
     color: black;
 }
-.resourceRankingForRemovalButton.removeMode {
+.recommender_resourceRankingForRemovalButton.recommender_removeMode {
     float: right;
     background-color: #B4053D;
     padding: 0.3em 1em 0.3em 1em;
     color: white;
 }
-.resourceRankingForRemovalButton:not(removeMode):before { content: 'Ordinary '; }
-.resourceRankingForRemovalButton.removeMode:before { content: 'Removal '; }
+.recommender_resourceRankingForRemovalButton:not(.recommender_removeMode):before { content: 'Ordinary '; }
+.recommender_resourceRankingForRemovalButton.recommender_removeMode:before { content: 'Removal '; }
 
-.endorse:not(.endorsed) { color: #DFD3D3; display: none; }
-.endorse.endorsed { color: rgb(69, 194, 10); }
-.endorse:before { content: '✔'; }
-.downArrow:before { content: '▼'; }
-.upArrow:before { content: '▲'; }
-.downArrow, .upArrow { margin-left: 0.5em; }
-.plusIcon:before { content: '+'; }
-.nextPageIcon:before { content: '►'; }
-.previousPageIcon:before { content: '◄'; }
-.highlightActivePageNumber { background-color: #948f8f; }
+.recommender_endorse:not(.recommender_endorsed) { color: #DFD3D3; display: none; }
+.recommender_endorse.recommender_endorsed { color: rgb(69, 194, 10); }
+.recommender_endorse:before { content: '✔'; }
+.recommender_downArrow:before { content: '▼'; }
+.recommender_upArrow:before { content: '▲'; }
+.recommender_downArrow, .recommender_upArrow { margin-left: 0.5em; }
+.recommender_nextPageIcon:before { content: '►'; }
+.recommender_previousPageIcon:before { content: '◄'; }
+.recommender_highlightActivePageNumber { background-color: #948f8f; }
 
 .my-custom-theme {
 	background: #948f8f;
@@ -273,6 +272,6 @@ input[type="button"]:not([DISABLED]){
 	padding: 8px 10px;
 }
 
-a:link, a:visited { color: black; }
-form { margin: 0em; }
-label { width: 100%; }
+.recommenderBlock a:link, .recommenderBlock a:visited { color: black; }
+.recommenderBlock form { margin: 0em; }
+.recommenderBlock label { width: 100%; }
