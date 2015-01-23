@@ -332,7 +332,7 @@ class RecommenderXBlock(HelperXBlock):
         """
         Check the type and size of uploaded file. If the file type is
         unexpected or the size exceeds the threshold, log the error and return
-        to browser, otherwise, return None. 
+        to browser, otherwise, return None.
         """
         # Check invalid file types
         file_type_error = False
@@ -498,7 +498,7 @@ class RecommenderXBlock(HelperXBlock):
                 response: HTTP response
                 response.body (response.responseText): name of the uploaded file
 
-        We validate that this is a valid JPG, GIF, or PNG by checking magic number, mimetype, 
+        We validate that this is a valid JPG, GIF, or PNG by checking magic number, mimetype,
         and extension all correspond. We also limit to 30MB. We save the file under its MD5
         hash to (1) avoid name conflicts, (2) avoid race conditions and (3) save space.
         """
@@ -602,7 +602,7 @@ class RecommenderXBlock(HelperXBlock):
         for field in self.resource_content_fields:
             result['old_' + field] = self.recommendations[resource_id][field]
             # If the content in resource is unchanged (i.e., data[field] is
-            # empty), return and log the content stored in the database 
+            # empty), return and log the content stored in the database
             # (self.recommendations), otherwise, return and log the edited
             # one (data[field])
             if data[field] == "":
@@ -885,7 +885,7 @@ class RecommenderXBlock(HelperXBlock):
         # no endorsed_recommendation_reasons. Thus, we add empty reasons to
         # make the length of the two lists equal
         #
-        # TODO: Go through old lists of resources in course, and remove this 
+        # TODO: Go through old lists of resources in course, and remove this
         # code. The migration should be done.
         while len(self.endorsed_recommendation_ids) > len(self.endorsed_recommendation_reasons):
             self.endorsed_recommendation_reasons.append('')
