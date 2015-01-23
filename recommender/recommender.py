@@ -66,6 +66,7 @@ def data_structure_upgrade(old_list):
     else:
         return old_list
 
+template_lookup = None
 
 class HelperXBlock(XBlock):
     ''' Generic functionality usable across XBlocks but not yet in the platform '''
@@ -256,8 +257,6 @@ class RecommenderXBlock(HelperXBlock):
         scope=Scope.content
     )
 
-    template_lookup = None
-
     # the dictionary keys for storing the content of a recommendation
     resource_content_fields = [
         'url', 'title', 'description', 'descriptionText'
@@ -315,6 +314,74 @@ class RecommenderXBlock(HelperXBlock):
             result['dup_id'] = self.removed_recommendations[resource_id]['id']
             tracker.emit(event_name, result)
             raise JsonHandlerError(405, result['error'])
+
+    def _validate_resource(self, data_id, event):
+        """
+        Validate whether the resource exists in the database. If not,
+        generate the error message, and return to the browser for a given
+        event, otherwise, return the stemmed id.
+        """
+        resource_id = stem_url(data_id)
+        if resource_id not in self.recommendations:
+            msg = 'The selected resource does not exist'
+            self._error_handler(msg, event, resource_id)
+        return resource_id
+
+    def _check_upload_file(self, request, file_types, file_type_error_msg, event, file_size_threshold):
+        """
+        Check the type and size of uploaded file. If the file type is
+        unexpected or the size exceeds the threshold, log the error and return
+        to browser, otherwise, return None. 
+        """
+        # Check invalid file types
+        file_type_error = False
+        file_type = [ft for ft in file_types
+                     if any(str(request.POST['file'].file).lower().endswith(ext)
+                            for ext in file_types[ft]['extension'])]
+
+        # Check extension
+        if not file_type:
+            file_type_error = True
+        else:
+            file_type = file_type[0]
+            # Check mimetypes
+            if request.POST['file'].file.content_type not in file_types[file_type]['mimetypes']:
+                file_type_error = True
+            else:
+                if 'magic' in file_types[file_type]:
+                    # Check magic number
+                    headers = file_types[file_type]['magic']
+                    if request.POST['file'].file.read(len(headers[0]) / 2).encode('hex') not in headers:
+                        file_type_error = True
+                    request.POST['file'].file.seek(0)
+
+        if file_type_error:
+            response = Response()
+            tracker.emit(event, {'uploadedFileName': 'FILE_TYPE_ERROR'})
+            response.status = 415
+            response.body = json.dumps({'error': file_type_error_msg})
+            return response
+
+        # Check whether file size exceeds threshold (30MB)
+        if request.POST['file'].file.size > file_size_threshold:
+            response = Response()
+            tracker.emit(event, {'uploadedFileName': 'FILE_SIZE_ERROR'})
+            response.status = 413
+            response.body = json.dumps({'error': 'Size of uploaded file exceeds threshold'})
+            return response
+
+        return file_type
+
+    def _raise_pyfs_error(self, event):
+        """
+        Log and return an error if the pyfs is not properly set.
+        """
+        response = Response()
+        error = 'The configuration of pyfs is not properly set'
+        tracker.emit(event, {'uploadedFileName': 'IMPROPER_FS_SETUP'})
+        response.status = 404
+        response.body = json.dumps({'error': error})
+        return response
 
     def get_client_side_settings(self):
         """
@@ -377,10 +444,7 @@ class RecommenderXBlock(HelperXBlock):
                 result['toggle']: boolean indicator for whether the resource
                                   was switched from downvoted to upvoted
         """
-        resource_id = stem_url(data['id'])
-        if resource_id not in self.recommendations:
-            msg = 'The selected resource does not exist'
-            self._error_handler(msg, data['event'], resource_id)
+        resource_id = self._validate_resource(data['id'], data['event'])
 
         result = {}
         result['id'] = resource_id
@@ -436,8 +500,6 @@ class RecommenderXBlock(HelperXBlock):
         We validate that this is a valid JPG, GIF, or PNG by checking magic number, mimetype, 
         and extension all correspond. We also limit to 30MB. We save the file under its MD5
         hash to (1) avoid name conflicts, (2) avoid race conditions and (3) save space.
-
-        TODO: Move core validation code out of this class. It is generic functionality.
         """
         # Check invalid file types
         image_types = {
@@ -457,59 +519,23 @@ class RecommenderXBlock(HelperXBlock):
                 'magic': ["474946383961", "474946383761"]
             }
         }
-        file_type_error = False
-        file_type = [ft for ft in image_types
-                     if any(str(request.POST['file'].file).lower().endswith(ext)
-                            for ext in image_types[ft]['extension'])]
-
-        # Check extension
-        if not file_type:
-            file_type_error = True
-        else:
-            file_type = file_type[0]
-            # Check mimetypes
-            if request.POST['file'].file.content_type not in image_types[file_type]['mimetypes']:
-                file_type_error = True
-            else:
-                # Check magic number
-                headers = image_types[file_type]['magic']
-                if request.POST['file'].file.read(len(headers[0]) / 2).encode('hex') not in headers:
-                    file_type_error = True
-                request.POST['file'].file.seek(0)
-
-        if file_type_error:
-            response = Response()
-            tracker.emit('upload_screenshot',
-                         {'uploadedFileName': 'FILE_TYPE_ERROR'})
-            response.status = 415
-            response.body = json.dumps({'error': 'Please upload an image in GIF/JPG/PNG'})
-            return response
-
-        # Check whether file size exceeds threshold (30MB)
-        if request.POST['file'].file.size > 31457280:
-            response = Response()
-            tracker.emit('upload_screenshot',
-                         {'uploadedFileName': 'FILE_SIZE_ERROR'})
-            response.status = 413
-            response.body = json.dumps({'error': 'Size of uploaded file exceeds threshold'})
-            return response
+        file_type_error_msg = 'Please upload an image in GIF/JPG/PNG'
+        result = self._check_upload_file(
+            request, image_types, file_type_error_msg, 'upload_screenshot', 31457280
+        )
+        if isinstance(result, Response):
+            return result
 
         try:
             content = request.POST['file'].file.read()
             file_id = hashlib.md5(content).hexdigest()
-            file_name = (file_id + '.' + file_type)
+            file_name = (file_id + '.' + result)            
 
             fhwrite = self.fs.open(file_name, "wb")
             fhwrite.write(content)
             fhwrite.close()
-        except BaseException:  # TODO: More specific exception
-            response = Response()
-            error = 'The configuration of pyfs is not properly set'
-            tracker.emit('upload_screenshot',
-                         {'uploadedFileName': 'IMPROPER_FS_SETUP'})
-            response.status = 404
-            response.body = json.dumps({'error': error})
-            return response
+        except IOError:
+            return self._raise_pyfs_error('upload_screenshot')
 
         response = Response()
         response.body = str("fs://" + file_name)
@@ -566,18 +592,18 @@ class RecommenderXBlock(HelperXBlock):
                 result[old_resource_content_field]: the content of the resource before edited
                 result[resource_content_field]: the content of the resource after edited
         """
-        resource_id = stem_url(data['id'])  ## TODO: Abstract out into a common validate_resource
-        if resource_id not in self.recommendations:
-            msg = 'The selected resource does not exist'
-            self._error_handler(msg, 'edit_resource', resource_id)
+        resource_id = self._validate_resource(data['id'], 'edit_resource')
 
         result = {}
         result['id'] = resource_id
         result['old_id'] = resource_id
 
-        ## TODO: Comment giving human-readable explantion of loop below
         for field in self.resource_content_fields:
             result['old_' + field] = self.recommendations[resource_id][field]
+            # If the content in resource is unchanged (i.e., data[field] is
+            # empty), return and log the content stored in the database 
+            # (self.recommendations), otherwise, return and log the edited
+            # one (data[field])
             if data[field] == "":
                 result[field] = self.recommendations[resource_id][field]
             else:
@@ -683,11 +709,7 @@ class RecommenderXBlock(HelperXBlock):
             msg = 'Endorse resource without permission'
             self._error_handler(msg, 'endorse_resource')
 
-        # Validate it exists (TODO: abstract out)
-        resource_id = stem_url(data['id'])
-        if resource_id not in self.recommendations:
-            msg = 'The selected resource does not exist'
-            self._error_handler(msg, 'endorse_resource', resource_id)
+        resource_id = self._validate_resource(data['id'], 'endorse_resource')
 
         result = {}
         result['id'] = resource_id
@@ -730,11 +752,7 @@ class RecommenderXBlock(HelperXBlock):
             msg = "You don't have the permission to remove this resource"
             self._error_handler(msg, 'remove_resource')
 
-        # Find+validate resource (TODO)
-        resource_id = stem_url(data['id'])
-        if resource_id not in self.recommendations:
-            msg = 'The selected resource does not exist'
-            self._error_handler(msg, 'remove_resource', resource_id)
+        resource_id = self._validate_resource(data['id'], 'remove_resource')
 
         # Grab a copy of the resource for the removed list
         # (swli: I reorganized the code a bit. First copy, then delete. This is more fault-tolerant)
@@ -786,11 +804,22 @@ class RecommenderXBlock(HelperXBlock):
             tracker.emit('import_resources', {'Status': 'NOT_A_STAFF'})
             return response
 
-        raw_data = ''
+        # Check invalid file types
+        file_types = {
+            'json': {
+                'extension': [".json"],
+                'mimetypes': ['application/json', 'text/json', 'text/x-json']
+            }
+        }
+        file_type_error_msg = 'Please submit the JSON file obtained with the download resources button'
+        result = self._check_upload_file(
+            request, file_types, file_type_error_msg, 'import_resources', 31457280
+        )
+        if isinstance(result, Response):
+            return result
+
         try:
             data = json.load(request.POST['file'].file)
-
-            # TODO: Validate imported data. This could corrupt out system.
 
             self.flagged_accum_resources = data['flagged_accum_resources']
             self.endorsed_recommendation_reasons = data['endorsed_recommendation_reasons']
@@ -807,13 +836,15 @@ class RecommenderXBlock(HelperXBlock):
             response.body = json.dumps(data, sort_keys=True)
             response.status = 200
             return response
-        except:  # TODO: More specific exception. This is a must-fix.
+        except (ValueError, KeyError):
             response.status = 415
             response.body = json.dumps(
                 {'error': 'Please submit the JSON file obtained with the download resources button'}
             )
-            tracker.emit('import_resources', {'Status': 'FILE_FORMAT_ERROR', 'data': raw_data})
+            tracker.emit('import_resources', {'Status': 'FILE_FORMAT_ERROR'})
             return response
+        except IOError:
+            return self._raise_pyfs_error('import_resources')
 
     @XBlock.json_handler
     def accum_flagged_resource(self, _data, _suffix=''):  # pylint: disable=unused-argument
@@ -858,13 +889,13 @@ class RecommenderXBlock(HelperXBlock):
         while len(self.endorsed_recommendation_ids) > len(self.endorsed_recommendation_reasons):
             self.endorsed_recommendation_reasons.append('')
 
-        # TODO: This would be better as a global variable
-        if not self.template_lookup:
-            self.template_lookup = TemplateLookup()
-            self.template_lookup.put_string(
+        global template_lookup
+        if not template_lookup:
+            template_lookup = TemplateLookup()
+            template_lookup.put_string(
                 "recommender.html",
                 self.resource_string("static/html/recommender.html"))
-            self.template_lookup.put_string(
+            template_lookup.put_string(
                 "resourcebox.html",
                 self.resource_string("static/html/resourcebox.html"))
 
@@ -887,7 +918,7 @@ class RecommenderXBlock(HelperXBlock):
         resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
 
         frag = Fragment(
-            self.template_lookup.get_template("recommender.html").render(
+            template_lookup.get_template("recommender.html").render(
                 resources=resources,
                 upvoted_ids=self.upvoted_ids,
                 downvoted_ids=self.downvoted_ids,
@@ -916,12 +947,13 @@ class RecommenderXBlock(HelperXBlock):
         The primary view of the RecommenderXBlock in studio. This is shown to
         course staff when editing a course in studio.
         """
-        if not self.template_lookup:
-            self.template_lookup = TemplateLookup()
-            self.template_lookup.put_string(
+        global template_lookup
+        if not template_lookup:
+            template_lookup = TemplateLookup()
+            template_lookup.put_string(
                 "recommenderstudio.html",
                 self.resource_string("static/html/recommenderstudio.html"))
-        frag = Fragment(self.template_lookup.get_template("recommenderstudio.html").render())
+        frag = Fragment(template_lookup.get_template("recommenderstudio.html").render())
         frag.add_css(pkg_resources.resource_string(__name__, "static/css/recommenderstudio.css"))
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_javascript(pkg_resources.resource_string(__name__, "static/js/src/recommenderstudio.js"))
