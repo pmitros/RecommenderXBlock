@@ -204,7 +204,7 @@
 
 .recommender_flagReasonSubmit, .recommender_editSubmit, .recommender_addSubmit, .recommender_removeResource, .recommender_endorseResource, .recommender_importResourceSubmit { margin-top: 0.5em; }
 
-input[type="button"]:not([DISABLED]){
+.recommenderBlock input[type="button"]:not([DISABLED]){
     background-image: linear-gradient(#1d9dd9,#1d9dd9);
     color: white;
 }
@@ -272,6 +272,6 @@ input[type="button"]:not([DISABLED]){
 	padding: 8px 10px;
 }
 
-a:link, a:visited { color: black; }
-form { margin: 0em; }
-label { width: 100%; }
+.recommenderBlock a:link, .recommenderBlock a:visited { color: black; }
+.recommenderBlock form { margin: 0em; }
+.recommenderBlock label { width: 100%; }
