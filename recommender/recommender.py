@@ -893,12 +893,12 @@ class RecommenderXBlock(HelperXBlock):
         global template_lookup
         if not template_lookup:
             template_lookup = TemplateLookup()
-            template_lookup.put_string(
-                "recommender.html",
-                self.resource_string("static/html/recommender.html"))
-            template_lookup.put_string(
-                "resourcebox.html",
-                self.resource_string("static/html/resourcebox.html"))
+        template_lookup.put_string(
+            "recommender.html",
+            self.resource_string("static/html/recommender.html"))
+        template_lookup.put_string(
+            "resourcebox.html",
+            self.resource_string("static/html/resourcebox.html"))
 
         # Ideally, we'd estimate score based on votes, such that items with
         # 1 vote have a sensible ranking (rather than a perfect rating)
@@ -950,9 +950,9 @@ class RecommenderXBlock(HelperXBlock):
         global template_lookup
         if not template_lookup:
             template_lookup = TemplateLookup()
-            template_lookup.put_string(
-                "recommenderstudio.html",
-                self.resource_string("static/html/recommenderstudio.html"))
+        template_lookup.put_string(
+            "recommenderstudio.html",
+            self.resource_string("static/html/recommenderstudio.html"))
         frag = Fragment(template_lookup.get_template("recommenderstudio.html").render())
         frag.add_css(pkg_resources.resource_string(__name__, "static/css/recommenderstudio.css"))
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")

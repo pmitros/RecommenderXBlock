@@ -6,7 +6,7 @@ function RecommenderXBlock(runtime, element) {
      * Bind the event for setting the student-view, client side configurations.
      */
     function bindConfigSettingEvent() {
-        $('.configSubmit').click(function() {
+        $('.recommender_configSubmit').click(function() {
             var data = {};
             data['DISABLE_DEV_UX'] = $('.developedUXDisable').val() == 'true';
             data['ENTRIES_PER_PAGE'] = parseInt($('.entriesPerPage').val(), 10);
