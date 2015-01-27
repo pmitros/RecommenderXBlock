@@ -384,6 +384,22 @@ class RecommenderXBlock(HelperXBlock):
         response.body = json.dumps({'error': error})
         return response
 
+    def _init_template_lookup(self):
+        """
+        Initialize template_lookup by adding mappings between strings and urls.
+        """
+        global template_lookup
+        template_lookup = TemplateLookup()
+        template_lookup.put_string(
+            "recommenderstudio.html",
+            self.resource_string("static/html/recommenderstudio.html"))
+        template_lookup.put_string(
+            "recommender.html",
+            self.resource_string("static/html/recommender.html"))
+        template_lookup.put_string(
+            "resourcebox.html",
+            self.resource_string("static/html/resourcebox.html"))
+
     def get_client_side_settings(self):
         """
         Return the parameters for client-side configuration settings.
@@ -892,13 +908,7 @@ class RecommenderXBlock(HelperXBlock):
 
         global template_lookup
         if not template_lookup:
-            template_lookup = TemplateLookup()
-        template_lookup.put_string(
-            "recommender.html",
-            self.resource_string("static/html/recommender.html"))
-        template_lookup.put_string(
-            "resourcebox.html",
-            self.resource_string("static/html/resourcebox.html"))
+            self._init_template_lookup()
 
         # Ideally, we'd estimate score based on votes, such that items with
         # 1 vote have a sensible ranking (rather than a perfect rating)
@@ -949,10 +959,8 @@ class RecommenderXBlock(HelperXBlock):
         """
         global template_lookup
         if not template_lookup:
-            template_lookup = TemplateLookup()
-        template_lookup.put_string(
-            "recommenderstudio.html",
-            self.resource_string("static/html/recommenderstudio.html"))
+            self._init_template_lookup()
+
         frag = Fragment(template_lookup.get_template("recommenderstudio.html").render())
         frag.add_css(pkg_resources.resource_string(__name__, "static/css/recommenderstudio.css"))
         frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
