@@ -936,7 +936,6 @@ class RecommenderXBlock(HelperXBlock):
         frag.add_css(self.resource_string("static/css/tooltipster.css"))
         frag.add_css(self.resource_string("static/css/recommender.css"))
         frag.add_css(self.resource_string("static/css/introjs.css"))
-        frag.add_javascript(self.resource_string("static/js/src/underscore-min.js"))
         frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))

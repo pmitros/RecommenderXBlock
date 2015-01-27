@@ -27,10 +27,16 @@ function RecommenderXBlock(runtime, element, init_data) {
      * @returns {dictionary} The dictionary for logging an event.
      */
     function generateLog(status, information) {
-        return _.find([
-            {'status': status, 'element': $(element).attr('data-usage-id')},
-            {'status': status, 'element': $(element).attr('data-usage-id'), 'information': information}
-        ], function(log) { return information === log.information; });
+        if (!information) {
+            return { 'status': status, 'element': $(element).attr('data-usage-id') };
+        }
+        else {
+            return {
+                'status': status,
+                'information': information,
+                'element': $(element).attr('data-usage-id')
+            }
+        }
     }
 
     /**
