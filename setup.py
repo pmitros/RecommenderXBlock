@@ -21,9 +21,6 @@ setup(
     packages=[
         'recommender',
     ],
-    install_requires=[
-        'XBlock',
-    ],
     entry_points={
         'xblock.v1': [
             'recommender = recommender:RecommenderXBlock',

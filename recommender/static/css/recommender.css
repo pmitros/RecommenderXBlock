@@ -1,267 +1,264 @@
 /* CSS for RecommenderXBlock */
-.clearFix {clear: both; height: 0.5em;}
+.recommender_clearFix {clear: both; height: 0.5em;}
 
-.recommender_block .count {
+.recommender_hideShow {
+    -webkit-transition:background-color 0.2s; color 0.2s;
+    transition:background-color 0.2s; color 0.2s;
+}
+
+.recommender_hideShow:hover {
+    background-color:rgb(137, 183, 205);
+    color:rgb(11, 11, 11);
+}
+
+.recommenderBlock .count {
+	font-weight: bold;
+}
+
+.recommenderBlock p {
+	cursor: pointer;
+}
+
+.recommender_hidden { display: none; }
+
+.recommenderBlock {
+    width : 100%;
+}
+
+.recommenderContent {
+    width: 700px;
+    float: left;
+}
+
+.recommender_hideShow, .recommenderModifyTitleContainer { 
+    font-size: 14px;
+    padding-top: 0.5em;
+    padding-left: 0.5em;
+    background-color: rgba(0,0,0,0.05);
+    height: 28px;
+    color: #948f8f;
+}
+
+.recommender_hideShow.recommender_resourceListExpanded { cursor: n-resize; }
+.recommender_hideShow:not(.recommender_resourceListExpanded) { cursor: s-resize; }
+.recommender_resourceListExpanded .recommender_expanded { display: block; }
+.recommender_resourceListExpanded .recommender_notExpanded {display: none; }
+.recommender_expanded { display: none; }
+.recommender_notExpanded {display: block; }
+
+.recommenderRow { 
+    height: 380px;
+}
+
+.recommenderTitle {
+    flex-grow : 1;
+    max-height: 65px;
+    overflow-y: auto;
+}
+
+.recommender_question {
+    width:700px;
+}
+
+.recommenderResource {
+    padding-top : 0.25em;
+    padding-bottom : 0.25em;
+    float:left;
+    width : 100%;
+}
+
+.recommender_expanded, .recommender_notExpanded {
+    float: right;
+    width: 50px;
+}
+
+.recommenderModify {
+    width: 700px;
+}
+
+.recommender_descriptionImg {
+    max-height: 1020px;
+    max-width: 700px;
+    margin-top: 2em;
+}
+
+.recommender_descriptionText {
+    max-height: 200px;
+    overflow: auto;
+    padding: 0.5em;
+    background-color: rgba(0,0,0,0.05);
+    color: #948f8f;
+}
+
+.recommender_showProblematicReasons {
+    max-height: 200px;
+    overflow: auto;
+    padding: 0.5em;
+    background-color: #B4053D;
+    color: white;
+}
+
+.recommender_showEndorsedReasons {
+    max-height: 200px;
+    overflow: auto;
+    padding: 0.5em;
+    background-color: rgb(69, 194, 10);
+    color: white;
+}
+
+.recommender_showProblematicReasons:before { content: 'This resource was flagged problematic by students.'; }
+.recommender_showEndorsedReasons:before { content: 'This resource was endorsed by course staff.'; }
+
+.recommender_previewingImg {
+    margin-top: 1em;
+    max-width: 700px;
+    max-height: 600px;
+}
+
+.recommenderVoteArrowDown {
+    width: 100%;
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
+}
+
+.recommenderVoteArrowDown:before {
+    content: '↓';
     font-weight: bold;
 }
 
-.recommender_block p {
-    cursor: pointer;
+.recommenderVoteArrowUp {
+    width: 100%; 
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
 }
 
-.hidden { display: none; }
-
-.recommender_block {
-  width : 100%;
+.recommenderVoteArrowUp:before {
+    content: '↑';
+    font-weight: bold;
 }
 
-.recommender_content {
-  width: 700px;
-  float: left;
+.recommenderVoteScore {
+    width: 100%; 
+    text-align: center;
+    cursor: default;
+    font-weight: 900;
 }
 
-.recommender_row_top, .recommender_modify_title_container { 
-  font-size: 14px;
-  padding-top: 0.5em;
-  padding-left: 0.5em;
-  background-color: rgba(0,0,0,0.05);
-  height: 28px;
-  color: #948f8f;
+.recommenderRecommendations { display: table; }
+
+.recommender_pagination {
+    display: table;
+    margin: 0 auto;
 }
 
-.recommender_row_top:before { content: 'Show'; }
-.recommender_row_top.resource_list_expanded:before { content: 'Hide'; }
-
-.recommender_row { 
-  height: 380px;
+.recommenderBlurb {
+    display:inline-block;
+    vertical-align: middle;
+    width:570px;
+    overflow:hidden;
+    word-wrap: break-word;
 }
 
-.recommender_title {
-  flex-grow : 1;
-  max-height: 65px;
-  overflow-y: auto;
+.recommenderEndorse { width:15px; display: inline-block; }
+
+.recommenderEntryId, .recommenderDescriptionImg, .recommenderProblematicReason, .recommenderDescriptionText, .recommenderEndorseReason {
+    display:none;
 }
 
-.question {
-  width:700px;
+.recommenderVoteBox {
+    display:inline-block;
+    vertical-align: middle;
+    width:50px;
 }
 
-.recommender_resource {
-  padding-top : 0.25em;
-  padding-bottom : 0.25em;
-  float:left;
-  width : 100%;
+.recommenderEdit {
+    display:inline-block;
+    vertical-align: top;
+    float: right;
+    width: 40px;
 }
 
-.recommender_panel {
-  float: right;
-  width: 50px;
+.recommender_redTxt { color: #B4053D; }
+.recommender_redTxt:before { content: '*'; }
+
+.recommenderVoteArrowDown, .recommenderVoteArrowUp, .recommender_resourceEditButton, .recommender_flagResource, .recommender_remove, .recommender_resourceImportButton, .recommender_resourceExportButton, .recommender_resourceAddButton, .recommender_paginationPageNumber, .recommender_backToViewButton, .recommender_endorse, .recommender_resourceRankingForRemovalButton { cursor: pointer; }
+
+.recommender_resourceAddButton, .recommender_resourceExportButton, .recommender_resourceImportButton { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em; margin-left: 1em;}
+.recommender_resourceEditButton { float: left; }
+.recommender_modifyPageTitle { margin-bottom: 1em; }
+
+.recommender_flagResourcePage, .recommender_editResourcePage, .recommender_addResourcePage, .recommender_removePage, .recommender_endorsePage, .recommender_importResourcePage {
+    padding-left: 1em;
 }
 
-.resource_list_less, .resource_list_more {
-  border : 1;
-  padding : 1;
-  margin : 1;
-  width : 95%;
-  border-color:gray;
-  border-width:1px;
-  border-style:solid;
-  border-radius:5px;
-
+.recommender_paginationPageNumber {
+    display:table-cell;
+    text-align:center;
+    vertical-align: middle;
+    width:25px;
 }
 
-.recommender_header {
-  display : flex;
-  padding : 0 0 10 0;
+.recommender_backToViewButton { color: #1d9dd9; float: left; }
+
+.recommender_flagReasonSubmit, .recommender_editSubmit, .recommender_addSubmit, .recommender_removeResource, .recommender_endorseResource, .recommender_importResourceSubmit { margin-top: 0.5em; }
+
+.recommenderBlock input[type="button"]:not([DISABLED]){
+    background-image: linear-gradient(#1d9dd9,#1d9dd9);
+    color: white;
 }
 
-.recommender_modify {
-  width: 700px;
+.recommender_endorseResource, .recommender_removeResource { margin-top: 0.5em; float:left; }
+
+.ui-icon.recommender_problematic {
+	background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
 }
 
-.descriptionImg {
-  max-height: 1020px;
-  max-width: 700px;
-  margin-top: 2em;
+.recommender_inTitle, .recommender_editTitle, .recommender_inDescriptionText, .recommender_editDescriptionText { 
+    height: 75px;
+    margin-left: 0.5em;
+    width:100%;
+}
+.recommender_inUrl, .recommender_editUrl, .recommender_flagReason, .recommender_removeReason, .recommender_endorseReason {
+    height: 25px;
+    margin-left: 0.5em;
+    width:100%;
 }
 
-.descriptionText {
-  max-height: 200px;
-  overflow: auto;
-  padding: 0.5em;
-  background-color: rgba(0,0,0,0.05);
-  color: #948f8f;
+.recommender_resourceHovered { background-color:#F2F7FA }
+
+.recommenderModifyTitle { float: right; padding-right: 2em; overflow: auto; }
+
+.recommenderVoteScore, .recommenderVoteArrowUp, .recommenderVoteArrowDown { color: #948f8f; }
+.recommenderVoteScore.recommender_upvoting, .recommenderVoteArrowUp.recommender_upvoting { color: rgb(69, 194, 10); }
+.recommenderVoteScore.recommender_downvoting, .recommenderVoteArrowDown.recommender_downvoting { color: #B4053D; }
+.recommenderVoteArrowUp.recommender_downvoting, .recommenderVoteArrowDown.recommender_upvoting { color: #948f8f; }
+
+.recommender_resourceRankingForRemovalButton:not(.recommender_removeMode) {
+    float: right;
+    background-color: rgba(0,0,0,0.05);
+    padding: 0.3em 1em 0.3em 1em;
+    color: black;
 }
-
-.show_problematic_reasons {
-  max-height: 200px;
-  overflow: auto;
-  padding: 0.5em;
-  background-color: #B4053D;
-  color: white;
+.recommender_resourceRankingForRemovalButton.recommender_removeMode {
+    float: right;
+    background-color: #B4053D;
+    padding: 0.3em 1em 0.3em 1em;
+    color: white;
 }
+.recommender_resourceRankingForRemovalButton:not(.recommender_removeMode):before { content: 'Ordinary '; }
+.recommender_resourceRankingForRemovalButton.recommender_removeMode:before { content: 'Removal '; }
 
-.show_endorsed_reasons {
-  max-height: 200px;
-  overflow: auto;
-  padding: 0.5em;
-  background-color: rgb(69, 194, 10);
-  color: white;
-}
-
-.show_problematic_reasons:before { content: 'This resource was flagged problematic by students.'; }
-.show_endorsed_reasons:before { content: 'This resource was endorsed by course staff.'; }
-
-.previewingImg {
-  margin-top: 1em;
-  max-width: 700px;
-  max-height: 600px;
-}
-
-.recommender_vote_arrow_down {
-  width: 100%;
-  margin-left:auto;
-  margin-right:auto;
-  text-align:center;
-}
-
-.recommender_vote_arrow_up {
-  width: 100%; 
-  margin-left:auto;
-  margin-right:auto;
-  text-align:center;
-}
-
-.recommender_vote_score {
-  width: 100%; 
-  text-align: center;
-  cursor: default;
-  font-weight: 900;
-}
-
-.recommender_recommendations { display: table; }
-
-.pagination {
-  display: table;
-  margin: 0 auto;
-}
-
-.recommender_blurb {
-  display:inline-block;
-  vertical-align: middle;
-  width:570px;
-  overflow:hidden;
-  word-wrap: break-word;
-}
-
-.recommender_endorse { width:15px; display: inline-block; }
-
-.recommender_entryId, .recommender_descriptionImg, .recommender_problematicReason, .recommender_descriptionText, .recommender_endorse_reason {
-  display:none;
-}
-
-.recommender_vote_box {
-  display:inline-block;
-  vertical-align: middle;
-  width:50px;
-}
-
-.recommender_edit{
-  display:inline-block;
-  vertical-align: top;
-  float: right;
-  width: 40px;
-}
-
-.redTxt {
-  color: #B4053D;
-}
-
-.recommender_vote_arrow_down, .recommender_vote_arrow_up, .resource_edit_button, .flagResource, .s3info_add_button, .deendorse, .resource_add_button, .hide-show, .paginationCell, .backToViewButton, .endorse, .resource_ranking_for_deendorsement_button { cursor: pointer; }
-
-
-.s3info_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
-.resource_add_button { float: right; background-color: rgba(0,0,0,0.05); padding: 0.3em 1em 0.3em 1em;}
-.resource_edit_button { float: left; }
-.addResourceBlockTitle, .editResourceBlockTitle, .flagResourceBlockTitle, .s3InfoBlockTitle, .deendorseBlockTitle, .endorseBlockTitle {
-    margin-bottom: 1em;
-}
-
-.editResourceBlock, .addResourceBlock, .flagResourceBlock {
-  padding-left: 1em;
-}
-
-.paginationCell {
-  display:table-cell;
-  text-align:center;
-  vertical-align: middle;
-  width:25px;
-}
-
-.backToViewButton { color: #1d9dd9; float: left; }
-
-.flag_reason_submit, .edit_submit, .add_submit, .deendorse_resource, .endorse_resource { margin-top: 0.5em; }
-
-input[type="button"]:not([DISABLED]){
-  background-image: linear-gradient(#1d9dd9,#1d9dd9);
-  color: white;
-}
-
-.endorse_resource, .deendorse_resource { margin-top: 0.5em; float:left; }
-
-.ui-icon.problematic {
-    background-image: url(http://download.jqueryui.com/themeroller/images/ui-icons_ff0000_256x240.png);
-}
-
-.in_title, .edit_title, .in_descriptionText, .edit_descriptionText { 
-  height: 75px;
-  margin-left: 0.5em;
-  width:100%;
-}
-.in_url, .edit_url, .flag_reason, .deendorse_reason, .endorse_reason, .aws_access_key, .aws_secret_key, .bucketName, .uploadedFileUrl, .uploadedFileDir {
-  height: 25px;
-  margin-left: 0.5em;
-  width:100%;
-}
-
-.submit_s3_info { margin-top: 0.5em; margin-bottom: 0.5em; } 
-
-.resource_hovered { background-color:#F2F7FA }
-
-.recommender_modify_title { float: right; padding-right: 2em; overflow: auto; }
-
-.hide-show-icon { margin-left: 0.5em; }
-
-.recommender_vote_score, .recommender_vote_arrow_up, .recommender_vote_arrow_down { color: #948f8f; }
-.recommender_vote_score.upvoting, .recommender_vote_arrow_up.upvoting { color: rgb(69, 194, 10); }
-.recommender_vote_score.downvoting, .recommender_vote_arrow_down.downvoting { color: #B4053D; }
-.recommender_vote_arrow_up.downvoting, .recommender_vote_arrow_down.upvoting { color: #948f8f; }
-
-.resource_ranking_for_deendorsement_button:not(.deendorsement_mode) {
-  float: right;
-  background-color: rgba(0,0,0,0.05);
-  padding: 0.3em 1em 0.3em 1em;
-  color: black;
-}
-.resource_ranking_for_deendorsement_button.deendorsement_mode {
-  float: right;
-  background-color: #B4053D;
-  padding: 0.3em 1em 0.3em 1em;
-  color: white;
-}
-.resource_ranking_for_deendorsement_button:not(deendorsement_mode):before { content: 'Ordinary '; }
-.resource_ranking_for_deendorsement_button.deendorsement_mode:before { content: 'De-endorsement '; }
-
-.endorse:not(.endorsed) { color: #DFD3D3; display: none; }
-.endorse.endorsed { color: rgb(69, 194, 10); }
-.endorse:before { content: '✔'; }
-.downArrowIcon:before { content: '▼'; }
-.upArrowIcon:before { content: '▲'; }
-.plusIcon:before { content: '+'; }
-.rightArrowIcon:before { content: '►'; }
-.leftArrowIcon:before { content: '◄'; }
-.moreIcon:before { content: '...'; }
-.lightgreyBg { background-color: #948f8f; }
+.recommender_endorse:not(.recommender_endorsed) { color: #DFD3D3; display: none; }
+.recommender_endorse.recommender_endorsed { color: rgb(69, 194, 10); }
+.recommender_endorse:before { content: '✔'; }
+.recommender_downArrow:before { content: '▼'; }
+.recommender_upArrow:before { content: '▲'; }
+.recommender_downArrow, .recommender_upArrow { margin-left: 0.5em; }
+.recommender_nextPageIcon:before { content: '►'; }
+.recommender_previousPageIcon:before { content: '◄'; }
+.recommender_highlightActivePageNumber { background-color: #948f8f; }
 
 .my-custom-theme {
 	background: #948f8f;
@@ -275,5 +272,6 @@ input[type="button"]:not([DISABLED]){
 	padding: 8px 10px;
 }
 
-a:link, a:visited { color: black; }
-form { margin: 0em; }
+.recommenderBlock a:link, .recommenderBlock a:visited { color: black; }
+.recommenderBlock form { margin: 0em; }
+.recommenderBlock label { width: 100%; }

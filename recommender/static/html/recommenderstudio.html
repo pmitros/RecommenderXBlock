@@ -1,0 +1,45 @@
+<div class="recommenderBlock">
+    <div class='recommender_recommenderModify'>
+        <div class='recommender_recommenderModifyTitleContainer'>
+            <div class='recommender_recommenderModifyTitle'>Configuration setting</div>
+        </div>
+        <div class="recommender_setRecommenderConfig">
+            <div class="recommender_setRecommenderConfigTitle">Set the student-view, client side configurations for RecommenderXblock.</div>
+                <div class="config">
+                    <select name='introEnable' class='introEnable'><option value='true'>Yes</option><option value='false'>No</option></select>
+                    <span>Do you want to take users on a little tour when they see the RecommenderXBlock first time?</span>
+                </div>
+                <div class="config">
+                    <select name='developedUXDisable' class='developedUXDisable'><option value='true'>Yes</option><option value='false'>No</option></select>
+                    <span>Do you want to disable the UX functions which are under development?</span>
+                </div>
+                <div class="config">
+                    <select name='entriesPerPage' class='entriesPerPage'>
+                        <option value='1'>1</option>
+                        <option value='2'>2</option>
+                        <option value='3'>3</option>
+                        <option value='4'>4</option>
+                        <option selected='selected' value='5'>5</option>
+                        <option value='6'>6</option>
+                        <option value='7'>7</option>
+                        <option value='8'>8</option>
+                        <option value='9'>9</option>
+                        <option value='10'>10</option>
+                    </select>
+                    <span>How many resources you want to show in each page of the resource list?</span>
+                </div>
+                <div class="config">
+                    <select name='pageSpan' class='pageSpan'>
+                        <option value='1'>1</option>
+                        <option selected='selected' value='2'>2</option>
+                        <option value='3'>3</option>
+                        <option value='4'>4</option>
+                        <option value='5'>5</option>
+                    </select>
+                    <span>How many page icons in pagination control (i.e., page range)? The icons for pages from (current page - page range) to (current page + page range) will be shown.</span>
+                </div>
+                <input type="button" value="Set configurations" class="recommender_configSubmit"/>
+            </div>
+        </div>
+    </div>
+</div>
