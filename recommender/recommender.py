@@ -976,13 +976,15 @@ class RecommenderXBlock(HelperXBlock):
         """
         node.tag = 'recommender'
 
-        el = etree.SubElement(node, 'intro_enabled')
-        el.text = str(self.intro_enabled)
-
-        el = etree.SubElement(node, 'client_side_settings')
-        el.text = unicode(json.dumps(self.client_side_settings))
+        node.set('intro_enabled', str(self.intro_enabled))
+        node.set('DISABLE_DEV_UX', str(self.client_side_settings['DISABLE_DEV_UX']))
+        node.set('ENTRIES_PER_PAGE', str(self.client_side_settings['ENTRIES_PER_PAGE']))
+        node.set('PAGE_SPAN', str(self.client_side_settings['PAGE_SPAN']))
 
         el = etree.SubElement(node, 'resources')
+        ## Note: The line below does not work in edX platform. 
+        ## We should figure out if the appropriate scope is available during import/export
+        ## TODO: Talk to Cale
         el.text = unicode(json.dumps(self.recommendations))
 
     @staticmethod
@@ -996,7 +998,7 @@ class RecommenderXBlock(HelperXBlock):
                 """
                 <vertical_demo>
                     <html_demo><img class="question" src="http://people.csail.mit.edu/swli/edx/recommendation/img/pset.png"></img></html_demo>
-                    <recommender>
+                    <recommender intro_enabled="True" DISABLE_DEV_UX="True" ENTRIES_PER_PAGE="3" PAGE_SPAN="1">
                         <resources>
                             [
                                 {"id": 1, "title": "Covalent bonding and periodic trends", "upvotes" : 15, "downvotes" : 5, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Periodic_Trends_and_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage1.png", "descriptionText" : "short description for Covalent bonding and periodic trends"},
@@ -1007,15 +1009,8 @@ class RecommenderXBlock(HelperXBlock):
                                 {"id": 6, "title": "Covalent bond - Energetics of covalent bond", "upvotes" : 10, "downvotes" : 7, "url" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/textbookpage2.png", "descriptionText" : "short description for Covalent bond - Energetics of covalent bond"}
                             ]
                         </resources>
-                        <intro_enabled>True</intro_enabled>
-                        <client_side_settings>
-                            {
-                                'DISABLE_DEV_UX': True,
-                                'ENTRIES_PER_PAGE': 5,
-                                'PAGE_SPAN': 2
-                            }
-                        </client_side_settings>
                     </recommender>
+                    <recommender />
                 </vertical_demo>
                 """
             ),
@@ -1039,23 +1034,24 @@ class RecommenderXBlock(HelperXBlock):
         if root.tagName != 'recommender':
             raise UpdateFromXmlError("XML content must contain an 'recommender' root element.")
 
-        el = root.getElementsByTagName('intro_enabled')
-        if el is None or len(el) != 1:
-            raise UpdateFromXmlError("XML content must contain an 'intro_enabled' element.")
-        if el.text == 'False':
-            block.intro_enabled = False
+        block.intro_enabled = (root.getAttribute('intro_enabled').lower().strip() != "false")
+        block.client_side_settings['DISABLE_DEV_UX'] = (root.getAttribute('DISABLE_DEV_UX').lower().strip() != "false")
 
-        el = root.getElementsByTagName('client_side_settings')
-        if el is None or len(el) != 1:
-            raise UpdateFromXmlError("XML content must contain an 'client_side_settings' element.")
-        if el.text != '' and el.text is not None:
-            block.client_side_settings = json.loads(el.text)
+        for tag in ['ENTRIES_PER_PAGE', 'PAGE_SPAN']:
+            if root.getAttribute(tag) is not None and len(root.getAttribute(tag)) > 0:
+                block.client_side_settings[tag] = int(root.getAttribute(tag))
 
         el = root.getElementsByTagName('resources')
-        if el is None or len(el) != 1:
-            raise UpdateFromXmlError("XML content must contain an 'resources' element.")
-        if el.text != '' and el.text is not None:
-            lines = json.loads(el.text)
-            block.default_recommendations = data_structure_upgrade(lines)
+        if el is not None and len(el) == 1:
+            text = el[0].childNodes[0].nodeValue
+            if text != '' and text is not None:
+                lines = json.loads(text)
+                block.default_recommendations = data_structure_upgrade(lines)
 
         return block
+
+class UpdateFromXmlError(Exception):
+    """
+    Error occurred while deserializing the TaggedText XBlock content from XML.
+    """
+    pass
