@@ -6,7 +6,6 @@ import hashlib
 import json
 import lxml.etree as etree
 import pkg_resources
-import xml.dom.minidom as md
 
 from copy import deepcopy
 
@@ -250,12 +249,12 @@ class RecommenderXBlock(HelperXBlock):
     # The file system we used to store uploaded screenshots
     fs = Filesystem(help="File system for screenshots", scope=Scope.user_state_summary)
 
-    client_side_settings = Dict(
+    client_configuration = Dict(
         help="Dict of customizable settings",
         default={
-            'DISABLE_DEV_UX': True,
-            'ENTRIES_PER_PAGE': 5,
-            'PAGE_SPAN': 2
+            'disable_dev_ux': True,
+            'entries_per_page': 5,
+            'page_span': 2
         },
         scope=Scope.content
     )
@@ -402,48 +401,48 @@ class RecommenderXBlock(HelperXBlock):
             "resourcebox.html",
             self.resource_string("static/html/resourcebox.html"))
 
-    def get_client_side_settings(self):
+    def get_client_configuration(self):
         """
         Return the parameters for client-side configuration settings.
 
         Returns:
-                DISABLE_DEV_UX: feature flag for any new UX under development
+                disable_dev_ux: feature flag for any new UX under development
                                 which should not appear in prod
-                ENTRIES_PER_PAGE: the number of resources in each page
-                PAGE_SPAN: page range in pagination control
-                INTRO: whether to take users through a short usage tutorial
+                entries_per_page: the number of resources in each page
+                page_span: page range in pagination control
+                intro: whether to take users through a short usage tutorial
                        the first time they see the RecommenderXBlock
-                IS_USER_STAFF: whether the user is staff
+                is_user_staff: whether the user is staff
         """
-        result = self.client_side_settings.copy()
-        result['IS_USER_STAFF'] = self.get_user_is_staff()
-        result['INTRO'] = not self.seen and self.intro_enabled
+        result = self.client_configuration.copy()
+        result['is_user_staff'] = self.get_user_is_staff()
+        result['intro'] = not self.seen and self.intro_enabled
         if not self.seen:
             # Mark the user who interacted with the XBlock first time as seen,
             # in order not to show the usage tutorial in future.
             self.seen = True
-        tracker.emit('get_client_side_settings', result)
+        tracker.emit('get_client_configuration', result)
         return result
 
     @XBlock.json_handler
-    def set_client_side_settings(self, data, _suffix=''):  # pylint: disable=unused-argument
+    def set_client_configuration(self, data, _suffix=''):  # pylint: disable=unused-argument
         """
         Set the parameters for student-view, client side configurations.
 
         Args:
                 data: dict in JSON format. Keys in data:
-                  DISABLE_DEV_UX: feature flag for any new UX under development
+                  disable_dev_ux: feature flag for any new UX under development
                                   which should not appear in prod
-                  ENTRIES_PER_PAGE: the number of resources in each page
-                  PAGE_SPAN: page range in pagination control
-                  INTRO_ENABLE: Should we show the users a short usage tutorial
+                  entries_per_page: the number of resources in each page
+                  page_span: page range in pagination control
+                  intro_enable: Should we show the users a short usage tutorial
                                 the first time they see the XBlock?
         """
-        self.intro_enabled = data['INTRO_ENABLE']
-        for key in ['DISABLE_DEV_UX', 'PAGE_SPAN', 'ENTRIES_PER_PAGE']:
-            self.client_side_settings[key] = data[key]
+        self.intro_enabled = data['intro_enable']
+        for key in ['disable_dev_ux', 'page_span', 'entries_per_page']:
+            self.client_configuration[key] = data[key]
 
-        tracker.emit('set_client_side_settings', data)
+        tracker.emit('set_client_configuration', data)
         return {}
 
     @XBlock.json_handler
@@ -951,7 +950,7 @@ class RecommenderXBlock(HelperXBlock):
         frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
         frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
-        frag.initialize_js('RecommenderXBlock', self.get_client_side_settings())
+        frag.initialize_js('RecommenderXBlock', self.get_client_configuration())
         return frag
 
     def studio_view(self, _context=None):  # pylint: disable=unused-argument
@@ -976,16 +975,16 @@ class RecommenderXBlock(HelperXBlock):
         """
         node.tag = 'recommender'
 
-        node.set('intro_enabled', str(self.intro_enabled))
-        node.set('DISABLE_DEV_UX', str(self.client_side_settings['DISABLE_DEV_UX']))
-        node.set('ENTRIES_PER_PAGE', str(self.client_side_settings['ENTRIES_PER_PAGE']))
-        node.set('PAGE_SPAN', str(self.client_side_settings['PAGE_SPAN']))
+        node.set('intro_enabled', 'true' if (self.intro_enabled) else 'false')
+        node.set('disable_dev_ux', 'true' if (self.client_configuration['disable_dev_ux']) else 'false')
+        node.set('entries_per_page', str(self.client_configuration['entries_per_page']))
+        node.set('page_span', str(self.client_configuration['page_span']))
 
         el = etree.SubElement(node, 'resources')
         ## Note: The line below does not work in edX platform. 
         ## We should figure out if the appropriate scope is available during import/export
         ## TODO: Talk to Cale
-        el.text = unicode(json.dumps(self.recommendations))
+        el.text = json.dumps(self.recommendations).encode("utf-8")
 
     @staticmethod
     def workbench_scenarios():
@@ -998,7 +997,7 @@ class RecommenderXBlock(HelperXBlock):
                 """
                 <vertical_demo>
                     <html_demo><img class="question" src="http://people.csail.mit.edu/swli/edx/recommendation/img/pset.png"></img></html_demo>
-                    <recommender intro_enabled="True" DISABLE_DEV_UX="True" ENTRIES_PER_PAGE="3" PAGE_SPAN="1">
+                    <recommender intro_enabled="true" disable_dev_ux="true" entries_per_page="2" page_span="1">
                         <resources>
                             [
                                 {"id": 1, "title": "Covalent bonding and periodic trends", "upvotes" : 15, "downvotes" : 5, "url" : "https://courses.edx.org/courses/MITx/3.091X/2013_Fall/courseware/SP13_Week_4/SP13_Periodic_Trends_and_Bonding/", "description" : "http://people.csail.mit.edu/swli/edx/recommendation/img/videopage1.png", "descriptionText" : "short description for Covalent bonding and periodic trends"},
@@ -1023,29 +1022,22 @@ class RecommenderXBlock(HelperXBlock):
 
         """
         block = runtime.construct_xblock_from_class(cls, keys)
-
-        node_xml = etree.tostring(node, encoding='utf-8')
-        try:
-            dom = md.parseString(node_xml.encode('utf-8'))
-        except Exception:
-            raise UpdateFromXmlError("An error occurred while parsing the XML content.")
-        root = dom.documentElement
-
-        if root.tagName != 'recommender':
+        if node.tag != 'recommender':
             raise UpdateFromXmlError("XML content must contain an 'recommender' root element.")
 
-        block.intro_enabled = (root.getAttribute('intro_enabled').lower().strip() != "false")
-        block.client_side_settings['DISABLE_DEV_UX'] = (root.getAttribute('DISABLE_DEV_UX').lower().strip() != "false")
+        if node.get('intro_enabled'):
+            block.intro_enabled = (node.get('intro_enabled').lower().strip() not in ['false', '0', ''])
 
-        for tag in ['ENTRIES_PER_PAGE', 'PAGE_SPAN']:
-            if root.getAttribute(tag) is not None and len(root.getAttribute(tag)) > 0:
-                block.client_side_settings[tag] = int(root.getAttribute(tag))
+        if node.get('disable_dev_ux'):
+            block.client_configuration['disable_dev_ux'] = (node.get('disable_dev_ux').lower().strip() not in ['false', '0', ''])
 
-        el = root.getElementsByTagName('resources')
-        if el is not None and len(el) == 1:
-            text = el[0].childNodes[0].nodeValue
-            if text != '' and text is not None:
-                lines = json.loads(text)
+        for tag in ['entries_per_page', 'page_span']:
+            if node.get(tag):
+                block.client_configuration[tag] = int(node.get(tag))
+
+        for child in node:
+            if child.tag == 'resources' and child.text:
+                lines = json.loads(child.text)
                 block.default_recommendations = data_structure_upgrade(lines)
 
         return block
