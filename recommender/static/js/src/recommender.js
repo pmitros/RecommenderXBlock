@@ -1134,14 +1134,14 @@ function RecommenderXBlock(runtime, element, init_data) {
         FLAGGED_RESOURCE_REASONS = {};
         /* the default page of resources showed to students. Should always be 1 */
         CURRENT_PAGE = 1;
-        DISABLE_DEV_UX = init_data['DISABLE_DEV_UX'];
-        ENTRIES_PER_PAGE = init_data['ENTRIES_PER_PAGE'];
-        PAGE_SPAN = init_data['PAGE_SPAN'];
-        IS_USER_STAFF = init_data['IS_USER_STAFF'];
+        DISABLE_DEV_UX = init_data['disable_dev_ux'];
+        ENTRIES_PER_PAGE = init_data['entries_per_page'];
+        PAGE_SPAN = init_data['page_span'];
+        IS_USER_STAFF = init_data['is_user_staff'];
         /* Render the initial web page */
         renderInitialPage();
 
-        if (init_data['INTRO']){
+        if (init_data['intro']){
             introJs().start();
         }
     }
