@@ -982,6 +982,9 @@ class RecommenderXBlock(HelperXBlock):
         node.set('entries_per_page', str(self.client_configuration['entries_per_page']))
         node.set('page_span', str(self.client_configuration['page_span']))
 
+        ## TODO: dump data like export_resources does
+        node.set('recommendation_num', str(len(self.recommendations)))
+
         el = etree.SubElement(node, 'resources')
         ## Note: The line below does not work in edX platform. 
         ## We should figure out if the appropriate scope is available during import/export
