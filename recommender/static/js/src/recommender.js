@@ -447,7 +447,7 @@ function RecommenderXBlock(runtime, element, init_data) {
             success: function(result) {
                 /* Writing the resource to database */
                 if ('success' in result && result['success'].search('Submission aborted!') > -1) {
-                    upload_file_error(result['success']);
+                    upload_file_error(result['success'], formDiv, writeType);
                 }
                 else {
                     data['description'] = result['file_name'];
@@ -463,8 +463,8 @@ function RecommenderXBlock(runtime, element, init_data) {
                  * 413: Size of uploaded file exceeds threshold
                  */
                 var data = JSON.parse(result.responseText)
-                if (data.error) { upload_file_error(data.error); }
-                else { upload_file_error('file uploading error'); }
+                if (data.error) { upload_file_error(data.error, formDiv, writeType); }
+                else { upload_file_error('file uploading error', formDiv, writeType); }
             },
         });
     }
