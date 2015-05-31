@@ -446,14 +446,9 @@ function RecommenderXBlock(runtime, element, init_data) {
             dataType: 'json',
             success: function(result) {
                 /* Writing the resource to database */
-                if ('success' in result && result['success'].search('Submission aborted!') > -1) {
-                    upload_file_error(result['success'], formDiv, writeType);
-                }
-                else {
-                    data['description'] = result['file_name'];
-                    if (writeType === writeDatabaseEnum.ADD) { addResource(data); }
-                    else if (writeType === writeDatabaseEnum.EDIT) { editResource(data); }
-                }
+                data['description'] = result['file_name'];
+                if (writeType === writeDatabaseEnum.ADD) { addResource(data); }
+                else if (writeType === writeDatabaseEnum.EDIT) { editResource(data); }
             },
             error: function(result) {
                 /**
