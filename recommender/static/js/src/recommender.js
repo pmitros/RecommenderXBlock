@@ -221,6 +221,7 @@ function RecommenderXBlock(runtime, element, init_data) {
                 cache: false,
                 processData: false,
                 async: false,
+                dataType: 'json',
                 success: function(result) {
                     /* Rendering new resources */
                     $('.recommenderResource', element).remove();
@@ -442,11 +443,17 @@ function RecommenderXBlock(runtime, element, init_data) {
             cache: false,
             processData: false,
             async: false,
+            dataType: 'json',
             success: function(result) {
                 /* Writing the resource to database */
-                data['description'] = result;
-                if (writeType === writeDatabaseEnum.ADD) { addResource(data); }
-                else if (writeType === writeDatabaseEnum.EDIT) { editResource(data); }
+                if ('success' in result && result['success'].search('Submission aborted!') > -1) {
+                    upload_file_error(result['success']);
+                }
+                else {
+                    data['description'] = result['file_name'];
+                    if (writeType === writeDatabaseEnum.ADD) { addResource(data); }
+                    else if (writeType === writeDatabaseEnum.EDIT) { editResource(data); }
+                }
             },
             error: function(result) {
                 /**
@@ -456,12 +463,23 @@ function RecommenderXBlock(runtime, element, init_data) {
                  * 413: Size of uploaded file exceeds threshold
                  */
                 var data = JSON.parse(result.responseText)
-                if (data.error) { alert(data.error); }
-                $("input[name='file']", formDiv).val('');
-                if (writeType === writeDatabaseEnum.ADD) { enableAddSubmit(); }
-                else if (writeType === writeDatabaseEnum.EDIT) { enableEditSubmit(); }
+                if (data.error) { upload_file_error(data.error); }
+                else { upload_file_error('file uploading error'); }
             },
         });
+    }
+
+    /**
+     * When error occurs during file uploading, warn the user and reset the form.
+     * @param {string} error_msg Error message showed to the user.
+     * @param {element} formDiv The submission form for the resource.
+     * @param {string} writeType The string indicating we are going to add or edit resource.
+     */
+    function upload_file_error(error_msg, formDiv, writeType) {
+        alert(error_msg);
+        $("input[name='file']", formDiv).val('');
+        if (writeType === writeDatabaseEnum.ADD) { enableAddSubmit(); }
+        else if (writeType === writeDatabaseEnum.EDIT) { enableEditSubmit(); }
     }
 
     /**

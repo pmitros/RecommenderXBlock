@@ -362,6 +362,7 @@ class RecommenderXBlock(HelperXBlock):
             tracker.emit(event, {'uploadedFileName': 'FILE_TYPE_ERROR'})
             response.status = 415
             response.body = json.dumps({'error': file_type_error_msg})
+            response.headers['Content-Type'] = 'application/json'
             return response
 
         # Check whether file size exceeds threshold (30MB)
@@ -370,6 +371,7 @@ class RecommenderXBlock(HelperXBlock):
             tracker.emit(event, {'uploadedFileName': 'FILE_SIZE_ERROR'})
             response.status = 413
             response.body = json.dumps({'error': 'Size of uploaded file exceeds threshold'})
+            response.headers['Content-Type'] = 'application/json'
             return response
 
         return file_type
@@ -383,6 +385,7 @@ class RecommenderXBlock(HelperXBlock):
         tracker.emit(event, {'uploadedFileName': 'IMPROPER_FS_SETUP'})
         response.status = 404
         response.body = json.dumps({'error': error})
+        response.headers['Content-Type'] = 'application/json'
         return response
 
     def _init_template_lookup(self):
@@ -556,8 +559,8 @@ class RecommenderXBlock(HelperXBlock):
             return self._raise_pyfs_error('upload_screenshot')
 
         response = Response()
-        response.body = str("fs://" + file_name)
-        response.headers['Content-Type'] = 'text/plain'
+        response.body = json.dumps({'file_name': str("fs://" + file_name)})
+        response.headers['Content-Type'] = 'application/json'
         tracker.emit('upload_screenshot',
                      {'uploadedFileName': response.body})
         response.status = 200
@@ -815,7 +818,7 @@ class RecommenderXBlock(HelperXBlock):
         Import resources into the recommender.
         """
         response = Response()
-        response.headers['Content-Type'] = 'text/plain'
+        response.headers['Content-Type'] = 'application/json'
         if not self.get_user_is_staff():
             response.status = 403
             response.body = json.dumps({'error': 'Only staff can import resources'})
@@ -850,7 +853,6 @@ class RecommenderXBlock(HelperXBlock):
             data['recommendations'] = self.recommendations
 
             tracker.emit('import_resources', {'Status': 'SUCCESS', 'data': data})
-            response.headers['Content-Type'] = 'application/json'
             response.body = json.dumps(data, sort_keys=True)
             response.status = 200
             return response
