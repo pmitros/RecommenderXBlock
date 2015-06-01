@@ -447,8 +447,11 @@ function RecommenderXBlock(runtime, element, init_data) {
             success: function(result) {
                 /* Writing the resource to database */
                 data['description'] = result['file_name'];
-                if (writeType === writeDatabaseEnum.ADD) { addResource(data); }
-                else if (writeType === writeDatabaseEnum.EDIT) { editResource(data); }
+                if (writeType === writeDatabaseEnum.ADD) {
+                    addResource(data);
+                } else if (writeType === writeDatabaseEnum.EDIT) {
+                    editResource(data);
+                }
             },
             error: function(result) {
                 /**
