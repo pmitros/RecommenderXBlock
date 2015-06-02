@@ -20,6 +20,8 @@ from xblock.fields import Scope, List, Dict, Boolean, String, JSONField
 from xblock.fragment import Fragment
 from xblock.reference.plugins import Filesystem
 
+from courseware.model_data import FieldDataCache, UserStateSummaryCache
+
 # TODO: Should be updated once XBlocks and tracking logs have finalized APIs
 # and documentation.
 try:
@@ -68,6 +70,10 @@ def data_structure_upgrade(old_list):
         return old_list
 
 template_lookup = None
+
+class MyTestingClass(object):
+    def __init__(self, name):
+        self.name = name
 
 
 class HelperXBlock(XBlock):
@@ -982,8 +988,28 @@ class RecommenderXBlock(HelperXBlock):
         node.set('entries_per_page', str(self.client_configuration['entries_per_page']))
         node.set('page_span', str(self.client_configuration['page_span']))
 
-        ## TODO: dump data like export_resources does
+        #### my testing code
+
+        recommendation_getter = UserStateSummaryCache(self.course_id)
+
         node.set('recommendation_num', str(len(self.recommendations)))
+        node.set('testing_data', str(dir(self)))
+        node.set('testing_data_2', str(self.course_id))
+
+        print self.course_id
+
+        testing_field = MyTestingClass("recommendations")
+
+        data = recommendation_getter._read_objects([testing_field], [self], ["str"])
+
+        print data
+
+        print dir(data)
+        print type(data)
+        for i in data:
+            print i
+
+        #### end of my testing code
 
         el = etree.SubElement(node, 'resources')
         ## Note: The line below does not work in edX platform. 
