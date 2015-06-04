@@ -988,6 +988,10 @@ class RecommenderXBlock(HelperXBlock):
         node.set('entries_per_page', str(self.client_configuration['entries_per_page']))
         node.set('page_span', str(self.client_configuration['page_span']))
 
+        #### my testing code
+
+        self.load_recommendation_from_lms()
+
         #### end of my testing code
 
         el = etree.SubElement(node, 'resources')
