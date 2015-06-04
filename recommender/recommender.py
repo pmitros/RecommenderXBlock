@@ -988,34 +988,13 @@ class RecommenderXBlock(HelperXBlock):
         node.set('entries_per_page', str(self.client_configuration['entries_per_page']))
         node.set('page_span', str(self.client_configuration['page_span']))
 
-        #### my testing code
-
-        recommendation_getter = UserStateSummaryCache(self.course_id)
-
-        node.set('recommendation_num', str(len(self.recommendations)))
-        node.set('testing_data', str(dir(self)))
-        node.set('testing_data_2', str(self.course_id))
-
-        print self.course_id
-
-        testing_field = MyTestingClass("recommendations")
-
-        data = recommendation_getter._read_objects([testing_field], [self], ["str"])
-
-        print data
-
-        print dir(data)
-        print type(data)
-        for i in data:
-            print i
-
         #### end of my testing code
 
         el = etree.SubElement(node, 'resources')
         ## Note: The line below does not work in edX platform. 
         ## We should figure out if the appropriate scope is available during import/export
         ## TODO: Talk to Cale
-        el.text = json.dumps(self.recommendations).encode("utf-8")
+        el.text = json.dumps(self.load_recommendation_from_lms()).encode("utf-8")
 
     @staticmethod
     def workbench_scenarios():
@@ -1072,6 +1051,25 @@ class RecommenderXBlock(HelperXBlock):
                 block.default_recommendations = data_structure_upgrade(lines)
 
         return block
+
+    def load_recommendation_from_lms(self):
+
+        recommendations = []
+
+        recommendation_getter = UserStateSummaryCache(self.course_id)
+        testing_field = MyTestingClass("recommendations")
+
+        recommendation_getter.cache_fields([testing_field], [self], [])
+
+        for k, v in recommendation_getter._cache.items():
+
+            json_data = json.loads(v.value)
+
+            recommendations.extend([value for key, value in json_data.items()])
+
+        print recommendations
+
+        return recommendations
 
 class UpdateFromXmlError(Exception):
     """
