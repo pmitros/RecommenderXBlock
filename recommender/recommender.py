@@ -71,10 +71,6 @@ def data_structure_upgrade(old_list):
 
 template_lookup = None
 
-class MyTestingClass(object):
-    def __init__(self, name):
-        self.name = name
-
 
 class HelperXBlock(XBlock):
     ''' Generic functionality usable across XBlocks but not yet in the platform '''
