@@ -20,7 +20,7 @@ from xblock.fields import Scope, List, Dict, Boolean, String, JSONField
 from xblock.fragment import Fragment
 from xblock.reference.plugins import Filesystem
 
-from courseware.model_data import FieldDataCache, UserStateSummaryCache
+from courseware.model_data import UserStateSummaryCache
 
 # TODO: Should be updated once XBlocks and tracking logs have finalized APIs
 # and documentation.
@@ -988,17 +988,12 @@ class RecommenderXBlock(HelperXBlock):
         node.set('entries_per_page', str(self.client_configuration['entries_per_page']))
         node.set('page_span', str(self.client_configuration['page_span']))
 
-        #### my testing code
-
-        self.load_recommendation_from_lms()
-
-        #### end of my testing code
-
         el = etree.SubElement(node, 'resources')
         ## Note: The line below does not work in edX platform. 
         ## We should figure out if the appropriate scope is available during import/export
         ## TODO: Talk to Cale
-        el.text = json.dumps(self.load_recommendation_from_lms()).encode("utf-8")
+        ## TODO: code review
+        el.text = json.dumps(self.load_recommender_from_lms()).encode("utf-8")
 
     @staticmethod
     def workbench_scenarios():
@@ -1056,24 +1051,21 @@ class RecommenderXBlock(HelperXBlock):
 
         return block
 
-    def load_recommendation_from_lms(self):
+    def load_recommender_from_lms(self):
 
-        recommendations = []
+        recommendation_data = []
 
         recommendation_getter = UserStateSummaryCache(self.course_id)
-        testing_field = MyTestingClass("recommendations")
 
-        recommendation_getter.cache_fields([testing_field], [self], [])
+        recommendation_getter.cache_fields([self.fields["recommendations"]], [self], [])
 
+        ## TODO: Shoudn't use an internal method like this
+        ## TODO: How about removed recommenations?
         for k, v in recommendation_getter._cache.items():
-
             json_data = json.loads(v.value)
+            recommendation_data.extend([value for key, value in json_data.items()])
 
-            recommendations.extend([value for key, value in json_data.items()])
-
-        print recommendations
-
-        return recommendations
+        return recommendation_data
 
 class UpdateFromXmlError(Exception):
     """
