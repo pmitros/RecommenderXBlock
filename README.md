@@ -21,7 +21,12 @@ students with varying learning needs.
 * Tag/categorize resources around specific misconceptions
 
 In a randomized control trial in a computer science course, this XBlock led to 
-similar learning outcomes in about 10% less time than without it. Qualitative 
-analysis as well as quantitative analysis of usage data showed it was helpful 
-in contexts where there were complex, multiconcept problems. It was not helpful
-or used in contexts where there were simple, single-step problems. 
+similar learning outcomes in about 10% less time than without it (so efficiency of 
+learning was about 10% better than without the XBlock -- students learned the same
+in less time). Qualitative analysis as well as quantitative analysis of usage data 
+showed it was helpful in contexts where there were complex, multiconcept problems. 
+It was not helpful or used in contexts where there were simple, single-step problems. 
+
+In an analysis comparing to other remediation systems within edX, it was more 
+effective for deeper, more complex misconceptions, and less effective for simple 
+errors. 
