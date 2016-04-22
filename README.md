@@ -17,5 +17,11 @@ students with varying learning needs.
 * Discussion around each resource
 * Better interface for adding varying types of resource (e.g., specific timestamps
   in the video or specific elements in a learning sequence)1
-* Better user he1lp/documentation
+* Better user help/documentation
 * Tag/categorize resources around specific misconceptions
+
+In a randomized control trial in a computer science course, this XBlock led to 
+similar learning outcomes in about 10% less time than without it. Qualitative 
+analysis as well as quantitative analysis of usage data showed it was helpful 
+in contexts where there were complex, multiconcept problems. It was not helpful
+or used in contexts where there were simple, single-step problems. 
