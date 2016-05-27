@@ -294,8 +294,7 @@ class RecommenderXBlock(HelperXBlock):
         """
         # check url for redundancy
         if resource_id in self.recommendations:
-            result['error'] = ('The resource you are attempting to ' +
-                               'provide already exists')
+            result['error'] = self.ugettext('The resource you are attempting to provide already exists')
             for field in self.resource_content_fields:
                 result['dup_' + field] = self.recommendations[resource_id][field]
             result['dup_id'] = self.recommendations[resource_id]['id']
@@ -308,9 +307,9 @@ class RecommenderXBlock(HelperXBlock):
         exception and return a HTTP status code for the error.
         """
         if resource_id in self.removed_recommendations:
-            result['error'] = ('The resource you are attempting to ' +
-                               'provide has been disallowed by the staff. ' +
-                               'Reason: ' + self.removed_recommendations[resource_id]['reason'])
+            result['error'] = self.ugettext('The resource you are attempting to '
+                                            'provide has been disallowed by the staff. '
+                                            'Reason: ' + self.removed_recommendations[resource_id]['reason'])
             for field in self.resource_content_fields:
                 result['dup_' + field] = self.removed_recommendations[resource_id][field]
             result['dup_id'] = self.removed_recommendations[resource_id]['id']
@@ -325,7 +324,7 @@ class RecommenderXBlock(HelperXBlock):
         """
         resource_id = stem_url(data_id)
         if resource_id not in self.recommendations:
-            msg = 'The selected resource does not exist'
+            msg = self.ugettext('The selected resource does not exist')
             self._error_handler(msg, event, resource_id)
         return resource_id
 
@@ -370,7 +369,7 @@ class RecommenderXBlock(HelperXBlock):
             response = Response()
             tracker.emit(event, {'uploadedFileName': 'FILE_SIZE_ERROR'})
             response.status = 413
-            response.body = json.dumps({'error': 'Size of uploaded file exceeds threshold'})
+            response.body = json.dumps({'error': self.ugettext('Size of uploaded file exceeds threshold')})
             response.headers['Content-Type'] = 'application/json'
             return response
 
@@ -381,7 +380,7 @@ class RecommenderXBlock(HelperXBlock):
         Log and return an error if the pyfs is not properly set.
         """
         response = Response()
-        error = 'The configuration of pyfs is not properly set'
+        error = self.ugettext('The configuration of pyfs is not properly set')
         tracker.emit(event, {'uploadedFileName': 'IMPROPER_FS_SETUP'})
         response.status = 404
         response.body = json.dumps({'error': error})
@@ -727,7 +726,7 @@ class RecommenderXBlock(HelperXBlock):
         """
         # Auth+auth
         if not self.get_user_is_staff():
-            msg = 'Endorse resource without permission'
+            msg = self.ugettext('Endorse resource without permission')
             self._error_handler(msg, 'endorse_resource')
 
         resource_id = self._validate_resource(data['id'], 'endorse_resource')
@@ -770,7 +769,7 @@ class RecommenderXBlock(HelperXBlock):
         """
         # Auth+auth
         if not self.get_user_is_staff():
-            msg = "You don't have the permission to remove this resource"
+            msg = self.ugettext("You don't have the permission to remove this resource")
             self._error_handler(msg, 'remove_resource')
 
         resource_id = self._validate_resource(data['id'], 'remove_resource')
@@ -821,7 +820,7 @@ class RecommenderXBlock(HelperXBlock):
         response.headers['Content-Type'] = 'application/json'
         if not self.get_user_is_staff():
             response.status = 403
-            response.body = json.dumps({'error': 'Only staff can import resources'})
+            response.body = json.dumps({'error': self.ugettext('Only staff can import resources')})
             tracker.emit('import_resources', {'Status': 'NOT_A_STAFF'})
             return response
 
@@ -832,7 +831,7 @@ class RecommenderXBlock(HelperXBlock):
                 'mimetypes': ['application/json', 'text/json', 'text/x-json']
             }
         }
-        file_type_error_msg = 'Please submit the JSON file obtained with the download resources button'
+        file_type_error_msg = self.ugettext('Please submit the JSON file obtained with the download resources button')
         result = self._check_upload_file(
             request, file_types, file_type_error_msg, 'import_resources', 31457280
         )
@@ -859,7 +858,7 @@ class RecommenderXBlock(HelperXBlock):
         except (ValueError, KeyError):
             response.status = 415
             response.body = json.dumps(
-                {'error': 'Please submit the JSON file obtained with the download resources button'}
+                {'error': self.ugettext('Please submit the JSON file obtained with the download resources button')}
             )
             tracker.emit('import_resources', {'Status': 'FILE_FORMAT_ERROR'})
             return response
@@ -872,7 +871,7 @@ class RecommenderXBlock(HelperXBlock):
         Accumulate the flagged resource ids and reasons from all students
         """
         if not self.get_user_is_staff():
-            msg = 'Tried to access flagged resources without staff permission'
+            msg = self.ugettext('Tried to access flagged resources without staff permission')
             self._error_handler(msg, 'accum_flagged_resource')
         result = {
             'flagged_resources': {}

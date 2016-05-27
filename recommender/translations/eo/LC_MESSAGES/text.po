@@ -1,0 +1,72 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2016-05-27 11:04+0500\n"
+"PO-Revision-Date: 2016-05-27 11:04+0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: eo\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: recommender.py
+msgid "The resource you are attempting to provide already exists"
+msgstr ""
+"Thé résöürçé ýöü äré ättémptïng tö prövïdé älréädý éxïsts Ⱡ'σяєм ιρѕυм ∂σłσя"
+" ѕιт αмєт, ¢σηѕє¢тєтυя α#"
+
+#: recommender.py
+msgid ""
+"The resource you are attempting to provide has been disallowed by the staff."
+" Reason: "
+msgstr ""
+"Thé résöürçé ýöü äré ättémptïng tö prövïdé häs ßéén dïsällöwéd ßý thé stäff."
+" Réäsön:  Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢#"
+
+#: recommender.py
+msgid "The selected resource does not exist"
+msgstr ""
+"Thé séléçtéd résöürçé döés nöt éxïst Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυ#"
+
+#: recommender.py
+msgid "Size of uploaded file exceeds threshold"
+msgstr ""
+"Sïzé öf üplöädéd fïlé éxçééds thréshöld Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυя#"
+
+#: recommender.py
+msgid "The configuration of pyfs is not properly set"
+msgstr ""
+"Thé çönfïgürätïön öf pýfs ïs nöt pröpérlý sét Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυя #"
+
+#: recommender.py
+msgid "Endorse resource without permission"
+msgstr ""
+"Éndörsé résöürçé wïthöüt pérmïssïön Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєт#"
+
+#: recommender.py
+msgid "You don't have the permission to remove this resource"
+msgstr ""
+"Ýöü dön't hävé thé pérmïssïön tö rémövé thïs résöürçé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт"
+" αмєт, ¢σηѕє¢тєтυя α#"
+
+#: recommender.py
+msgid "Only staff can import resources"
+msgstr "Önlý stäff çän ïmpört résöürçés Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢т#"
+
+#: recommender.py
+msgid ""
+"Please submit the JSON file obtained with the download resources button"
+msgstr ""
+"Pléäsé süßmït thé JSÖN fïlé ößtäïnéd wïth thé döwnlöäd résöürçés ßüttön "
+"Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя#"
+
+#: recommender.py
+msgid "Tried to access flagged resources without staff permission"
+msgstr ""
+"Trïéd tö äççéss fläggéd résöürçés wïthöüt stäff pérmïssïön Ⱡ'σяєм ιρѕυм "
+"∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя α#"
