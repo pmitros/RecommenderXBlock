@@ -113,6 +113,7 @@ class HelperXBlock(XBlock):
 
 
 @XBlock.needs('fs')
+@XBlock.needs('i18n')
 class RecommenderXBlock(HelperXBlock):
     """
     This XBlock will show a set of recommended resources which may be helpful
