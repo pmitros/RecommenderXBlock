@@ -1,0 +1,58 @@
+# 
+# Translators:
+# qualityalltext <quality@alltext.co.il>, 2016
+msgid ""
+msgstr ""
+"Project-Id-Version: XBlocks\n"
+"POT-Creation-Date: 2016-05-27 11:04+0500\n"
+"PO-Revision-Date: 2016-08-21 07:51+0000\n"
+"Last-Translator: qualityalltext <quality@alltext.co.il>\n"
+"Language-Team: Hebrew (http://www.transifex.com/open-edx/xblocks/language/he/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: he\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: recommender.py
+msgid "The resource you are attempting to provide already exists"
+msgstr "המקור שהינך מנסה לספק, קיים כבר"
+
+#: recommender.py
+msgid ""
+"The resource you are attempting to provide has been disallowed by the staff."
+" Reason: "
+msgstr "המקור שהינך מנסה לספק, נפסל בידי הצוות. סיבה: "
+
+#: recommender.py
+msgid "The selected resource does not exist"
+msgstr "המקור שנבחר אינו קיים"
+
+#: recommender.py
+msgid "Size of uploaded file exceeds threshold"
+msgstr "גודל הקובץ שהועלה חורג מדרישות הסף"
+
+#: recommender.py
+msgid "The configuration of pyfs is not properly set"
+msgstr "תצורת ה- pyfs אינה מוגדרת נכון"
+
+#: recommender.py:729
+msgid "Endorse resource without permission"
+msgstr "מקור הוסב ללא אישור"
+
+#: recommender.py
+msgid "You don't have the permission to remove this resource"
+msgstr "אין לך אישור להסיר מקור זה."
+
+#: recommender.py
+msgid "Only staff can import resources"
+msgstr "רק הצוות יכול לייבא מקורות"
+
+#: recommender.py
+msgid ""
+"Please submit the JSON file obtained with the download resources button"
+msgstr "שלח את קובץ ה-JSON שהתקבל באמצעות לחצן הורדת מקורות"
+
+#: recommender.py
+msgid "Tried to access flagged resources without staff permission"
+msgstr "ניסית להיכנס למקורות מסומנים ללא אישור הצוות"
