@@ -1,0 +1,60 @@
+# 
+# Translators:
+# danielcn <deo.daniel@gmail.com>, 2016
+# Larissa Azevedo <lahazevedo07@gmail.com>, 2016
+# Renata Barboza-Murray, 2016
+msgid ""
+msgstr ""
+"Project-Id-Version: XBlocks\n"
+"POT-Creation-Date: 2016-05-27 11:04+0500\n"
+"PO-Revision-Date: 2016-12-21 19:06+0000\n"
+"Last-Translator: Renata Barboza-Murray\n"
+"Language-Team: Portuguese (Brazil) (http://www.transifex.com/open-edx/xblocks/language/pt_BR/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: pt_BR\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: recommender.py
+msgid "The resource you are attempting to provide already exists"
+msgstr "O recurso que você está tentando fornecer já existe"
+
+#: recommender.py
+msgid ""
+"The resource you are attempting to provide has been disallowed by the staff."
+" Reason: "
+msgstr "O recurso que você está tentando fornecer foi proibido pela equipe. Razão:"
+
+#: recommender.py
+msgid "The selected resource does not exist"
+msgstr "O recurso selecionado não existe"
+
+#: recommender.py
+msgid "Size of uploaded file exceeds threshold"
+msgstr "O tamanho do arquivo carregado excede o limite estabelecido"
+
+#: recommender.py
+msgid "The configuration of pyfs is not properly set"
+msgstr "A configuração de pyfs não está feita corretamente"
+
+#: recommender.py:729
+msgid "Endorse resource without permission"
+msgstr "Recomendar recurso sem permissão"
+
+#: recommender.py
+msgid "You don't have the permission to remove this resource"
+msgstr "Você não tem permissão para remover este recurso"
+
+#: recommender.py
+msgid "Only staff can import resources"
+msgstr "Apenas a equipe pode importar recursos"
+
+#: recommender.py
+msgid ""
+"Please submit the JSON file obtained with the download resources button"
+msgstr "Envie o arquivo JSON que você obteve ao baixar os recursos"
+
+#: recommender.py
+msgid "Tried to access flagged resources without staff permission"
+msgstr "Tentou acessar recursos marcados sem a permissão da equipe"

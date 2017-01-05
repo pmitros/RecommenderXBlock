@@ -1,0 +1,8 @@
+[main]
+host = https://www.transifex.com
+
+[xblocks.recommender]
+file_filter = recommender/translations/<lang>/LC_MESSAGES/text.po
+source_file = recommender/translations/en/LC_MESSAGES/text.po
+source_lang = en
+type = PO

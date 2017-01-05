@@ -1,0 +1,58 @@
+# 
+# Translators:
+# shefaa abu jabel <shefaa.aj@gmail.com>, 2016
+msgid ""
+msgstr ""
+"Project-Id-Version: XBlocks\n"
+"POT-Creation-Date: 2016-05-27 11:04+0500\n"
+"PO-Revision-Date: 2016-08-24 12:32+0000\n"
+"Last-Translator: shefaa abu jabel <shefaa.aj@gmail.com>\n"
+"Language-Team: Arabic (http://www.transifex.com/open-edx/xblocks/language/ar/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#: recommender.py
+msgid "The resource you are attempting to provide already exists"
+msgstr "المصدر الذي تحاول تقديمه موجود بالفعل"
+
+#: recommender.py
+msgid ""
+"The resource you are attempting to provide has been disallowed by the staff."
+" Reason: "
+msgstr "قام الموظفون برفض المصدر الذي تحاول تقديمه. السبب لذلك: "
+
+#: recommender.py
+msgid "The selected resource does not exist"
+msgstr "المصدر المختار غير موجود"
+
+#: recommender.py
+msgid "Size of uploaded file exceeds threshold"
+msgstr "حجم الملف الذي تم رفعه يتجاوز الحد"
+
+#: recommender.py
+msgid "The configuration of pyfs is not properly set"
+msgstr "لم يتم تحديد ترتيب إعدادات pyfs بشكل صحيح"
+
+#: recommender.py:729
+msgid "Endorse resource without permission"
+msgstr "قبول المصدر بدون تصريح"
+
+#: recommender.py
+msgid "You don't have the permission to remove this resource"
+msgstr "ليس لديك التصريح لحذف هذا المصدر"
+
+#: recommender.py
+msgid "Only staff can import resources"
+msgstr "يمكن للموظفين فقط استيراد المصادر"
+
+#: recommender.py
+msgid ""
+"Please submit the JSON file obtained with the download resources button"
+msgstr "الرجاء إرسال ملف JSON الذي تم الحصول عليها باستخدام زر تنزيل المصادر"
+
+#: recommender.py
+msgid "Tried to access flagged resources without staff permission"
+msgstr "تمت محاولة الدخول إلى مصادر المعلمة بعلامات بدون تصريح من الموظفين"

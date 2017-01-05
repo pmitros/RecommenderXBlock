@@ -17,7 +17,7 @@ def package_data(pkg, root_list):
 
 setup(
     name='recommender-xblock',
-    version='1.1',
+    version='1.2',
     description='recommender XBlock',   # TODO: write a better description.
     packages=[
         'recommender',
