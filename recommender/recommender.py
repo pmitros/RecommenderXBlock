@@ -20,6 +20,8 @@ from xblock.fields import Scope, List, Dict, Boolean, String, JSONField
 from xblock.fragment import Fragment
 from xblock.reference.plugins import Filesystem
 
+from courseware.model_data import UserStateSummaryCache
+
 # TODO: Should be updated once XBlocks and tracking logs have finalized APIs
 # and documentation.
 try:
@@ -986,7 +988,8 @@ class RecommenderXBlock(HelperXBlock):
         ## Note: The line below does not work in edX platform. 
         ## We should figure out if the appropriate scope is available during import/export
         ## TODO: Talk to Cale
-        el.text = json.dumps(self.recommendations).encode("utf-8")
+        ## TODO: code review
+        el.text = json.dumps(self.load_recommender_from_lms()).encode("utf-8")
 
     @staticmethod
     def workbench_scenarios():
@@ -1043,6 +1046,22 @@ class RecommenderXBlock(HelperXBlock):
                 block.default_recommendations = data_structure_upgrade(lines)
 
         return block
+
+    def load_recommender_from_lms(self):
+
+        recommendation_data = []
+
+        recommendation_getter = UserStateSummaryCache(self.course_id)
+
+        recommendation_getter.cache_fields([self.fields["recommendations"]], [self], [])
+
+        ## TODO: Shoudn't use an internal method like this
+        ## TODO: How about removed recommenations?
+        for k, v in recommendation_getter._cache.items():
+            json_data = json.loads(v.value)
+            recommendation_data.extend([value for key, value in json_data.items()])
+
+        return recommendation_data
 
 class UpdateFromXmlError(Exception):
     """
