@@ -156,7 +156,7 @@ var loggerStatus = {
          * @param {string} toPage The index of the currently shown page.
          * @returns {string} The string for logging the page-change event.
          */
-        toPageNIcon: function(fromPage, toPage) { return 'From page ' + fromPage + ' To page ' + toPage; }
+        toPageNIcon(fromPage, toPage) { return 'From page ' + fromPage + ' To page ' + toPage; }
     },
     'exportResource': {'exportResource': 'Export resources'},
     'importResource': {
