@@ -6,7 +6,7 @@ function RecommenderXBlock(runtime, element) {
      * Bind the event for setting the student-view, client side configurations.
      */
     function bindConfigSettingEvent() {
-        $('.recommender_configSubmit').click(function() {
+        $('.recommender_configSubmit').click(() => {
             var data = {};
             data['disable_dev_ux'] = $('.developedUXDisable').val() == 'true';
             data['entries_per_page'] = parseInt($('.entriesPerPage').val(), 10);
@@ -17,10 +17,10 @@ function RecommenderXBlock(runtime, element) {
                 type: "POST",
                 url: setConfigUrl,
                 data: JSON.stringify(data),
-                success: function(result) {
+                success(result) {
                     alert('The configurations have been updated');
                 },
-                error: function(result) {
+                error(result) {
                     alert('An internal error happened. We cannot set the configurations right now. Please try again later.');
                 }
             });
