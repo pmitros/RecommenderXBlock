@@ -5,6 +5,9 @@ import subprocess
 from setuptools.command.install import install as _install
 from setuptools import setup
 
+base_path = os.path.dirname(__file__)
+README = open(os.path.join(base_path, "README.rst")).read()
+
 
 class XBlockInstall(_install):
     """Custom XBlock install command."""
@@ -43,11 +46,16 @@ def package_data(pkg, root_list):
 
 setup(
     name='recommender-xblock',
-    version='1.2',
+    version='1.3',
     description='recommender XBlock',   # TODO: write a better description.
+    long_description=README,
+    author='edX',
+    author_email='oscm@edx.org',
+    url='https://github.com/edx/RecommenderXBlock',
     packages=[
         'recommender',
     ],
+    license='AGPL 3.0',
     entry_points={
         'xblock.v1': [
             'recommender = recommender:RecommenderXBlock',
@@ -57,4 +65,18 @@ setup(
     cmdclass={
         'install': XBlockInstall,
     },
+    keywords="Django edx",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Framework :: Django",
+        "Framework :: Django :: 1.8",
+        "Framework :: Django :: 1.9",
+        "Framework :: Django :: 1.10",
+        "Framework :: Django :: 1.11",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
+    ],
 )
