@@ -550,7 +550,7 @@ class RecommenderXBlock(HelperXBlock):
         try:
             content = request.POST['file'].file.read()
             file_id = hashlib.md5(content).hexdigest()
-            file_name = (file_id + '.' + result)
+            file_name = u'{}.{}'.format(file_id, result)
 
             fhwrite = self.fs.open(file_name, "wb")
             fhwrite.write(content)
