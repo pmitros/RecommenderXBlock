@@ -2,8 +2,6 @@ language: python
 sudo: false
 install:
 - echo "Nothing to install"
-script:
-- echo "TODO: add tests"
 deploy:
   provider: pypi
   user: edx
