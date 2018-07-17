@@ -6,6 +6,7 @@ import hashlib
 import json
 import lxml.etree as etree
 import pkg_resources
+import bleach
 
 from copy import deepcopy
 
@@ -583,7 +584,7 @@ class RecommenderXBlock(HelperXBlock):
         # Construct new resource
         result = {}
         for field in self.resource_content_fields:
-            result[field] = data[field]
+            result[field] = strip_and_clean_html_elements(data[field])
 
         resource_id = stem_url(data['url'])
         self._check_redundant_resource(resource_id, 'add_resource', result)
@@ -620,15 +621,16 @@ class RecommenderXBlock(HelperXBlock):
         result['old_id'] = resource_id
 
         for field in self.resource_content_fields:
-            result['old_' + field] = self.recommendations[resource_id][field]
+            old_recommendation_field_data = strip_and_clean_html_elements(self.recommendations[resource_id][field])
+            result['old_' + field] = old_recommendation_field_data
             # If the content in resource is unchanged (i.e., data[field] is
             # empty), return and log the content stored in the database
             # (self.recommendations), otherwise, return and log the edited
             # one (data[field])
             if data[field] == "":
-                result[field] = self.recommendations[resource_id][field]
+                result[field] = old_recommendation_field_data
             else:
-                result[field] = data[field]
+                result[field] = strip_and_clean_html_elements(data[field])
 
         ## Handle resource ID changes
         edited_resource_id = stem_url(data['url'])
@@ -676,7 +678,8 @@ class RecommenderXBlock(HelperXBlock):
         result = {}
         result['id'] = data['id']
         result['isProblematic'] = data['isProblematic']
-        result['reason'] = data['reason']
+        clean_data_reason = strip_and_clean_html_elements(data['reason'])
+        result['reason'] = clean_data_reason
 
         user_id = self.get_user_id()
 
@@ -687,15 +690,15 @@ class RecommenderXBlock(HelperXBlock):
                 result['oldReason'] = self.flagged_reasons[
                     self.flagged_ids.index(data['id'])]
                 self.flagged_reasons[
-                    self.flagged_ids.index(data['id'])] = data['reason']
+                    self.flagged_ids.index(data['id'])] = clean_data_reason
             # Otherwise, flag it.
             else:
                 self.flagged_ids.append(data['id'])
-                self.flagged_reasons.append(data['reason'])
+                self.flagged_reasons.append(clean_data_reason)
 
                 if user_id not in self.flagged_accum_resources:
                     self.flagged_accum_resources[user_id] = {}
-            self.flagged_accum_resources[user_id][data['id']] = data['reason']
+            self.flagged_accum_resources[user_id][data['id']] = clean_data_reason
         # Unflag resource. Currently unsupported.
         else:
             if data['id'] in self.flagged_ids:
@@ -743,10 +746,11 @@ class RecommenderXBlock(HelperXBlock):
             del self.endorsed_recommendation_reasons[endorsed_index]
         # Endorse new resource
         else:
-            result['reason'] = data['reason']
+            clean_data_reason = strip_and_clean_html_elements(data['reason'])
+            result['reason'] = clean_data_reason
             result['status'] = 'endorsement'
             self.endorsed_recommendation_ids.append(resource_id)
-            self.endorsed_recommendation_reasons.append(data['reason'])
+            self.endorsed_recommendation_reasons.append(clean_data_reason)
 
         tracker.emit('endorse_resource', result)
         return result
@@ -780,7 +784,7 @@ class RecommenderXBlock(HelperXBlock):
         result = {}
         result['id'] = resource_id
         removed_resource = deepcopy(self.recommendations[resource_id])
-        removed_resource['reason'] = data['reason']
+        removed_resource['reason'] = strip_and_clean_html_elements(data['reason'])
 
         # Add it to removed resources and remove it from main resource list.
         self.removed_recommendations[resource_id] = removed_resource
@@ -915,7 +919,6 @@ class RecommenderXBlock(HelperXBlock):
 
         # Ideally, we'd estimate score based on votes, such that items with
         # 1 vote have a sensible ranking (rather than a perfect rating)
-
         # We pre-generate URLs for all resources. We benchmarked doing this
         # for 44 URLs, and the time per URL was about 8ms. The 44 URLs were
         # all of the images added by students over several problem sets. If
@@ -923,11 +926,12 @@ class RecommenderXBlock(HelperXBlock):
         # issue. If students make substantially more resources, we may want
         # to paginate, and generate in sets of 5-20 URLs per load.
         resources = [{'id': r['id'],
-                      'title': r['title'],
+                      'title': strip_and_clean_html_elements(r['title']),
                       "votes": r['upvotes'] - r['downvotes'],
                       'url': r['url'],
                       'description': self._get_onetime_url(r['description']),
-                      'descriptionText': r['descriptionText']}
+                      'descriptionText': strip_and_clean_html_elements(r['descriptionText'])
+                      }
                      for r in self.recommendations.values()]
         resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
 
@@ -1044,8 +1048,16 @@ class RecommenderXBlock(HelperXBlock):
 
         return block
 
+
 class UpdateFromXmlError(Exception):
     """
     Error occurred while deserializing the TaggedText XBlock content from XML.
     """
     pass
+
+
+def strip_and_clean_html_elements(data):
+    """
+    Clean an HTML elements and return it
+    """
+    return bleach.clean(data, strip=True)

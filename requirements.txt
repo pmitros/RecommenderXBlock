@@ -2,3 +2,4 @@ webob
 fs
 mako
 boto
+bleach==1.4

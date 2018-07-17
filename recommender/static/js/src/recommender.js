@@ -59,22 +59,27 @@ function RecommenderXBlock(runtime, element, init_data) {
      * This function is triggered when clicking on the header of the resource list.
      */
     function bindToggleResourceListEvent() {
-        if ($(this).hasClass('recommender_resourceListExpanded')) {
+        var recommenderEl = $(this);
+        if (recommenderEl.hasClass('recommender_resourceListExpanded')) {
             Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['hide']));
             $(".recommenderRowInner", element).slideUp('fast').attr('aria-hidden', 'true');
-            $(this).text(resourceListHeader['show'])
-                   .append($(Mustache.render($("#hideShowTemplate").html(), {})))
-                   .attr('aria-expanded', 'false');
+            recommenderEl.text(resourceListHeader['show']);
+            recommenderEl.attr('aria-expanded', 'false');
         }
         else {
             Logger.log('mit.recommender.hideShow', generateLog(loggerStatus['hideShow']['show']));
             $(".recommenderRowInner", element).slideDown('fast').attr('aria-hidden', 'false');
-            $(this).text(resourceListHeader['hide'])
-                   .append($(Mustache.render($("#hideShowTemplate").html(), {})))
-                   .attr('aria-expanded', 'true');
+            recommenderEl.text(resourceListHeader['hide']);
+            recommenderEl.attr('aria-expanded', 'true');
             focusFirstResource();
         }
-        $(this).toggleClass('recommender_resourceListExpanded');
+        edx.HtmlUtils.append(
+            recommenderEl,
+            edx.HtmlUtils.HTML(
+                $(Mustache.render($("#hideShowTemplate").html()), {})
+            )
+        )
+        recommenderEl.toggleClass('recommender_resourceListExpanded');
         addTooltip();
     }
 
@@ -128,8 +133,13 @@ function RecommenderXBlock(runtime, element, init_data) {
                 });
             }
 
-            var paginationItemDiv = $(Mustache.render($("#paginationItemTemplate").html(), renderData));
-            $('.recommender_pagination', element).append(paginationItemDiv);
+            var paginationItemDiv = edx.HtmlUtils.HTML(
+                $(Mustache.render($("#paginationItemTemplate").html(), renderData))
+            );
+            edx.HtmlUtils.append(
+                $('.recommender_pagination', element),
+                paginationItemDiv
+            )
         }
 
         /* Page-changing event */
@@ -548,7 +558,13 @@ function RecommenderXBlock(runtime, element, init_data) {
                             .toggleClass(voteConfig['previousVoteClassName']);
                     }
                     setVoteAriaParam(resource);
-                    $('.recommenderVoteScore', resource).html(newVotes).attr('aria-label', newVotes + recommenderVoteScorePostfix);
+
+                    var $recommenderVoteScore = $('.recommenderVoteScore', resource);
+                    edx.HtmlUtils.setHtml(
+                        $recommenderVoteScore,
+                        edx.HtmlUtils.HTML(newVotes)
+                    );
+                    $recommenderVoteScore.attr('aria-label', newVotes + recommenderVoteScorePostfix);
                 },
                 error: function (request) {
                     response = JSON.parse(request.responseText);
@@ -590,14 +606,24 @@ function RecommenderXBlock(runtime, element, init_data) {
                             $('.recommender_showProblematicReasons', element).show().attr('aria-hidden', 'false');
                             reasons = FLAGGED_RESOURCE_REASONS[resourceId].join(reasonSeparator);
                         }
-                        if (reasons !== '') { $('.recommender_showProblematicReasons', element).html(problematicReasonsPrefix + reasons); }
-                        else { $('.recommender_showProblematicReasons', element).html(''); }
+                        if (reasons !== '') {
+                            edx.HtmlUtils.setHtml(
+                                $('.recommender_showProblematicReasons', element),
+                                edx.HtmlUtils.HTML(problematicReasonsPrefix + reasons)
+                            );
+                        }
+                        else { $('.recommender_showProblematicReasons', element).text(''); }
                     }
 
                     $('.recommender_showEndorsedReasons', element).hide().attr('aria-hidden', 'true');
                     if ($('.recommender_endorse', this).hasClass('recommender_endorsed')) {
                         var reasons = $('.recommenderEndorseReason', this).text();
-                        if (reasons !== '') { $('.recommender_showEndorsedReasons', element).html(endorsedReasonsPrefix + reasons); }
+                        if (reasons !== '') {
+                            edx.HtmlUtils.setHtml(
+                                $('.recommender_showEndorsedReasons', element),
+                                edx.HtmlUtils.HTML(endorsedReasonsPrefix + reasons)
+                            )
+                        }
                         else { $('.recommender_showEndorsedReasons', element).html(''); }
                         $('.recommender_showEndorsedReasons', element).show().attr('aria-hidden', 'false');
                     }
@@ -1054,7 +1080,12 @@ function RecommenderXBlock(runtime, element, init_data) {
      * @param {element} ele The recommenderResource element the event will be bound to.
      */
     function bindResourceRemoveEvent(ele) {
-        if ($('.recommender_remove', ele).length === 0) { $('.recommenderEdit', ele).append(removeIcon); }
+        if ($('.recommender_remove', ele).length === 0) {
+            edx.HtmlUtils.append(
+                $('.recommenderEdit', ele),
+                edx.HtmlUtils.HTML(removeIcon)
+            )
+        }
                     
         /* Enter removal mode */
         $('.recommender_remove', ele).click(function() {
@@ -1160,6 +1191,13 @@ function RecommenderXBlock(runtime, element, init_data) {
         if (init_data['intro']){
             introJs().start();
         }
+
+        // Prevent XSS attack in jQuery 2.X: https://github.com/jquery/jquery/issues/2432#issuecomment-140038536
+        $.ajaxSetup({
+            contents: {
+                javascript: false
+            }
+        });
     }
 
     /**
