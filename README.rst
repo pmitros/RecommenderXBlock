@@ -6,7 +6,8 @@ problem. The resources are recommended, edited, and voted by students.
 For each resource, we show its title, link, short summary, preview
 screenshot, and votes:
 
-![Recommender screenshot](recommender_xblock.png)
+.. image:: recommender_xblock.png
+   :alt: Recommender screenshot
 
 This is an module where students can share useful resources/hints and rate
 them. This crowdsourcing mechanism allows a scalable solution to fulfill
@@ -16,7 +17,7 @@ students with varying learning needs.
   de-endorse resource
 * Discussion around each resource
 * Better interface for adding varying types of resource (e.g., specific timestamps
-  in the video or specific elements in a learning sequence)1
+  in the video or specific elements in a learning sequence)
 * Better user help/documentation
 * Tag/categorize resources around specific misconceptions
 

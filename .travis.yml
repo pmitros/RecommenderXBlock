@@ -1,0 +1,14 @@
+language: python
+sudo: false
+install:
+- echo "Nothing to install"
+script:
+- echo "todo add tests"
+deploy:
+  provider: pypi
+  user: edx
+  password:
+    secure: ke/VM6TThYijhhvTRGV1UA/Tn9OyXBbEYLkTRaihChy5KrJZWmA1talVJGD/3U8dwXTO1yfx6+WfF/UGFqQQpSQgFD8sgN8ojJuc4ih7HyiNqcUPv4xZmyCYsVZIS6728TQ3xIedqYdF0cVSWZ4VVEHUHSJ69Oe+SkVDe79uAgCdJLx6+1dCrbXp5tZaZyGT5JhCaxtwVHqCB+R1Xy0MsMl8Eiu0XM7ZCGjnbT/T90+kLJk0P1DuhH7IZib3JWMCv9rn87g6XNN1GqZzrN9Q2bLMR+n60hUbQzAM9RWfuOQMXGI6eHVf3dWy+6afN5k9Nx3p58lRExjtn2P+17M5qKmlIDtfr2kulRY4U2XOs9/vxBHkxg+np6qgd9l3sh7G7i6rlndc4cP+f4r0Q+1BNebV0JdqAZweyKLkPcsOW6EVMAfPcc6kC7EPaHAonNMNaLG+x73o0d8UKFtpis7ytUUSN1DJ1T4f1Di3XDlATAyTL7UZlhGWr7Rnu5LrvuFxhSwNCjgYb23w1/7zUQP+WNt7eeJVG9q3kNuldcKxjJZ4BQ6lIthprMOTziQij4IfVPvfP5q0GF07lMhEXgmpl/2QSW7Aa+7r/VlQAKRyxIbPF69qL/i17FC4mJXo0QNywUbZktF18oEpNJwQh4/z6O6t7WrM2kAYJrpcu38Q8jY=
+  distributions: sdist bdist_wheel
+  on:
+    tags: true
