@@ -7,6 +7,7 @@ import json
 import lxml.etree as etree
 import pkg_resources
 import bleach
+import re
 
 from copy import deepcopy
 
@@ -586,7 +587,7 @@ class RecommenderXBlock(HelperXBlock):
         for field in self.resource_content_fields:
             result[field] = strip_and_clean_html_elements(data[field])
 
-        resource_id = stem_url(data['url'])
+        resource_id = stem_url(result['url'])
         self._check_redundant_resource(resource_id, 'add_resource', result)
         self._check_removed_resource(resource_id, 'add_resource', result)
 
@@ -925,11 +926,12 @@ class RecommenderXBlock(HelperXBlock):
         # load continues to be as-is, pre-generation is not a performance
         # issue. If students make substantially more resources, we may want
         # to paginate, and generate in sets of 5-20 URLs per load.
-        resources = [{'id': r['id'],
+        resources = [{
+                      'id': strip_and_clean_html_elements(r['id']),
                       'title': strip_and_clean_html_elements(r['title']),
-                      "votes": r['upvotes'] - r['downvotes'],
-                      'url': r['url'],
-                      'description': self._get_onetime_url(r['description']),
+                      "votes": strip_and_clean_html_elements(r['upvotes'] - r['downvotes']),
+                      'url': strip_and_clean_url(r['url']),
+                      'description': self._get_onetime_url(strip_and_clean_html_elements(r['description'])),
                       'descriptionText': strip_and_clean_html_elements(r['descriptionText'])
                       }
                      for r in self.recommendations.values()]
@@ -1060,4 +1062,27 @@ def strip_and_clean_html_elements(data):
     """
     Clean an HTML elements and return it
     """
-    return bleach.clean(data, strip=True)
+    return bleach.clean(data, tags=[], strip=True)
+
+def strip_and_clean_url(data):
+    """
+    Clean an URL elements of HTML tags and possible javascript and return it for use
+    Ex of bleach linkify output:
+        bleach.linkify('google.com') ==> u'<a rel="nofollow" href="http://google.com">google.com</a>'
+        bleach.linkify('<a href="javascript:alert()"  google.com') ==> u''
+    Ex of bleach linkify with clean output:
+        bleach.linkify(bleach.clean('<a> href="javascript:alert()"  google.com', tags=[], strip=True))
+        ==> u' href="javascript:alert()"  <a rel="nofollow" href="http://google.com">google.com</a>'
+    """
+    clean_url = data or ''
+    clean_url = strip_and_clean_html_elements(clean_url)
+    # ensure <a> only exists after linkify call below
+    if '<a' in clean_url:
+        return ''
+
+    clean_url = bleach.linkify(clean_url)
+    if clean_url.startswith(u'<a'):
+        # The regex pulls out the href value of the generated <a>
+        return re.search('href=\"(?P<href>.*?)\"', clean_url).group('href')
+    else:
+        return ''

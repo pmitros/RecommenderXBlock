@@ -396,20 +396,20 @@ function RecommenderXBlock(runtime, element, init_data) {
             resourceVotes: votes
         }
 
-        var newDiv = $(Mustache.render($("#recommenderResourceTemplate").html(), renderData));
-        bindResourceDependentEvent(newDiv);
-        if (IS_USER_STAFF) { bindStaffLimitedResourceDependentEvent(newDiv); }
+        var $newDiv = $(Mustache.render($("#recommenderResourceTemplate").html(), renderData));
+        bindResourceDependentEvent($newDiv);
+        if (IS_USER_STAFF) { bindStaffLimitedResourceDependentEvent($newDiv); }
 
         if ($('.recommenderResource', element).length === 0) {
-            $('.noResourceIntro', element).after(newDiv);
+            $('.noResourceIntro', element).after($newDiv);
         }
         else {
-            if (pos === -1) { $(toDiv).after(newDiv); }
-            else { $(toDiv).before(newDiv); }
+            if (pos === -1) { $(toDiv).after($newDiv); }
+            else { $(toDiv).before($newDiv); }
         }
-        addResourceDependentTooltip(newDiv);
+        addResourceDependentTooltip($newDiv);
 
-        return newDiv;
+        return $newDiv;
     }
     
     /**
