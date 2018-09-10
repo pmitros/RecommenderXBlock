@@ -290,6 +290,16 @@ class RecommenderXBlock(HelperXBlock):
         tracker.emit(event, result)
         raise JsonHandlerError(400, result['error'])
 
+    def _check_location_input(self, url, event_name, result):
+        """
+        Check whether the submitted location url resource is invalid. If true, raise an
+        exception and return a HTTP status code for the error.
+        """
+        if not url:
+            result['error'] = self.ugettext('Invalid location URL provided')
+            tracker.emit(event_name, result)
+            raise JsonHandlerError(400, result['error'])
+
     def _check_redundant_resource(self, resource_id, event_name, result):
         """
         Check whether the submitted resource is redundant. If true, raise an
@@ -325,7 +335,7 @@ class RecommenderXBlock(HelperXBlock):
         generate the error message, and return to the browser for a given
         event, otherwise, return the stemmed id.
         """
-        resource_id = stem_url(data_id)
+        resource_id = strip_and_clean_url(data_id)
         if resource_id not in self.recommendations:
             msg = self.ugettext('The selected resource does not exist')
             self._error_handler(msg, event, resource_id)
@@ -585,9 +595,13 @@ class RecommenderXBlock(HelperXBlock):
         # Construct new resource
         result = {}
         for field in self.resource_content_fields:
-            result[field] = strip_and_clean_html_elements(data[field])
+            if field == 'url':
+                result[field] = strip_and_clean_url(data[field])
+            else:
+                result[field] = strip_and_clean_html_elements(data[field])
 
-        resource_id = stem_url(result['url'])
+        resource_id = result['url']
+        self._check_location_input(result['url'], 'add_resource', result)
         self._check_redundant_resource(resource_id, 'add_resource', result)
         self._check_removed_resource(resource_id, 'add_resource', result)
 
@@ -630,12 +644,15 @@ class RecommenderXBlock(HelperXBlock):
             # one (data[field])
             if data[field] == "":
                 result[field] = old_recommendation_field_data
+            elif field == 'url':
+                result[field] = strip_and_clean_url(data[field])
             else:
                 result[field] = strip_and_clean_html_elements(data[field])
 
         ## Handle resource ID changes
-        edited_resource_id = stem_url(data['url'])
+        edited_resource_id = result['url']
         if edited_resource_id != resource_id:
+            self._check_location_input(result['url'], 'add_resource', result)
             self._check_redundant_resource(edited_resource_id, 'edit_resource', result)
             self._check_removed_resource(edited_resource_id, 'edit_resource', result)
 
@@ -1068,21 +1085,17 @@ def strip_and_clean_url(data):
     """
     Clean an URL elements of HTML tags and possible javascript and return it for use
     Ex of bleach linkify output:
-        bleach.linkify('google.com') ==> u'<a rel="nofollow" href="http://google.com">google.com</a>'
-        bleach.linkify('<a href="javascript:alert()"  google.com') ==> u''
-    Ex of bleach linkify with clean output:
-        bleach.linkify(bleach.clean('<a> href="javascript:alert()"  google.com', tags=[], strip=True))
-        ==> u' href="javascript:alert()"  <a rel="nofollow" href="http://google.com">google.com</a>'
+        bleach.linkify('http://google.com') ==> u'<a rel="nofollow" href="http://google.com">http://google.com</a>'
     """
     clean_url = data or ''
+    clean_url = stem_url(clean_url)
     clean_url = strip_and_clean_html_elements(clean_url)
-    # ensure <a> only exists after linkify call below
-    if '<a' in clean_url:
-        return ''
 
-    clean_url = bleach.linkify(clean_url)
-    if clean_url.startswith(u'<a'):
+    bleach_url = bleach.linkify(clean_url)
+    if bleach_url.startswith(u'<a'):
         # The regex pulls out the href value of the generated <a>
-        return re.search('href=\"(?P<href>.*?)\"', clean_url).group('href')
-    else:
-        return ''
+        href_url = re.search('href=\"(?P<href>.*?)\"', bleach_url).group('href')
+        if href_url == clean_url:
+            return href_url
+
+    return ''
