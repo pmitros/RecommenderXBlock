@@ -1079,7 +1079,7 @@ def strip_and_clean_html_elements(data):
     """
     Clean an HTML elements and return it
     """
-    return bleach.clean(str(data), tags=[], strip=True)
+    return bleach.clean(unicode(data), tags=[], strip=True)
 
 def strip_and_clean_url(data):
     """
