@@ -1,6 +1,6 @@
 """Setup for recommender XBlock."""
 import distutils.spawn
-import logging
+from distutils import log
 import os
 import subprocess
 from setuptools.command.install import install as _install
@@ -19,7 +19,7 @@ class XBlockInstall(_install):
         Compiles textual translations files(.po) to binary(.mo) files.
         """
         if distutils.spawn.find_executable("msgfmt") is None:
-            self.announce('msgfmt binary not found. Install gettext', logging.ERROR)
+            self.announce('msgfmt binary not found. Install gettext', log.ERROR)
             raise RuntimeError
         self.announce('Compiling translations')
         try:
@@ -31,7 +31,7 @@ class XBlockInstall(_install):
                         self.announce('Compiling translation at %s' % po_path)
                         subprocess.check_call(['msgfmt', po_path, '-o', mo_path], cwd=self.install_lib)
         except Exception as ex:
-            self.announce('Translations compilation failed: %s' % ex.message, logging.ERROR)
+            self.announce('Translations compilation failed: %s' % ex.message, log.ERROR)
             raise
 
 
