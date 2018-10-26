@@ -1,5 +1,6 @@
 """Setup for recommender XBlock."""
-
+import distutils.spawn
+import logging
 import os
 import subprocess
 from setuptools.command.install import install as _install
@@ -17,6 +18,9 @@ class XBlockInstall(_install):
         """
         Compiles textual translations files(.po) to binary(.mo) files.
         """
+        if distutils.spawn.find_executable("msgfmt") is None:
+            self.announce('msgfmt binary not found. Install gettext', logging.ERROR)
+            raise RuntimeError
         self.announce('Compiling translations')
         try:
             for dirname, _, files in os.walk(os.path.join('recommender', 'translations')):
