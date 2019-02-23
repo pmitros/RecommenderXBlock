@@ -1,5 +1,6 @@
 """Setup for recommender XBlock."""
 
+from __future__ import absolute_import
 import os
 import subprocess
 from setuptools.command.install import install as _install

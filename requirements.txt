@@ -3,3 +3,4 @@ fs
 mako
 boto
 bleach==2.1.4
+pycodestyle

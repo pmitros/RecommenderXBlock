@@ -1,9 +1,22 @@
 language: python
-sudo: false
-install:
-- echo "Nothing to install"
+dist: xenial  # required for Python >= 3.7 (travis-ci/travis-ci#9069)
+python:
+  - 2.7
+  - 3.6
+  - 3.7
+env:
+  - TOXENV=django111
+  - TOXENV=django20
+  - TOXENV=django21
+matrix:
+  exclude:
+    - python: 2.7
+      env: TOXENV=django20
+    - python: 2.7
+      env: TOXENV=django21
+install: pip install -r requirements.txt
 script:
-- echo "TODO add tests"
+  - pycodestyle . --max-line-length=419  # TODO 419 --> 120
 deploy:
   provider: pypi
   user: edx
