@@ -3,6 +3,8 @@ This XBlock will show a set of recommended resources which may be helpful to
 students solving a given problem.
 """
 from __future__ import absolute_import
+
+import codecs
 import hashlib
 import json
 import lxml.etree as etree
@@ -368,7 +370,10 @@ class RecommenderXBlock(HelperXBlock):
                 if 'magic' in file_types[file_type]:
                     # Check magic number
                     headers = file_types[file_type]['magic']
-                    if request.POST['file'].file.read(len(headers[0]) / 2).encode('hex') not in headers:
+                    file_pointer = request.POST['file'].file
+                    file_magic_number = file_pointer.read(int(len(headers[0]) / 2))
+
+                    if codecs.encode(file_magic_number, 'hex').decode('utf-8') not in headers:
                         file_type_error = True
                     request.POST['file'].file.seek(0)
 
@@ -376,7 +381,7 @@ class RecommenderXBlock(HelperXBlock):
             response = Response()
             tracker.emit(event, {'uploadedFileName': 'FILE_TYPE_ERROR'})
             response.status = 415
-            response.body = json.dumps({'error': file_type_error_msg})
+            response.text = json.dumps({'error': file_type_error_msg})
             response.headers['Content-Type'] = 'application/json'
             return response
 
@@ -385,7 +390,7 @@ class RecommenderXBlock(HelperXBlock):
             response = Response()
             tracker.emit(event, {'uploadedFileName': 'FILE_SIZE_ERROR'})
             response.status = 413
-            response.body = json.dumps({'error': self.ugettext('Size of uploaded file exceeds threshold')})
+            response.text = json.dumps({'error': self.ugettext('Size of uploaded file exceeds threshold')})
             response.headers['Content-Type'] = 'application/json'
             return response
 
@@ -399,7 +404,7 @@ class RecommenderXBlock(HelperXBlock):
         error = self.ugettext('The configuration of pyfs is not properly set')
         tracker.emit(event, {'uploadedFileName': 'IMPROPER_FS_SETUP'})
         response.status = 404
-        response.body = json.dumps({'error': error})
+        response.text = json.dumps({'error': error})
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -531,7 +536,7 @@ class RecommenderXBlock(HelperXBlock):
                 request.POST['file'].file: the file to be uploaded
         Returns:
                 response: HTTP response
-                response.body (response.responseText): name of the uploaded file
+                response.text (response.responseText): name of the uploaded file
 
         We validate that this is a valid JPG, GIF, or PNG by checking magic number, mimetype,
         and extension all correspond. We also limit to 30MB. We save the file under its MD5
@@ -574,7 +579,7 @@ class RecommenderXBlock(HelperXBlock):
             return self._raise_pyfs_error('upload_screenshot')
 
         response = Response()
-        response.body = json.dumps({'file_name': str("fs://" + file_name)})
+        response.text = json.dumps({'file_name': str("fs://" + file_name)})
         response.headers['Content-Type'] = 'application/json'
         tracker.emit('upload_screenshot',
                      {'uploadedFileName': response.body})
@@ -846,7 +851,7 @@ class RecommenderXBlock(HelperXBlock):
         response.headers['Content-Type'] = 'application/json'
         if not self.get_user_is_staff():
             response.status = 403
-            response.body = json.dumps({'error': self.ugettext('Only staff can import resources')})
+            response.text = json.dumps({'error': self.ugettext('Only staff can import resources')})
             tracker.emit('import_resources', {'Status': 'NOT_A_STAFF'})
             return response
 
@@ -878,12 +883,12 @@ class RecommenderXBlock(HelperXBlock):
             data['recommendations'] = self.recommendations
 
             tracker.emit('import_resources', {'Status': 'SUCCESS', 'data': data})
-            response.body = json.dumps(data, sort_keys=True)
+            response.text = json.dumps(data, sort_keys=True)
             response.status = 200
             return response
         except (ValueError, KeyError):
             response.status = 415
-            response.body = json.dumps(
+            response.text = json.dumps(
                 {'error': self.ugettext('Please submit the JSON file obtained with the download resources button')}
             )
             tracker.emit('import_resources', {'Status': 'FILE_FORMAT_ERROR'})
