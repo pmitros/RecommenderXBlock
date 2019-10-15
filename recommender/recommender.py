@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 import codecs
 import hashlib
-import json
+import simplejson as json
 import lxml.etree as etree
 import pkg_resources
 import re
