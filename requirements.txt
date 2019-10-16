@@ -1,6 +1,7 @@
-webob
+bleach==2.1.4
+boto
 fs
 mako
-boto
-bleach==2.1.4
 pycodestyle
+simplejson
+webob
